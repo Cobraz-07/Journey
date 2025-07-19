@@ -1,5 +1,5 @@
 @import "tailwindcss"; 
-@import "/src/styles/starwind.css";
+@import "../styles/starwind.css";
 
 :root {
     --brand-color: #aadba3;
