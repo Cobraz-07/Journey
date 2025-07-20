@@ -1,6 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 @import "tailwindcss"; 
 @import "../styles/starwind.css";
 
 :root {
-    --brand-color: #aadba3;
+  --brand-color: #aadba3;
+  --text-color: #121712;
+}
+
+.jakarta {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+.feature-box {
+  border-radius: 8px;
+  border: 1px solid #DEE5DB;
+  padding: 16px;
+  font-weight: bold;
 }

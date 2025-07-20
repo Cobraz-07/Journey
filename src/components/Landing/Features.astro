@@ -1,0 +1,30 @@
+---
+import { Icon } from 'astro-icon/components'
+---
+
+<section class="flex flex-col items-center my-4">
+    <div id="features-title-container" class="mx-4 mt-6 mb-3 text-center">
+        <h2 class="text-[32px] font-bold">Your Travel Companion</h2>
+    </div>
+    <div id="features-subtitle-container" class="mx-4 mt-1 mb-3 text-center">
+        <p class="text-[16px] w-9/10 m-auto">Journey helps you document your travels with ease. Capture every moment, from the big adventures to the small details.</p>
+    </div>
+    <div id="feature-grid" class="grid grid-cols-2 grid-rows-2 gap-3 w-4/5 max-[370px]:w-9/10">
+        <div class="feature-box col-start-1 row-start-1 flex items-center gap-4">
+            <Icon name="plane" class="w-6 h-6"/>
+            Trip<br>Tracking
+        </div>
+        <div class="feature-box col-start-2 flex items-center gap-4">
+            <Icon name="timeline" class="w-6 h-6"/>
+            Travel<br>Timeline
+        </div>
+        <div class="feature-box col-start-1 flex items-center gap-4">
+            <Icon name="pen" class="w-6 h-6"/>
+            Daily<br>Journals
+        </div>
+        <div class="feature-box col-start-2 row-start-2 flex items-center gap-4">
+            <Icon name="image" class="w-6 h-6"/>
+            Photo<br>Albums
+        </div>
+    </div>
+</section>
