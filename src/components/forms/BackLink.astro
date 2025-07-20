@@ -1,0 +1,7 @@
+---
+const {text, href} = Astro.props
+---
+
+<div class="absolute bottom-8 w-full text-center">
+    <a aria-label="Custom text depending on page" href={href} class="text-[var(--dk-brand-color)] text-[14px]">{text}</a>
+</div>

@@ -1,0 +1,19 @@
+---
+import { Label } from "@/components/starwind/label";
+import { Input } from "@/components/starwind/input";
+import { Button } from "@/components/starwind/button";
+const { title, api, labelStyle, inputStyle, apiTitle} = Astro.props
+---
+
+<section class="flex flex-col pt-5 pl-4 pr-4 gap-6">
+    <h2 class="text-[22px] font-extrabold">{title}</h2>
+    <form class="flex flex-col" action=`/api/auth/${api}` method="post">
+        <Label class={labelStyle} for="name">Name</Label>
+        <Input name="name" id="name" type="text" placeholder="Enter your name" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] bg-[#EBF0EB]" class={inputStyle}/>
+        <Label  class="mb-2 font-medium" for="email">Email</Label>
+        <Input name="email" id="email" type="email" placeholder="Enter your email" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
+        <Label  class="mb-2 font-medium" for="password">Password</Label>
+        <Input name="password" id="password" type="password" placeholder="Enter your password" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
+        <Button type="submit" variant="Form">{apiTitle}</Button>
+    </form>
+</section>

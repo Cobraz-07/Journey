@@ -1,0 +1,68 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import BackBTN from "@/components/global/headers/BackBTN.astro";
+import JourneySimple from "@/components/global/headers/JourneySimple.astro";
+import RegisterForm from "@/components/forms/RegisterForm.astro";
+import BackLink from "@/components/forms/BackLink.astro";
+
+import { app } from "../firebase/server";
+import { getAuth } from "firebase-admin/auth";
+
+/* Check if the user is authenticated */
+const auth = getAuth(app);
+if (Astro.cookies.has("__session")) {
+  const sessionCookie = Astro.cookies.get("__session")!.value;
+  const decodedCookie = await auth.verifySessionCookie(sessionCookie);
+  if (decodedCookie) {
+    return Astro.redirect("/dashboard");
+  }
+}
+---
+
+<BaseLayout title="Journey | Register">
+    <BackBTN href="/" />
+    <JourneySimple />
+    <RegisterForm title="Sign in to your account" apiTitle="Sign in" api="signin" labelStyle="hidden" inputStyle="hidden" />
+    <BackLink href="/register" text="Don't have an account? Sign Up"/>
+</BaseLayout>
+
+<script>
+  import {
+    getAuth,
+    inMemoryPersistence,
+    signInWithEmailAndPassword,
+  } from "firebase/auth";
+  import { app } from "../firebase/client";
+
+  const auth = getAuth(app);
+  // This will prevent the browser from storing session data
+  auth.setPersistence(inMemoryPersistence);
+
+  const form = document.querySelector("form") as HTMLFormElement;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const email = formData.get("email")?.toString();
+    const password = formData.get("password")?.toString();
+
+    if (!email || !password) {
+      return;
+    }
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    const idToken = await userCredential.user.getIdToken();
+    const response = await fetch("/api/auth/signin", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    });
+
+    if (response.redirected) {
+      window.location.assign(response.url);
+    }
+  });
+</script>
