@@ -13,11 +13,5 @@ export default defineConfig({
   adapter: vercel(),
   vite: {
       plugins: [tailwindcss()],
-      resolve: {
-        alias: {
-          "@": path.resolve(__dirname, "./src"),
-          "@tests": path.resolve(__dirname, "./tests")
-        }
-      }
     },
 });
