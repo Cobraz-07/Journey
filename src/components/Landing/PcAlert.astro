@@ -1,0 +1,16 @@
+---
+import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
+import Flame from "@tabler/icons/outline/flame.svg";
+---
+
+    <Alert id="alert" variant="error" class="hidden absolute top-5 left-5 w-auto m-auto backdrop-blur-sm">
+        <AlertTitle><Flame />Danger!</AlertTitle>
+        <AlertDescription>
+            Use on mobile is mandatory for a good experience!
+        </AlertDescription>
+    </Alert>
+    <script defer>
+        if (document.documentElement.clientWidth > 600) {
+                document.getElementById("alert").classList.remove("hidden")
+        }
+    </script>

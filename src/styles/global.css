@@ -18,4 +18,5 @@
   border: 1px solid #DEE5DB;
   padding: 16px;
   font-weight: bold;
+  max-width: 160px;
 }
