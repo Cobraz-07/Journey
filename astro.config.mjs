@@ -12,11 +12,6 @@ export default defineConfig({
 
   vite: {
       plugins: [tailwindcss()],
-      resolve: {
-      alias: {
-        '@': new URL('./src', import.meta.url).pathname
-      }
-    }
     },
 
   integrations: [icon()],
