@@ -16,12 +16,23 @@ import { Button } from "@/components/starwind/button";
 </section>
 
 <script>
-    import { actions } from 'astro:actions';
+    import { isInputError } from 'astro:actions';
+import { actions } from 'astro:actions';
     const createForm = document.querySelector("#create-account") as HTMLFormElement;
 
     createForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        await actions.createAccount(new FormData(createForm));
+        const { error } = await actions.createAccount(new FormData(createForm));
+        if (error) {
+            console.log(error);
+            alert(error)
+            if(isInputError(error)) {
+                console.log(error.fields);
+                alert(error.fields)
+            }
+            return
+        }
+
         window.location.href = "/signin";
     });
 </script>
