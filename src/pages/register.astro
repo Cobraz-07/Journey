@@ -1,14 +1,14 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BackBTN from "@/components/global/headers/BackBTN.astro";
-import JourneySimple from "@/components/global/headers/JourneySimple.astro";
+import TitleSimple from "@/components/global/headers/TitleSimple.astro";
 import RegisterForm from "@/components/forms/RegisterForm.astro";
 import BackLink from "@/components/forms/BackLink.astro";
 ---
 
 <BaseLayout title="Journey | Sign Up">
     <BackBTN href="/" />
-    <JourneySimple />
+    <TitleSimple title="Journey"/>
     <RegisterForm />
     <BackLink href="/signin" text="Already have an account? Sign in"/>
 </BaseLayout>

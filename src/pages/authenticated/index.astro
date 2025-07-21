@@ -1,20 +1,24 @@
 ---
+import TitleSimple from "@/components/global/headers/TitleSimple.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-
+import User from "@/components/account_page/User.astro"
+import SettingsAccordion from "@/components/account_page/SettingsAccordion.astro";
+import AppFooter from "@/components/global/footers/appFooter.astro";
 ---
 <BaseLayout title="Journey | Account">
-<form id="logout-form">
-    <button>Log Out</button>
-</form>
-
-<script>
+    <TitleSimple title="Settings" />
+    <User />
+    <SettingsAccordion />
+    <AppFooter />
+    <button class="hidden" id="logout-button">Log Out</button>
+    <script>
     import { actions } from 'astro:actions';
-    const logoutForm = document.querySelector("#logout-form") as HTMLFormElement;
+    const logoutButton = document.querySelector("#logout-button") as HTMLButtonElement;
 
-    logoutForm.addEventListener("submit", async (e) => {
+    logoutButton.addEventListener("click", async (e) => {
         e.preventDefault();
         await actions.logoutAccount();
         window.location.href = "/";
     });
-</script>
+    </script>
 </BaseLayout>

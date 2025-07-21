@@ -1,0 +1,13 @@
+---
+import { projectAuth } from "@/firebase/config";
+const email = projectAuth.currentUser?.email;
+const index = email?.indexOf("@");
+const strippedEmail = email?.substring(0, index)
+---
+
+<section class="flex flex-col items-center my-10 h-[128px] text-center">
+    <div>
+        <h2 class="text-[20px] font-extrabold">{strippedEmail?.toUpperCase()}</h2>
+        <h4 class="font-extralight">{email}</h4>
+    </div>
+</section>
