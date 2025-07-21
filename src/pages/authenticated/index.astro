@@ -1,0 +1,20 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+---
+<BaseLayout title="Journey | Account">
+<form id="logout-form">
+    <button>Log Out</button>
+</form>
+
+<script>
+    import { actions } from 'astro:actions';
+    const logoutForm = document.querySelector("#logout-form") as HTMLFormElement;
+
+    logoutForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await actions.logoutAccount();
+        window.location.href = "/";
+    });
+</script>
+</BaseLayout>

@@ -6,7 +6,7 @@ import { Button } from "@/components/starwind/button";
 
 <section class="flex flex-col pt-5 pl-4 pr-4 gap-6">
     <h2 class="text-[22px] font-extrabold">Sign In to your account</h2>
-    <form class="flex flex-col" action=`/api/auth/signin` method="post">
+    <form class="flex flex-col" id="login-account">
         <Label  class="mb-2 font-medium" for="email">Email</Label>
         <Input name="email" id="email" type="email" placeholder="Enter your email" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
         <Label  class="mb-2 font-medium" for="password">Password</Label>
@@ -14,3 +14,14 @@ import { Button } from "@/components/starwind/button";
         <Button type="submit" variant="Form">Sign In</Button>
     </form>
 </section>
+
+<script>
+    import { actions } from 'astro:actions';
+    const loginForm = document.querySelector("#login-account") as HTMLFormElement;
+
+    loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await actions.loginAccount(new FormData(loginForm));
+        window.location.href = "/authenticated/";
+    });
+</script>
