@@ -24,11 +24,8 @@ import { actions } from 'astro:actions';
         e.preventDefault();
         const { error } = await actions.loginAccount(new FormData(loginForm));
         if (error) {
-            console.log(error);
-            alert(error)
-            if(isInputError(error)) {
-                console.log(error.fields);
-                alert(error.fields)
+            if (error.message = "Firebase: Error (auth/invalid-credential)."){
+                alert("Your email or password is incorrect, try again.")
             }
             return
         }

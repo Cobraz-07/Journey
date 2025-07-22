@@ -20,6 +20,7 @@ import { Button } from "@/components/starwind/button";
     import { actions } from 'astro:actions';
     import { db } from "@/firebase/config";
     import { doc, setDoc } from "firebase/firestore"; 
+import { useDeviceLanguage } from 'firebase/auth';
 
     const createForm = document.querySelector("#create-account") as HTMLFormElement;
     const formEmail = document.getElementById("email") as HTMLInputElement;
@@ -28,11 +29,8 @@ import { Button } from "@/components/starwind/button";
         e.preventDefault();
         const { error } = await actions.createAccount(new FormData(createForm));
         if (error) {
-            console.log(error);
-            alert(error)
-            if(isInputError(error)) {
-                console.log(error.fields);
-                alert(error.fields)
+            if (error.message = "Firebase: Error (auth/email-already-in-use.)"){
+                alert("Email is already in use.")
             }
             return
         }
