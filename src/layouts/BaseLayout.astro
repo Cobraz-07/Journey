@@ -4,11 +4,11 @@ import BaseHead from "@/components/BaseHead.astro";
 const { title } = Astro.props;
 ---
 <!DOCTYPE html>
-<html lang="en" class="jakarta text-[var(--text-color)] scroll-smooth selection:bg-accent-500 selection:text-white">
+<html lang="en" class="jakarta text-[var(--text-color)] scroll-smooth selection:bg-accent">
     <head>
         <BaseHead title={title}/>
     </head>
-    <body class="bg-white flex flex-col min-h-svh h-auto">
+    <body class="bg-[#f2f0eb] flex flex-col min-h-svh h-auto">
         <main class="grow">
             <slot />
         </main>
