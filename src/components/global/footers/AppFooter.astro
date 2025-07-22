@@ -1,14 +1,13 @@
 ---
 import { Icon } from "astro-icon/components";
-
-
+const { iconStateUser, iconStateHome } = Astro.props;
 ---
 
-<div class="absolute w-full flex justify-evenly bottom-0">
-    <a aria-label="Home" href="/authenticated/trips">
+<div class="absolute w-full flex justify-evenly bottom-4 pt-2 border-t-1 border-gray-300">
+    <a aria-label="Home" href="/authenticated/trips" class=`p-1 ${iconStateHome} rounded-lg`>
         <Icon name="home" class="w-7.5 h-7.5" />
     </a>
-    <a aria-label="Settings" href="/authenticated/">
+    <a aria-label="Settings" href="/authenticated/" class=`p-1 ${iconStateUser} rounded-lg`>
         <Icon name="user" class="w-7.5 h-7.5" />
     </a>
 </div>

@@ -1,0 +1,17 @@
+---
+import Button from "@/components/starwind/button";
+---
+<section class="flex justify-center absolute w-full bottom-24">
+    <Button variant="outline" class="rounded-full" id="logout-button">Log Out</Button>
+</section>
+
+<script>
+    import { actions } from 'astro:actions';
+    const logoutButton = document.querySelector("#logout-button") as HTMLButtonElement;
+
+    logoutButton.addEventListener("click", async (e) => {
+        e.preventDefault();
+        await actions.logoutAccount();
+        window.location.href = "/";
+    });
+</script>

@@ -17,8 +17,12 @@ import { Button } from "@/components/starwind/button";
 
 <script>
     import { isInputError } from 'astro:actions';
-import { actions } from 'astro:actions';
+    import { actions } from 'astro:actions';
+    import { db } from "@/firebase/config";
+    import { doc, setDoc } from "firebase/firestore"; 
+
     const createForm = document.querySelector("#create-account") as HTMLFormElement;
+    const formEmail = document.getElementById("email") as HTMLInputElement;
 
     createForm.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -33,6 +37,9 @@ import { actions } from 'astro:actions';
             return
         }
 
+        await setDoc(doc(db, "users", `${formEmail.value}`), {
+            email: `${formEmail.value}`,
+        });
         window.location.href = "/signin";
     });
 </script>

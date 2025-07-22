@@ -1,0 +1,14 @@
+---
+import TitleSimple from "@/components/global/headers/TitleSimple.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import AppFooter from "@/components/global/footers/AppFooter.astro";
+import TripList from "@/components/authenticated/trips_page/TripList.astro";
+
+const toggled = "bg-[var(--brand-color)]"
+---
+
+<BaseLayout title="Journey | Trips">
+    <TitleSimple title="Journey" />
+    <TripList />
+    <AppFooter iconStateHome={toggled} />
+</BaseLayout>

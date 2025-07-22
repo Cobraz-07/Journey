@@ -1,24 +1,17 @@
 ---
 import TitleSimple from "@/components/global/headers/TitleSimple.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import User from "@/components/account_page/User.astro"
-import SettingsAccordion from "@/components/account_page/SettingsAccordion.astro";
+import User from "@/components/authenticated/account_page/User.astro"
+import SettingsAccordion from "@/components/authenticated/account_page/SettingsAccordion.astro";
 import AppFooter from "@/components/global/footers/AppFooter.astro";
+import SignOutButton from "@/components/authenticated/account_page/SignOutButton.astro"
+
+const toggled = "bg-[var(--brand-color)]"
 ---
 <BaseLayout title="Journey | Account">
     <TitleSimple title="Settings" />
     <User />
     <SettingsAccordion />
-    <AppFooter />
-    <button class="hidden" id="logout-button">Log Out</button>
-    <script>
-    import { actions } from 'astro:actions';
-    const logoutButton = document.querySelector("#logout-button") as HTMLButtonElement;
-
-    logoutButton.addEventListener("click", async (e) => {
-        e.preventDefault();
-        await actions.logoutAccount();
-        window.location.href = "/";
-    });
-    </script>
+    <SignOutButton />
+    <AppFooter iconStateUser={toggled} />
 </BaseLayout>
