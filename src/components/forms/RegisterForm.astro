@@ -16,11 +16,9 @@ import { Button } from "@/components/starwind/button";
 </section>
 
 <script>
-    import { isInputError } from 'astro:actions';
     import { actions } from 'astro:actions';
     import { db } from "@/firebase/config";
     import { doc, setDoc } from "firebase/firestore"; 
-import { useDeviceLanguage } from 'firebase/auth';
 
     const createForm = document.querySelector("#create-account") as HTMLFormElement;
     const formEmail = document.getElementById("email") as HTMLInputElement;
