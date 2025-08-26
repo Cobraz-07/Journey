@@ -7,18 +7,18 @@ import { Button } from "@/components/starwind/button";
 <section class="flex flex-col pt-5 pl-4 pr-4 gap-6">
     <h2 class="text-[22px] font-extrabold">Create your account</h2>
     <form class="flex flex-col" id="create-account">
-        <Label  class="mb-2 font-medium" for="email">Email</Label>
+        <Label class="mb-2 font-medium" for="email">Email</Label>
         <Input name="email" id="email" type="email" placeholder="Enter your email" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
-        <Label  class="mb-2 font-medium" for="password">Password</Label>
+        <Label class="mb-2 font-medium" for="password">Password</Label>
         <Input name="password" id="password" type="password" placeholder="Enter your password" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
         <Button variant="Form">Sign Up</Button>
     </form>
 </section>
 
 <script>
-    import { actions } from 'astro:actions';
+    import { actions } from "astro:actions";
     import { db } from "@/firebase/config";
-    import { doc, setDoc } from "firebase/firestore"; 
+    import { doc, setDoc } from "firebase/firestore";
 
     const createForm = document.querySelector("#create-account") as HTMLFormElement;
     const formEmail = document.getElementById("email") as HTMLInputElement;
@@ -27,10 +27,10 @@ import { Button } from "@/components/starwind/button";
         e.preventDefault();
         const { error } = await actions.createAccount(new FormData(createForm));
         if (error) {
-            if (error.message = "Firebase: Error (auth/email-already-in-use.)"){
-                alert("Email is already in use.")
+            if ((error.message = "Firebase: Error (auth/email-already-in-use.)")) {
+                alert("Email is already in use.");
             }
-            return
+            return;
         }
 
         await setDoc(doc(db, "users", `${formEmail.value}`), {

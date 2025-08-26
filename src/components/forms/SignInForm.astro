@@ -7,26 +7,26 @@ import { Button } from "@/components/starwind/button";
 <section class="flex flex-col pt-5 pl-4 pr-4 gap-6">
     <h2 class="text-[22px] font-extrabold">Sign In to your account</h2>
     <form class="flex flex-col" id="login-account">
-        <Label  class="mb-2 font-medium" for="email">Email</Label>
+        <Label class="mb-2 font-medium" for="email">Email</Label>
         <Input name="email" id="email" type="email" placeholder="Enter your email" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
-        <Label  class="mb-2 font-medium" for="password">Password</Label>
+        <Label class="mb-2 font-medium" for="password">Password</Label>
         <Input name="password" id="password" type="password" placeholder="Enter your password" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
         <Button type="submit" variant="Form">Sign In</Button>
     </form>
 </section>
 
 <script>
-    import { actions } from 'astro:actions';
+    import { actions } from "astro:actions";
     const loginForm = document.querySelector("#login-account") as HTMLFormElement;
 
     loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const { error } = await actions.loginAccount(new FormData(loginForm));
         if (error) {
-            if (error.message = "Firebase: Error (auth/invalid-credential)."){
-                alert("Your email or password is incorrect, try again.")
+            if ((error.message = "Firebase: Error (auth/invalid-credential).")) {
+                alert("Your email or password is incorrect, try again.");
             }
-            return
+            return;
         }
 
         window.location.href = "/authenticated/";

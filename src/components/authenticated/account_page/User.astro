@@ -2,7 +2,7 @@
 import { projectAuth } from "@/firebase/config";
 const email = projectAuth.currentUser?.email;
 const index = email?.indexOf("@");
-const strippedEmail = email?.substring(0, index)
+const strippedEmail = email?.substring(0, index);
 ---
 
 <section class="flex flex-col items-center my-15 mb-0 h-[128px] text-center">

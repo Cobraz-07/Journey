@@ -1,13 +1,14 @@
 ---
 import TitleSimple from "@/components/global/headers/TitleSimple.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import User from "@/components/authenticated/account_page/User.astro"
+import User from "@/components/authenticated/account_page/User.astro";
 import SettingsAccordion from "@/components/authenticated/account_page/SettingsAccordion.astro";
 import AppFooter from "@/components/global/footers/AppFooter.astro";
-import SignOutButton from "@/components/authenticated/account_page/SignOutButton.astro"
+import SignOutButton from "@/components/authenticated/account_page/SignOutButton.astro";
 
-const toggled = "bg-[var(--brand-color)]"
+const toggled = "bg-[var(--brand-color)]";
 ---
+
 <BaseLayout title="Journey | Account">
     <TitleSimple title="Settings" />
     <User />

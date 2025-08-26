@@ -9,8 +9,7 @@ export const loginAccount = defineAction({
         email: z.string().email(),
         password: z.string(),
     }),
-    handler: async ({email, password}) => {
+    handler: async ({ email, password }) => {
         await signInWithEmailAndPassword(projectAuth, email, password);
-
-    }
+    },
 });

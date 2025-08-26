@@ -9,7 +9,7 @@ export const createAccount = defineAction({
         email: z.string().email(),
         password: z.string(),
     }),
-    handler: async ({email, password}) => {
+    handler: async ({ email, password }) => {
         await createUserWithEmailAndPassword(projectAuth, email, password);
     },
 });
