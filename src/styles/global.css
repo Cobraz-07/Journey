@@ -1,25 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
-@import "tailwindcss"; 
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap");
+@import "tailwindcss";
 @import "../styles/starwind.css";
 
 :root {
-  --brand-color: #aadba3;
-  --dk-brand-color: #63875E;
-  --text-color: #121712;
+    --brand-color: #aadba3;
+    --dk-brand-color: #63875e;
+    --lt-text-color: #6e826b;
+    --text-color: #121712;
 }
 
 .jakarta {
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-optical-sizing: auto;
-  font-style: normal;
-  font-display: swap;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    font-display: swap;
 }
 
 .feature-box {
-  border-radius: 8px;
-  border: 1px solid #DEE5DB;
-  padding: 16px;
-  font-weight: bold;
-  max-width: 160px;
-  box-shadow: 0 1px #aadba3;
+    border-radius: 8px;
+    border: 1px solid #dee5db;
+    padding: 16px;
+    font-weight: bold;
+    max-width: 160px;
+    box-shadow: 0 1px #aadba3;
 }
