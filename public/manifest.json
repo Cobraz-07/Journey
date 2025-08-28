@@ -1,4 +1,7 @@
 {
     "name": "Journey",
-    "display": "standalone"
+    "display": "standalone",
+    "start_url": "/authenticated/",
+    "background_color": "#f2f0eb",
+    "theme_color": "#f2f0eb"
 }
