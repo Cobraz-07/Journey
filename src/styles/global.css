@@ -9,6 +9,10 @@
     --text-color: #121712;
 }
 
+@viewport {
+    viewport-fit: cover;
+}
+
 .jakarta {
     font-family: "Plus Jakarta Sans", sans-serif;
     font-optical-sizing: auto;
