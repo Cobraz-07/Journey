@@ -1,7 +1,7 @@
 import { projectAuth } from "@/firebase/config";
 import { z } from "astro:schema";
 import { defineAction } from "astro:actions";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "firebase/auth";
 
 export const loginAccount = defineAction({
     accept: "form",
@@ -10,6 +10,7 @@ export const loginAccount = defineAction({
         password: z.string(),
     }),
     handler: async ({ email, password }) => {
+        await setPersistence(projectAuth, browserLocalPersistence);
         await signInWithEmailAndPassword(projectAuth, email, password);
     },
 });
