@@ -3,15 +3,16 @@ import TitleSimple from "@/components/global/headers/TitleSimple.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import AppFooter from "@/components/global/footers/AppFooter.astro";
 import TripList from "@/components/authenticated/trips_page/TripList.astro";
+import TripListHeader from "@/components/authenticated/trips_page/TripListHeader.astro";
+import TripListForm from "@/components/authenticated/trips_page/TripListForm.astro";
 
 const toggled = "bg-[var(--brand-color)]";
 ---
 
 <BaseLayout title="Journey | Trips">
     <TitleSimple title="Journey" />
-    <section class="flex flex-col items-left mx-4">
-        <h2 class="mt-5 mb-3 text-[22px] font-extrabold">Recent Trips</h2>
-    </section>
+    <TripListHeader />
+    <TripListForm />
     <TripList />
     <AppFooter iconStateHome={toggled} />
 </BaseLayout>
