@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
@@ -22,3 +22,11 @@ const app = initializeApp(firebaseConfig);
 
 export const projectAuth = getAuth(app);
 export const db = getFirestore(app);
+
+setPersistence(projectAuth, browserLocalPersistence)
+    .then(() => {
+        console.log("Persistence mode set to local.");
+    })
+    .catch((error) => {
+        console.error("Error setting persistence mode:", error);
+    });
