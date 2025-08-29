@@ -36,6 +36,7 @@ import { Button } from "@/components/starwind/button";
         await setDoc(doc(db, "users", `${formEmail.value}`), {
             email: `${formEmail.value}`,
         });
+        await setDoc(doc(db, "users", `${formEmail.value}`, "trips"), {});
         window.location.href = "/signin";
     });
 </script>
