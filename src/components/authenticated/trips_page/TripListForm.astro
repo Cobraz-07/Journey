@@ -1,13 +1,16 @@
 ---
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/starwind/dialog";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator } from "@/components/starwind/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from "@/components/starwind/select";
 import { Input } from "@/components/starwind/input";
 import { Button } from "@/components/starwind/button";
+
+import { projectAuth } from "@/firebase/config";
+const { email = projectAuth.currentUser?.email } = Astro.props;
 ---
 
-<Dialog id="contact-us-dialog">
+<Dialog id="trip-form-dialog">
     <DialogContent class="w-9/10 h-8/10 rounded-xl">
-        <form id="contact-form" method="dialog" class="flex flex-col gap-4 h-full">
+        <form id="trip-form" data-message={email} method="dialog" class="flex flex-col gap-4 h-full">
             <DialogHeader class="mb-6">
                 <DialogTitle>Create new trip</DialogTitle>
             </DialogHeader>
@@ -284,3 +287,30 @@ import { Button } from "@/components/starwind/button";
         </form>
     </DialogContent>
 </Dialog>
+
+<script>
+    import { db } from "@/firebase/config";
+    import { collection, doc, setDoc } from "firebase/firestore";
+
+    const tripForm = document.querySelector("#trip-form") as HTMLFormElement;
+    const formTitle = document.getElementById("title") as HTMLInputElement;
+    const formStartDate = document.getElementById("start-date") as HTMLInputElement;
+    const formEndDate = document.getElementById("end-date") as HTMLInputElement;
+    const formCountry = document.getElementById("framework") as HTMLInputElement;
+    const email = tripForm.dataset.message;
+
+    const userDocRef = doc(db, "users", email ?? "unknown_user");
+
+    tripForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        await setDoc(doc(collection(userDocRef, "trips")), {
+            title: `${formTitle.value}`,
+            startDate: `${formStartDate.value}`,
+            endDate: `${formEndDate.value}`,
+            country: `${formCountry.value}`,
+        });
+
+        window.location.href = "/authenticated/trips";
+    });
+</script>
