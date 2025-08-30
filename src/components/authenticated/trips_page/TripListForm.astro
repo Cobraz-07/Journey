@@ -290,7 +290,7 @@ const { email = projectAuth.currentUser?.email } = Astro.props;
 
 <script>
     import { db } from "@/firebase/config";
-    import { collection, doc, setDoc } from "firebase/firestore";
+    import { collection, doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 
     const tripForm = document.querySelector("#trip-form") as HTMLFormElement;
     const formTitle = document.getElementById("title") as HTMLInputElement;
@@ -310,13 +310,20 @@ const { email = projectAuth.currentUser?.email } = Astro.props;
     tripForm.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        await setDoc(doc(collection(userDocRef, "trips"), `${formTitle.value}`), {
+        // Get current tripCounter or initialize if not present
+        const userSnap = await getDoc(userDocRef);
+        let tripCounter = userSnap.data()?.tripCounter ?? 9999999999;
+
+        await setDoc(doc(collection(userDocRef, "trips"), `trip nº${tripCounter}`), {
             title: `${formTitle.value}`,
             startDate: `${formStartDate.value}`,
             endDate: `${formEndDate.value}`,
             country: `${formCountry.textContent}`,
             countryCode: countryCode,
+            createdAt: new Date().toISOString(),
         });
+
+        await updateDoc(userDocRef, { tripCounter: tripCounter - 1 });
 
         window.location.href = "/authenticated/trips";
     });
