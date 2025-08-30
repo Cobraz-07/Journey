@@ -1,21 +1,43 @@
 ---
-
+import { projectAuth } from "@/firebase/config";
+const { email = projectAuth.currentUser?.email } = Astro.props;
 ---
 
-<section class="flex flex-col items-left mx-6 my-4 gap-4">
-    <div id="Summer in Paris" class="w-full flex items-center gap-4">
-        <img src="https://flagcdn.com/fr.svg" width="40" class="h-7.5 trip-img" alt="France" />
-        <div id="text-div">
-            <h4 class="font-bold">Summer in Paris</h4>
-            <h6 class="text-[var(--lt-text-color)]">Paris, France</h6>
-        </div>
-    </div>
-    <p id="separator" class="w-9/10 bg-neutral-200 h-0.5 m-auto"></p>
-    <div id="Exploring Tokyo" class="w-full flex items-center gap-4">
-        <img src="https://flagcdn.com/jp.svg" width="40" class="h-7.5 trip-img" alt="Japan" />
-        <div id="text-div">
-            <h4 class="font-bold">Exploring Tokyo</h4>
-            <h6 class="text-[var(--lt-text-color)]">Tokyo, Japan</h6>
-        </div>
-    </div>
+<section data-message={email} id="trip-list" class="flex flex-col items-left mx-6 my-4 gap-4">
+    <!-- Trip items will be dynamically inserted here -->
 </section>
+
+<script>
+    import { db } from "@/firebase/config";
+    import { collection, getDocs, doc, getCountFromServer } from "firebase/firestore";
+
+    const tripList = document.getElementById("trip-list") as HTMLDivElement;
+    const email = tripList.dataset.message;
+    const userDocRef = doc(db, "users", email ?? "unknown_user");
+    const tripsCollectionRef = collection(userDocRef, "trips");
+    const tripsSnapshot = await getCountFromServer(tripsCollectionRef);
+    console.log("Trip count: ", tripsSnapshot.data().count);
+
+    if (tripsSnapshot.data().count === 0) {
+        tripList.innerHTML = `
+            <div class="flex flex-col items-center justify-center w-full h-60">
+                <h3 class="text-xl font-semibold text-center text-[var(--lt-text-color)]">No trips added yet</h3>
+                <p class="text-center text-[var(--lt-text-color)]">Start by adding a new trip to plan your next adventure!</p>
+            </div>
+        `;
+    } else {
+        const tripsSnapshotDocs = await getDocs(tripsCollectionRef);
+        tripsSnapshotDocs.forEach((tripDoc) => {
+            const tripData = tripDoc.data();
+            tripList.innerHTML += `
+                <div id="" class="w-full flex items-center gap-4">
+                    <img src="https://flagcdn.com/${tripData?.countryCode}.svg" width="40" class="h-7.5 trip-img" alt="${tripData?.countryCode}" />
+                    <div id="text-div">
+                        <h4 class="font-bold">${tripData?.title ?? "Unnamed Trip"}</h4>
+                        <h6 class="text-[var(--lt-text-color)]">${tripData?.country ?? "Nowhere"}</h6>
+                    </div>
+                </div>
+                <p id="separator" class="w-9/10 bg-neutral-200 h-0.5 m-auto"></p>`;
+        });
+    }
+</script>
