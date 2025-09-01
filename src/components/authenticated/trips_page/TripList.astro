@@ -30,14 +30,16 @@ const { email = projectAuth.currentUser?.email } = Astro.props;
         tripsSnapshotDocs.forEach((tripDoc) => {
             const tripData = tripDoc.data();
             tripList.innerHTML += `
-                <div id="" class="w-full flex items-center gap-4">
-                    <img src="https://flagcdn.com/${tripData?.countryCode}.svg" width="40" class="h-7.5 trip-img" alt="${tripData?.countryCode}" />
-                    <div id="text-div">
-                        <h4 class="font-bold">${tripData?.title ?? "Unnamed Trip"}</h4>
-                        <h6 class="text-[var(--lt-text-color)]">${tripData?.country ?? "Nowhere"}</h6>
+                <a href="/authenticated/${email}/${tripData?.title ?? "Unnamed_Trip"}">
+                    <div id="" class="w-full flex items-center gap-4">
+                        <img src="https://flagcdn.com/${tripData?.countryCode}.svg" width="40" class="h-7.5 trip-img" alt="${tripData?.countryCode}" />
+                        <div id="text-div">
+                            <h4 class="font-bold">${tripData?.title ?? "Unnamed Trip"}</h4>
+                            <h6 class="text-[var(--lt-text-color)]">${tripData?.country ?? "Nowhere"}</h6>
+                        </div>
                     </div>
-                </div>
-                <p id="separator" class="w-9/10 bg-neutral-200 h-0.5 m-auto"></p>`;
+                </a>
+                    <p id="separator" class="w-9/10 bg-neutral-200 h-0.5 m-auto"></p>`;
         });
     }
 </script>
