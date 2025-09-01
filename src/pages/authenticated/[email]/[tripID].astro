@@ -2,6 +2,8 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { db } from "@/firebase/config";
 import { doc, getDoc } from "firebase/firestore";
+import TitleSimple from "@/components/global/headers/TitleSimple.astro";
+import BackBTN from "@/components/global/headers/BackBTN.astro";
 const { email, tripID } = Astro.params;
 console.log("Params:", email, tripID);
 
@@ -12,11 +14,6 @@ const tripData = tripSnap.data();
 ---
 
 <BaseLayout id="layout" title={`Journey | ${tripID}`}>
-    <h1 class="text-3xl font-bold my-4 text-center text-[var(--lt-text-color)]">{tripData?.title ?? "Trip Details"}</h1>
-    <div class="mx-6 my-4 p-4 border border-gray-300 rounded-lg bg-white shadow-md">
-        <h2 class="text-2xl font-semibold mb-2 text-[var(--lt-text-color)]">Trip Information</h2>
-        <p class="mb-1 text-[var(--lt-text-color)]"><strong>Destination:</strong> {tripData?.country ?? "Unknown"}</p>
-        <p class="mb-1 text-[var(--lt-text-color)]"><strong>Start Date:</strong> {tripData?.startDate ?? "N/A"}</p>
-        <p class="mb-1 text-[var(--lt-text-color)]"><strong>End Date:</strong> {tripData?.endDate ?? "N/A"}</p>
-    </div>
+    <BackBTN href="/authenticated/trips" />
+    <TitleSimple title="Trip Details" />
 </BaseLayout>

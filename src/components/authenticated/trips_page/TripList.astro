@@ -1,38 +1,46 @@
 ---
 import { projectAuth } from "@/firebase/config";
 const { email = projectAuth.currentUser?.email } = Astro.props;
+import { Skeleton } from "@/components/starwind/skeleton";
 ---
 
 <section data-message={email} id="trip-list" class="flex flex-col items-left mx-6 my-4 gap-4">
     <!-- Trip items will be dynamically inserted here -->
+    <Skeleton class="h-[66px] w-full" />
+    <Skeleton class="h-[66px] w-full" />
+    <Skeleton class="h-[66px] w-full" />
+    <Skeleton class="h-[66px] w-full" />
+    <Skeleton class="h-[66px] w-full" />
 </section>
 
 <script>
     import { db } from "@/firebase/config";
-    import { collection, getDocs, doc, getCountFromServer } from "firebase/firestore";
+    import { collection, getDocs, doc } from "firebase/firestore";
 
     const tripList = document.getElementById("trip-list") as HTMLDivElement;
     const email = tripList.dataset.message;
     const userDocRef = doc(db, "users", email ?? "unknown_user");
     const tripsCollectionRef = collection(userDocRef, "trips");
-    const tripsSnapshot = await getCountFromServer(tripsCollectionRef);
-    console.log("Trip count: ", tripsSnapshot.data().count);
 
-    if (tripsSnapshot.data().count === 0) {
-        tripList.innerHTML = `
-            <div class="flex flex-col items-center justify-center w-full h-60">
-                <h3 class="text-xl font-semibold text-center text-[var(--lt-text-color)]">No trips added yet</h3>
-                <p class="text-center text-[var(--lt-text-color)]">Start by adding a new trip to plan your next adventure!</p>
-            </div>
-        `;
-    } else {
-        const tripsSnapshotDocs = await getDocs(tripsCollectionRef);
-        tripsSnapshotDocs.forEach((tripDoc) => {
+    async function renderTrips() {
+        const tripsSnapshot = await getDocs(tripsCollectionRef);
+        if (tripsSnapshot.empty) {
+            tripList.innerHTML = `
+                <div class="flex flex-col items-center justify-center w-full h-60">
+                    <h3 class="text-xl font-semibold text-center text-[var(--lt-text-color)]">No trips added yet</h3>
+                    <p class="text-center text-[var(--lt-text-color)]">Start by adding a new trip to plan your next adventure!</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = "";
+        tripsSnapshot.forEach((tripDoc) => {
             const tripData = tripDoc.data();
             const tripID = tripDoc.id;
-            tripList.innerHTML += `
+            html += `
                 <a href="/authenticated/${email}/${tripID ?? "Unnamed_Trip"}">
-                    <div id="" class="w-full flex items-center gap-4">
+                    <div class="w-full flex items-center gap-4">
                         <img src="https://flagcdn.com/${tripData?.countryCode}.svg" width="40" class="h-7.5 trip-img" alt="${tripData?.countryCode}" />
                         <div id="text-div">
                             <h4 class="font-bold">${tripData?.title ?? "Unnamed Trip"}</h4>
@@ -40,7 +48,11 @@ const { email = projectAuth.currentUser?.email } = Astro.props;
                         </div>
                     </div>
                 </a>
-                    <p id="separator" class="w-9/10 bg-neutral-200 h-0.5 m-auto"></p>`;
+                <p id="separator" class="w-9/10 bg-neutral-200 h-0.5 m-auto"></p>
+            `;
         });
+        tripList.innerHTML = html;
     }
+
+    renderTrips();
 </script>
