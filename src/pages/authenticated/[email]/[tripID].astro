@@ -4,6 +4,9 @@ import { db } from "@/firebase/config";
 import { doc, getDoc } from "firebase/firestore";
 import TitleSimple from "@/components/global/headers/TitleSimple.astro";
 import BackBTN from "@/components/global/headers/BackBTN.astro";
+import TripJournalHeader from "@/components/authenticated/trips_page/TripJournalHeader.astro";
+import TripJournalForm from "@/components/authenticated/trips_page/TripJournalForm.astro";
+import TripJournalList from "@/components/authenticated/trips_page/TripJournalList.astro";
 const { email, tripID } = Astro.params;
 console.log("Params:", email, tripID);
 
@@ -16,4 +19,11 @@ const tripData = tripSnap.data();
 <BaseLayout id="layout" title={`Journey | ${tripID}`}>
     <BackBTN href="/authenticated/trips" />
     <TitleSimple title="Trip Details" />
+    <section class="flex flex-col mt-16 w-full mx-6">
+        <h2 class="text-3xl font-bold mb-2 text-[var(--text-color)]">{tripData?.title ?? "Unnamed Trip"}</h2>
+        <p class="mb-4 w-8/10 wrap-break-word text-[var(--lt-text-color)]">{tripData?.description ?? "No description available."}</p>
+    </section>
+    <TripJournalHeader />
+    <TripJournalForm email={email} tripID={tripID} />
+    <TripJournalList email={email} tripID={tripID} />
 </BaseLayout>

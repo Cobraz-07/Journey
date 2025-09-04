@@ -1,0 +1,53 @@
+---
+const { email, tripID } = Astro.props;
+import { Skeleton } from "@/components/starwind/skeleton";
+---
+
+<section data-message={email} id="journal-list" class="flex flex-col items-left mx-6 my-4 gap-4">
+    <!-- Journal items will be dynamically inserted here -->
+    <Skeleton data-message={tripID} class="h-[66px] w-full" />
+    <Skeleton class="h-[66px] w-full" />
+    <Skeleton class="h-[66px] w-full" />
+    <Skeleton class="h-[66px] w-full" />
+    <Skeleton class="h-[66px] w-full" />
+</section>
+
+<script>
+    import { db } from "@/firebase/config";
+    import { collection, getDocs, doc } from "firebase/firestore";
+
+    const journalList = document.getElementById("journal-list") as HTMLDivElement;
+    const email = journalList.dataset.message;
+    const tripID = document.querySelector("[data-message]")?.getAttribute("data-message");
+    const userDocRef = doc(db, "users", email ?? "unknown_user");
+    const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
+    const journalCollectionRef = collection(tripDocRef, "journal");
+
+    async function renderJournals() {
+        const journalsSnapshot = await getDocs(journalCollectionRef);
+        if (journalsSnapshot.empty) {
+            journalList.innerHTML = `
+                <div class="flex flex-col items-center justify-center w-full h-60">
+                    <h3 class="text-xl font-semibold text-center text-[var(--lt-text-color)]">No journals added yet</h3>
+                    <p class="text-center text-[var(--lt-text-color)]">Start by adding a new journal entry for this trip!</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = "";
+        journalsSnapshot.forEach((journalDoc) => {
+            const journalData = journalDoc.data();
+            html += `
+                <div class="w-full flex flex-col gap-2 p-4 rounded-lg bg-[#EBF0EB]">
+                    <h4 class="font-bold text-[#63875E]">${journalData?.title ?? "Untitled Journal"}</h4>
+                    <p class="text-[var(--lt-text-color)]">${journalData?.description ?? ""}</p>
+                </div>
+                <p id="separator" class="w-9/10 bg-neutral-200 h-0.5 m-auto"></p>
+            `;
+        });
+        journalList.innerHTML = html;
+    }
+
+    renderJournals();
+</script>

@@ -1,0 +1,59 @@
+---
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/starwind/dialog";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from "@/components/starwind/select";
+import { Input } from "@/components/starwind/input";
+import { Button } from "@/components/starwind/button";
+import { Textarea } from "@/components/starwind/textarea";
+
+import { projectAuth } from "@/firebase/config";
+import { db } from "@/firebase/config";
+import { collection, doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+const { email, tripID } = Astro.props;
+const userDocRef = doc(db, "users", email ?? "unknown_user");
+const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
+const tripSnap = await getDoc(tripDocRef);
+---
+
+<Dialog id="journal-form-dialog" data-message={tripID}>
+    <DialogContent class="w-9/10 h-8/10 rounded-xl">
+        <form id="journal-form" data-message={email} method="dialog" class="flex flex-col gap-4 h-full">
+            <DialogHeader class="mb-6">
+                <DialogTitle>Create new journal</DialogTitle>
+            </DialogHeader>
+            <Input name="journal title" id="title" type="text" placeholder="Journal Title" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
+            <Textarea class="rounded-[12px] mb-6 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="description" placeholder="Journal Description" />
+            <DialogFooter class="mt-auto">
+                <Button type="submit" variant="Form">Create Journal</Button>
+            </DialogFooter>
+        </form>
+    </DialogContent>
+</Dialog>
+
+<script>
+    import { db } from "@/firebase/config";
+    import { collection, doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+
+    const journalFormDialog = document.getElementById("journal-form-dialog") as HTMLDivElement;
+    const journalForm = document.querySelector("#journal-form") as HTMLFormElement;
+    const formTitle = document.getElementById("title") as HTMLInputElement;
+    const formDescription = document.getElementById("description") as HTMLTextAreaElement;
+    const email = journalForm.dataset.message;
+    const tripID = journalFormDialog.dataset.message;
+    const userDocRef = doc(db, "users", email ?? "unknown_user");
+
+    journalForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const tripDocRef = doc(collection(userDocRef, "trips"), `${tripID}`);
+
+        // Add the journal entry to the 'journal' subcollection
+        const journalCollectionRef = collection(tripDocRef, "journal");
+        await setDoc(doc(journalCollectionRef), {
+            title: `${formTitle.value}`,
+            description: `${formDescription.value}`,
+            createdAt: new Date().toISOString(),
+        });
+
+        window.location.href = `/authenticated/${email}/${tripID}`;
+    });
+</script>

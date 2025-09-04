@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from "@/components/starwind/select";
 import { Input } from "@/components/starwind/input";
 import { Button } from "@/components/starwind/button";
+import { Textarea } from "@/components/starwind/textarea";
 
 import { projectAuth } from "@/firebase/config";
 const { email = projectAuth.currentUser?.email } = Astro.props;
@@ -15,6 +16,7 @@ const { email = projectAuth.currentUser?.email } = Astro.props;
                 <DialogTitle>Create new trip</DialogTitle>
             </DialogHeader>
             <Input name="trip title" id="title" type="text" placeholder="Trip Title" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
+            <Textarea class="rounded-[12px] mb-6 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="description" placeholder="Trip Description" />
             <p>Start Date / End Date</p>
             <div id="date-inputs" class="flex gap-4">
                 <Input name="trip start date" id="start-date" type="date" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
@@ -294,6 +296,7 @@ const { email = projectAuth.currentUser?.email } = Astro.props;
 
     const tripForm = document.querySelector("#trip-form") as HTMLFormElement;
     const formTitle = document.getElementById("title") as HTMLInputElement;
+    const formDescription = document.getElementById("description") as HTMLTextAreaElement;
     const formStartDate = document.getElementById("start-date") as HTMLInputElement;
     const formEndDate = document.getElementById("end-date") as HTMLInputElement;
     const formCountry = document.getElementById("country") as HTMLInputElement;
@@ -314,8 +317,11 @@ const { email = projectAuth.currentUser?.email } = Astro.props;
         const userSnap = await getDoc(userDocRef);
         let tripCounter = userSnap.data()?.tripCounter ?? 9999999999;
 
-        await setDoc(doc(collection(userDocRef, "trips"), `trip nº${tripCounter}`), {
+        const tripDocRef = doc(collection(userDocRef, "trips"), `trip nº${tripCounter}`);
+
+        await setDoc(tripDocRef, {
             title: `${formTitle.value}`,
+            description: `${formDescription.value}`,
             startDate: `${formStartDate.value}`,
             endDate: `${formEndDate.value}`,
             country: `${formCountry.textContent}`,

@@ -1,0 +1,11 @@
+---
+import { DialogTrigger } from "@/components/starwind/dialog";
+import { Icon } from "astro-icon/components";
+---
+
+<section class="flex justify-between items-center items-left mx-6">
+    <h2 class="mt-5 mb-3 text-[22px] font-extrabold">Journal Entries</h2>
+    <DialogTrigger for="journal-form-dialog" class="mt-2" asChild>
+        <Icon name="add" class="w-7.5 h-7.5" />
+    </DialogTrigger>
+</section>
