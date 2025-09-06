@@ -22,6 +22,8 @@ const tripSnap = await getDoc(tripDocRef);
             </DialogHeader>
             <Input name="journal title" id="title" type="text" placeholder="Journal Title" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
             <Textarea class="rounded-[12px] mb-6 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="description" placeholder="Journal Description" />
+            <p>Journal Date</p>
+            <Input name="journal date" id="journal-date" type="date" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
             <DialogFooter class="mt-auto">
                 <Button type="submit" variant="Form">Create Journal</Button>
             </DialogFooter>
@@ -31,12 +33,13 @@ const tripSnap = await getDoc(tripDocRef);
 
 <script>
     import { db } from "@/firebase/config";
-    import { collection, doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+    import { collection, doc, setDoc } from "firebase/firestore";
 
     const journalFormDialog = document.getElementById("journal-form-dialog") as HTMLDivElement;
     const journalForm = document.querySelector("#journal-form") as HTMLFormElement;
     const formTitle = document.getElementById("title") as HTMLInputElement;
     const formDescription = document.getElementById("description") as HTMLTextAreaElement;
+    const formDate = document.getElementById("journal-date") as HTMLInputElement;
     const email = journalForm.dataset.message;
     const tripID = journalFormDialog.dataset.message;
     const userDocRef = doc(db, "users", email ?? "unknown_user");
@@ -51,7 +54,7 @@ const tripSnap = await getDoc(tripDocRef);
         await setDoc(doc(journalCollectionRef), {
             title: `${formTitle.value}`,
             description: `${formDescription.value}`,
-            createdAt: new Date().toISOString(),
+            date: `${formDate.value}`,
         });
 
         window.location.href = `/authenticated/${email}/${tripID}`;

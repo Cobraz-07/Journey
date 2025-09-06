@@ -39,8 +39,11 @@ import { Skeleton } from "@/components/starwind/skeleton";
         journalsSnapshot.forEach((journalDoc) => {
             const journalData = journalDoc.data();
             html += `
-                <div class="w-full flex flex-col gap-2 p-4 rounded-lg bg-[#EBF0EB]">
-                    <h4 class="font-bold text-[#63875E]">${journalData?.title ?? "Untitled Journal"}</h4>
+                <div class="w-full flex flex-col gap-2 p-4">
+                    <div class="flex justify-between w-full">
+                        <h4 class="font-bold text-[var(--text-color)]">${journalData?.title ?? "Untitled Journal"}</h4>
+                        <p class="text-sm text-[var(--lt-text-color)]">${journalData?.date ?? ""}</p>
+                    </div>
                     <p class="text-[var(--lt-text-color)]">${journalData?.description ?? ""}</p>
                 </div>
                 <p id="separator" class="w-9/10 bg-neutral-200 h-0.5 m-auto"></p>
