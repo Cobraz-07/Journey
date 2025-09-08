@@ -38,6 +38,15 @@ import { Skeleton } from "@/components/starwind/skeleton";
         tripsSnapshot.forEach((tripDoc) => {
             const tripData = tripDoc.data();
             const tripID = tripDoc.id;
+            const formatDate = (dateString: string | undefined) => {
+                if (!dateString) return "";
+                const parts = dateString.split("-");
+                if (parts.length === 3) {
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                return dateString; // Return original if format is unexpected
+            };
+
             html += `
                 <a href="/authenticated/${email}/${tripID ?? "Unnamed_Trip"}">
                     <div class="w-full flex items-center gap-4">
@@ -45,6 +54,7 @@ import { Skeleton } from "@/components/starwind/skeleton";
                         <div id="text-div">
                             <h4 class="font-bold">${tripData?.title ?? "Unnamed Trip"}</h4>
                             <h6 class="text-[var(--lt-text-color)]">${tripData?.country ?? "Nowhere"}</h6>
+                            <h6 class="text-[var(--lt-text-color)]">${formatDate(tripData?.startDate)} / ${formatDate(tripData?.endDate)}</h6>
                         </div>
                     </div>
                 </a>

@@ -14,6 +14,14 @@ const userDocRef = doc(db, "users", email ?? "unknown_user");
 const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
 const tripSnap = await getDoc(tripDocRef);
 const tripData = tripSnap.data();
+const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "";
+    const parts = dateString.split("-");
+    if (parts.length === 3) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateString; // Return original if format is unexpected
+};
 ---
 
 <BaseLayout id="layout" title={`Journey | ${tripID}`}>
@@ -25,6 +33,7 @@ const tripData = tripSnap.data();
     <section class="flex flex-col mt-16 w-full mx-6">
         <h2 class="text-3xl font-bold mb-2 text-[var(--text-color)]">{tripData?.title ?? "Unnamed Trip"}</h2>
         <p class="mb-4 w-8/10 wrap-break-word text-[var(--lt-text-color)]">{tripData?.description ?? "No description available."}</p>
+        <h6 class="text-[var(--lt-text-color)]">{formatDate(tripData?.startDate)} / {formatDate(tripData?.endDate)}</h6>
     </section>
     <TripJournalHeader />
     <TripJournalForm email={email} tripID={tripID} />
