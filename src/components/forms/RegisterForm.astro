@@ -32,9 +32,8 @@ import { Button } from "@/components/starwind/button";
 </section>
 
 <script>
-    import { projectAuth, db } from "@/firebase/config";
+    import { projectAuth } from "@/firebase/config";
     import { createUserWithEmailAndPassword } from "firebase/auth";
-    import { doc, setDoc } from "firebase/firestore";
     import { showToast } from "@/utils/toast";
 
     const createForm = document.querySelector("#create-account") as HTMLFormElement;
@@ -61,13 +60,7 @@ import { Button } from "@/components/starwind/button";
                 formPassword.value,
             );
 
-            // Create user document in Firestore under immutable UID
-            await setDoc(doc(db, "users", userCredential.user.uid), {
-                email: formEmail.value,
-                createdAt: new Date().toISOString(),
-            });
-
-            // Send ID token to server to create a session cookie
+            // Send ID token to server to create session cookie and initialize user doc server-side
             const idToken = await userCredential.user.getIdToken();
             const res = await fetch("/api/session", {
                 method: "POST",

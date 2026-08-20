@@ -26,7 +26,23 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
         // Verify the ID token first
         const adminAuth = await getAdminAuth();
-        await adminAuth.verifyIdToken(idToken);
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+
+        // Ensure user document exists in Firestore server-side
+        try {
+            const { getAdminDb } = await import("@/firebase/server");
+            const adminDb = await getAdminDb();
+            const userDocRef = adminDb.collection("users").doc(decodedToken.uid);
+            const userDocSnap = await userDocRef.get();
+            if (!userDocSnap.exists) {
+                await userDocRef.set({
+                    email: decodedToken.email ?? null,
+                    createdAt: new Date().toISOString(),
+                });
+            }
+        } catch (dbErr) {
+            console.warn("Could not check/create user doc on session creation:", dbErr);
+        }
 
         // Create a session cookie
         const sessionCookie = await adminAuth.createSessionCookie(idToken, {
