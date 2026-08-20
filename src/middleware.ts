@@ -1,21 +1,44 @@
 import { defineMiddleware } from "astro:middleware";
-import { projectAuth } from "./firebase/config";
+import { getAdminAuth } from "./firebase/server";
 
-export const onRequest = defineMiddleware((context, next) => {
-    const currentUser = projectAuth.currentUser;
+export const onRequest = defineMiddleware(async (context, next) => {
     const { pathname } = context.url;
 
-    if (!currentUser && pathname.startsWith("/authenticated") && context.request.method === "GET") {
+    // Skip auth verification for API routes
+    if (pathname.startsWith("/api/")) {
+        return next();
+    }
+
+    // Try to verify the session cookie
+    const sessionCookie = context.cookies.get("__session")?.value;
+    let user: { email: string | null; uid: string } | null = null;
+
+    if (sessionCookie) {
+        try {
+            const decodedClaims = await getAdminAuth().verifySessionCookie(sessionCookie, true);
+            user = {
+                email: decodedClaims.email ?? null,
+                uid: decodedClaims.uid,
+            };
+        } catch {
+            // Invalid or expired cookie — clear it
+            context.cookies.delete("__session", { path: "/" });
+        }
+    }
+
+    // Protect authenticated routes
+    if (!user && pathname.startsWith("/authenticated") && context.request.method === "GET") {
         return context.redirect("/register");
     }
 
-    if (currentUser && (pathname === "/signin" || pathname === "/register" || pathname === "/")) {
+    // Redirect authenticated users away from public auth pages
+    if (user && (pathname === "/signin" || pathname === "/register" || pathname === "/")) {
         return context.redirect("/authenticated/");
     }
 
-    if (currentUser) {
-        context.locals.userEmail = currentUser.email;
-    }
+    // Set verified user info in locals
+    context.locals.userEmail = user?.email ?? null;
+    context.locals.uid = user?.uid ?? null;
 
     return next();
 });

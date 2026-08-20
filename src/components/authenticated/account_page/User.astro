@@ -1,6 +1,5 @@
 ---
-import { projectAuth } from "@/firebase/config";
-const email = projectAuth.currentUser?.email;
+const { email } = Astro.props;
 const index = email?.indexOf("@");
 const strippedEmail = email?.substring(0, index);
 ---

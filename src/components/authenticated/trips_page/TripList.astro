@@ -1,6 +1,5 @@
 ---
-import { projectAuth } from "@/firebase/config";
-const { email = projectAuth.currentUser?.email } = Astro.props;
+const { email } = Astro.props;
 import { Skeleton } from "@/components/starwind/skeleton";
 ---
 
@@ -48,7 +47,7 @@ import { Skeleton } from "@/components/starwind/skeleton";
             };
 
             html += `
-                <a href="/authenticated/${email}/${tripID ?? "Unnamed_Trip"}">
+                <a href="/authenticated/trips/${tripID ?? "Unnamed_Trip"}">
                     <div class="w-full flex items-center gap-4">
                         <img src="https://flagcdn.com/${tripData?.countryCode}.svg" width="40" class="h-7.5 trip-img" alt="${tripData?.countryCode}" />
                         <div id="text-div">

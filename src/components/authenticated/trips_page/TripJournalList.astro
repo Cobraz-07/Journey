@@ -3,9 +3,9 @@ const { email, tripID } = Astro.props;
 import { Skeleton } from "@/components/starwind/skeleton";
 ---
 
-<section data-message={email} id="journal-list" class="flex flex-col items-left mx-6 my-4 gap-4">
+<section data-email={email} data-trip-id={tripID} id="journal-list" class="flex flex-col items-left mx-6 my-4 gap-4">
     <!-- Journal items will be dynamically inserted here -->
-    <Skeleton data-message={tripID} class="h-[66px] w-full" />
+    <Skeleton class="h-[66px] w-full" />
     <Skeleton class="h-[66px] w-full" />
     <Skeleton class="h-[66px] w-full" />
     <Skeleton class="h-[66px] w-full" />
@@ -17,8 +17,8 @@ import { Skeleton } from "@/components/starwind/skeleton";
     import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 
     const journalList = document.getElementById("journal-list") as HTMLDivElement;
-    const email = journalList.dataset.message;
-    const tripID = document.querySelector("[data-message]")?.getAttribute("data-message");
+    const email = journalList.dataset.email;
+    const tripID = journalList.dataset.tripId;
     const userDocRef = doc(db, "users", email ?? "unknown_user");
     const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
     const journalCollectionRef = collection(tripDocRef, "journal");

@@ -7,12 +7,16 @@ import Button from "@/components/starwind/button";
 </section>
 
 <script>
-    import { actions } from "astro:actions";
+    import { projectAuth } from "@/firebase/config";
+
     const logoutButton = document.querySelector("#logout-button") as HTMLButtonElement;
 
     logoutButton.addEventListener("click", async (e) => {
         e.preventDefault();
-        await actions.logoutAccount();
+        // Clear client-side Firebase Auth state
+        await projectAuth.signOut();
+        // Clear server-side session cookie
+        await fetch("/api/session", { method: "DELETE" });
         window.location.href = "/";
     });
 </script>

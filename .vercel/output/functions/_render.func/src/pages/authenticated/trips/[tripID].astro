@@ -1,0 +1,63 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getAdminDb } from "@/firebase/server";
+import TitleSimple from "@/components/global/headers/TitleSimple.astro";
+import BackBTN from "@/components/global/headers/BackBTN.astro";
+import TripJournalHeader from "@/components/authenticated/trips_page/TripJournalHeader.astro";
+import TripJournalForm from "@/components/authenticated/trips_page/TripJournalForm.astro";
+import TripJournalList from "@/components/authenticated/trips_page/TripJournalList.astro";
+import { Icon } from "astro-icon/components";
+
+const email = Astro.locals.userEmail;
+if (!email) return Astro.redirect("/register");
+
+const { tripID } = Astro.params;
+const tripSnap = await getAdminDb()
+    .collection("users")
+    .doc(email)
+    .collection("trips")
+    .doc(tripID ?? "unknown_trip")
+    .get();
+const tripData = tripSnap.data();
+
+const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "";
+    const parts = dateString.split("-");
+    if (parts.length === 3) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateString;
+};
+---
+
+<BaseLayout id="layout" title={`Journey | ${tripID}`}>
+    <BackBTN href="/authenticated/trips" />
+    <div class="flex justify-between items-center absolute top-4 right-4">
+        <button data-email={email} data-id={tripID} id="delete-trip-btn" title="Delete Trip"><Icon class="w-7.5 h-7.5" name="delete" /></button>
+    </div>
+    <TitleSimple title="Trip Details" />
+    <section class="flex flex-col mt-16 w-full mx-6">
+        <h2 class="text-3xl font-bold mb-2 text-[var(--text-color)]">{tripData?.title ?? "Unnamed Trip"}</h2>
+        <p class="mb-4 w-8/10 wrap-break-word text-[var(--lt-text-color)]">{tripData?.description ?? "No description available."}</p>
+        <h6 class="text-[var(--lt-text-color)]">{formatDate(tripData?.startDate)} / {formatDate(tripData?.endDate)}</h6>
+    </section>
+    <TripJournalHeader />
+    <TripJournalForm email={email} tripID={tripID} />
+    <TripJournalList email={email} tripID={tripID} />
+</BaseLayout>
+
+<script>
+    import { db } from "@/firebase/config";
+    import { doc, deleteDoc } from "firebase/firestore";
+
+    const deleteBtn = document.getElementById("delete-trip-btn");
+    const email = deleteBtn?.dataset.email;
+    const tripID = deleteBtn?.dataset.id;
+    const userDocRef = doc(db, "users", email ?? "unknown_user");
+    const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
+
+    deleteBtn?.addEventListener("click", async () => {
+        await deleteDoc(tripDocRef);
+        window.location.href = "/authenticated/trips";
+    });
+</script>

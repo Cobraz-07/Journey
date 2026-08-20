@@ -1,7 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { db } from "@/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { getAdminDb } from "@/firebase/server";
 import TitleSimple from "@/components/global/headers/TitleSimple.astro";
 import BackBTN from "@/components/global/headers/BackBTN.astro";
 import TripJournalHeader from "@/components/authenticated/trips_page/TripJournalHeader.astro";
@@ -9,18 +8,25 @@ import TripJournalForm from "@/components/authenticated/trips_page/TripJournalFo
 import TripJournalList from "@/components/authenticated/trips_page/TripJournalList.astro";
 import { Icon } from "astro-icon/components";
 
-const { email, tripID } = Astro.params;
-const userDocRef = doc(db, "users", email ?? "unknown_user");
-const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
-const tripSnap = await getDoc(tripDocRef);
+const email = Astro.locals.userEmail;
+if (!email) return Astro.redirect("/register");
+
+const { tripID } = Astro.params;
+const tripSnap = await getAdminDb()
+    .collection("users")
+    .doc(email)
+    .collection("trips")
+    .doc(tripID ?? "unknown_trip")
+    .get();
 const tripData = tripSnap.data();
+
 const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "";
     const parts = dateString.split("-");
     if (parts.length === 3) {
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
-    return dateString; // Return original if format is unexpected
+    return dateString;
 };
 ---
 
@@ -47,7 +53,6 @@ const formatDate = (dateString: string | undefined) => {
     const deleteBtn = document.getElementById("delete-trip-btn");
     const email = deleteBtn?.dataset.email;
     const tripID = deleteBtn?.dataset.id;
-    console.log("Email:", email, "TripID:", tripID);
     const userDocRef = doc(db, "users", email ?? "unknown_user");
     const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
 

@@ -5,8 +5,7 @@ import { Input } from "@/components/starwind/input";
 import { Button } from "@/components/starwind/button";
 import { Textarea } from "@/components/starwind/textarea";
 
-import { projectAuth } from "@/firebase/config";
-const { email = projectAuth.currentUser?.email } = Astro.props;
+const { email } = Astro.props;
 ---
 
 <Dialog id="trip-form-dialog">

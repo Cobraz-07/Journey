@@ -1,22 +1,15 @@
 ---
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/starwind/dialog";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from "@/components/starwind/select";
 import { Input } from "@/components/starwind/input";
 import { Button } from "@/components/starwind/button";
 import { Textarea } from "@/components/starwind/textarea";
 
-import { projectAuth } from "@/firebase/config";
-import { db } from "@/firebase/config";
-import { collection, doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 const { email, tripID } = Astro.props;
-const userDocRef = doc(db, "users", email ?? "unknown_user");
-const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
-const tripSnap = await getDoc(tripDocRef);
 ---
 
-<Dialog id="journal-form-dialog" data-message={tripID}>
+<Dialog id="journal-form-dialog" data-trip-id={tripID}>
     <DialogContent class="w-9/10 h-8/10 rounded-xl">
-        <form id="journal-form" data-message={email} method="dialog" class="flex flex-col gap-4 h-full">
+        <form id="journal-form" data-email={email} method="dialog" class="flex flex-col gap-4 h-full">
             <DialogHeader class="mb-6">
                 <DialogTitle>Create new journal</DialogTitle>
             </DialogHeader>
@@ -40,8 +33,8 @@ const tripSnap = await getDoc(tripDocRef);
     const formTitle = document.getElementById("title") as HTMLInputElement;
     const formDescription = document.getElementById("description") as HTMLTextAreaElement;
     const formDate = document.getElementById("journal-date") as HTMLInputElement;
-    const email = journalForm.dataset.message;
-    const tripID = journalFormDialog.dataset.message;
+    const email = journalForm.dataset.email;
+    const tripID = journalFormDialog.dataset.tripId;
     const userDocRef = doc(db, "users", email ?? "unknown_user");
 
     journalForm.addEventListener("submit", async (e) => {
@@ -57,6 +50,6 @@ const tripSnap = await getDoc(tripDocRef);
             date: `${formDate.value}`,
         });
 
-        window.location.href = `/authenticated/${email}/${tripID}`;
+        window.location.href = `/authenticated/trips/${tripID}`;
     });
 </script>
