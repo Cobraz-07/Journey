@@ -1,10 +1,56 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each user has full access to their own document and all nested subcollections
-    match /users/{email}/{document=**} {
-      allow read, write: if request.auth != null
-                         && request.auth.token.email == email;
+
+    // Helper: check that the user is authenticated and owns this path
+    function isOwner(email) {
+      return request.auth != null && request.auth.token.email == email;
+    }
+
+    // User profile document
+    match /users/{email} {
+      allow read: if isOwner(email);
+      allow write: if isOwner(email)
+                   && request.resource.data.keys().hasOnly(['email', 'tripCounter'])
+                   && request.resource.data.email is string;
+    }
+
+    // Trips subcollection
+    match /users/{email}/trips/{tripId} {
+      allow read: if isOwner(email);
+      allow write: if isOwner(email)
+                   && request.resource.data.keys().hasOnly([
+                        'title', 'description', 'startDate', 'endDate',
+                        'country', 'countryCode', 'coverUrl', 'coverStoragePath', 'createdAt'
+                      ])
+                   && request.resource.data.title is string
+                   && request.resource.data.title.size() <= 200;
+      allow delete: if isOwner(email);
+    }
+
+    // Photos subcollection under trips
+    match /users/{email}/trips/{tripId}/photos/{photoId} {
+      allow read: if isOwner(email);
+      allow write: if isOwner(email)
+                   && request.resource.data.keys().hasOnly([
+                        'id', 'url', 'storagePath', 'caption', 'createdAt', 'size'
+                      ])
+                   && request.resource.data.url is string
+                   && request.resource.data.storagePath is string;
+      allow delete: if isOwner(email);
+    }
+
+    // Journal subcollection under trips
+    match /users/{email}/trips/{tripId}/journal/{journalId} {
+      allow read: if isOwner(email);
+      allow write: if isOwner(email)
+                   && request.resource.data.keys().hasOnly([
+                        'title', 'description', 'date', 'imageUrl',
+                        'imageStoragePath', 'createdAt'
+                      ])
+                   && request.resource.data.title is string
+                   && request.resource.data.title.size() <= 200;
+      allow delete: if isOwner(email);
     }
 
     // Deny everything else by default

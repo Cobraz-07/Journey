@@ -59,6 +59,7 @@
 
 <script>
     import { deleteTripPhoto, type TripPhoto } from "@/firebase/storageService";
+    import { showToast } from "@/utils/toast";
 
     interface LightboxState {
         photos: TripPhoto[];
@@ -206,7 +207,7 @@
                 }
             } catch (err) {
                 console.error("Error al eliminar la foto:", err);
-                alert("Ocurrió un error al intentar eliminar la foto.");
+                showToast("Ocurrió un error al intentar eliminar la foto.", "error");
             }
         }
     });

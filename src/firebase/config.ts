@@ -1,21 +1,17 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase client config from environment variables (PUBLIC_ prefix = safe for client-side)
 const firebaseConfig = {
-    apiKey: "AIzaSyBAGeTp4WQFP1mcDreHThX7w6G-YgF8pVE",
-    authDomain: "journey-4d59b.firebaseapp.com",
-    projectId: "journey-4d59b",
-    storageBucket: "journey-4d59b.firebasestorage.app",
-    messagingSenderId: "487803690897",
-    appId: "1:487803690897:web:38d25e97e435449fb6c430",
-    measurementId: "G-3LE9HW063X",
+    apiKey: import.meta.env.PUBLIC_FIREBASE_API_KEY,
+    authDomain: import.meta.env.PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.PUBLIC_FIREBASE_APP_ID,
+    measurementId: import.meta.env.PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
@@ -25,11 +21,6 @@ export const projectAuth = getAuth(app);
 export const db = getFirestore(app);
 export const projectStorage = getStorage(app);
 
-setPersistence(projectAuth, browserLocalPersistence)
-    .then(() => {
-        console.log("Persistence mode set to local.");
-    })
-    .catch((error) => {
-        console.error("Error setting persistence mode:", error);
-    });
-
+setPersistence(projectAuth, browserLocalPersistence).catch((error) => {
+    console.error("Error setting persistence mode:", error);
+});

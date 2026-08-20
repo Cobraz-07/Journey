@@ -1,38 +1,44 @@
 ---
-const { email, tripID } = Astro.props;
-import { Skeleton } from "@/components/starwind/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/starwind/dialog";
+
+const { tripID, email } = Astro.props;
 ---
 
-<section data-email={email} data-trip-id={tripID} id="journal-list" class="flex flex-col items-left mx-6 my-4 gap-4">
-    <!-- Journal items will be dynamically inserted here -->
-    <Skeleton class="h-[66px] w-full" />
-    <Skeleton class="h-[66px] w-full" />
-    <Skeleton class="h-[66px] w-full" />
-    <Skeleton class="h-[66px] w-full" />
-    <Skeleton class="h-[66px] w-full" />
-</section>
+<div class="flex flex-col gap-2 p-2" id="journal-list" data-message={tripID} data-email={email}>
+    <!-- Loading spinner / skeleton -->
+    <div class="flex items-center justify-center py-10 text-[var(--lt-text-color)]">
+        <svg class="animate-spin h-6 w-6 text-[#63875e]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+    </div>
+</div>
 
 <script>
     import { db } from "@/firebase/config";
-    import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
+    import { collection, getDocs, doc } from "firebase/firestore";
+    import { deleteJournalEntry } from "@/firebase/storageService";
+    import { escapeHtml } from "@/utils/escapeHtml";
+    import { formatDate } from "@/utils/formatDate";
 
     const journalList = document.getElementById("journal-list") as HTMLDivElement;
     const email = journalList.dataset.email;
-    const tripID = journalList.dataset.tripId;
+    const tripId = journalList.dataset.message;
     const userDocRef = doc(db, "users", email ?? "unknown_user");
-    const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
+    const tripDocRef = doc(collection(userDocRef, "trips"), `${tripId}`);
     const journalCollectionRef = collection(tripDocRef, "journal");
 
-    // Event delegation for delete buttons
+    // Add event listener to journal list for deletion
     journalList.addEventListener("click", async (event) => {
         const target = event.target as HTMLElement;
         const deleteButton = target.closest("[data-delete-journal]") as HTMLButtonElement;
 
-        if (deleteButton) {
+        if (deleteButton && email && tripId) {
             const journalId = deleteButton.dataset.deleteJournal;
+            const storagePath = deleteButton.dataset.deleteStoragePath;
             if (journalId) {
                 try {
-                    await deleteDoc(doc(journalCollectionRef, journalId));
+                    await deleteJournalEntry(email, tripId, journalId, storagePath);
                     // Re-render journals instead of full page reload
                     renderJournals();
                 } catch (error) {
@@ -71,35 +77,30 @@ import { Skeleton } from "@/components/starwind/skeleton";
         journalsArray.forEach((journal) => {
             const journalData = journal.data;
 
-            // Format date from yyyy-mm-dd to dd-mm-yyyy
-            const formatDate = (dateString: string | undefined) => {
-                if (!dateString) return "";
-                const parts = dateString.split("-");
-                if (parts.length === 3) {
-                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
-                }
-                return dateString; // Return original if format is unexpected
-            };
-
             const hasImage = Boolean(journalData?.imageUrl);
+
+            const safeTitle = escapeHtml(journalData?.title) || "Untitled Journal";
+            const safeDescription = escapeHtml(journalData?.description);
+            const safeImageUrl = escapeHtml(journalData?.imageUrl);
+            const safeStoragePath = escapeHtml(journalData?.imageStoragePath);
 
             html += `
                 <div class="w-full flex flex-col gap-3 p-4 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-900/30 transition-colors">
                     <div class="flex justify-between items-start w-full">
                         <div>
-                            <h4 class="font-bold text-base text-[var(--text-color)]">${journalData?.title ?? "Untitled Journal"}</h4>
+                            <h4 class="font-bold text-base text-[var(--text-color)]">${safeTitle}</h4>
                             <p class="text-xs text-[var(--lt-text-color)] font-medium mt-0.5">${formatDate(journalData?.date)}</p>
                         </div>
-                        <button data-delete-journal="${journal.id}" class="p-1.5 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" title="Delete Journal">
+                        <button data-delete-journal="${escapeHtml(journal.id)}" data-delete-storage-path="${safeStoragePath}" class="p-1.5 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" title="Delete Journal">
                             <img src="/delete.svg" class="w-4.5 h-4.5" />
                         </button>
                     </div>
                     
-                    ${journalData?.description ? `<p class="text-sm text-[var(--lt-text-color)] whitespace-pre-line">${journalData.description}</p>` : ""}
+                    ${safeDescription ? `<p class="text-sm text-[var(--lt-text-color)] whitespace-pre-line">${safeDescription}</p>` : ""}
 
                     ${hasImage ? `
-                        <div class="mt-1 max-w-sm rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm cursor-pointer group" data-journal-img-url="${journalData.imageUrl}" data-journal-img-title="${journalData.title ?? ""}">
-                            <img src="${journalData.imageUrl}" alt="${journalData.title ?? "Journal image"}" class="w-full max-h-56 object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                        <div class="mt-1 max-w-sm rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm cursor-pointer group" data-journal-img-url="${safeImageUrl}" data-journal-img-title="${safeTitle}">
+                            <img src="${safeImageUrl}" alt="${safeTitle}" class="w-full max-h-56 object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
                         </div>
                     ` : ""}
                 </div>

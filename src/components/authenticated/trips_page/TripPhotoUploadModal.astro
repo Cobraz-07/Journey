@@ -129,6 +129,7 @@ const { email, tripID } = Astro.props;
 <script>
     import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
     import { uploadTripPhoto } from "@/firebase/storageService";
+    import { showToast } from "@/utils/toast";
 
     const modalDialog = document.getElementById("trip-photo-upload-dialog") as any;
     const email = modalDialog?.dataset.email;
@@ -163,6 +164,7 @@ const { email, tripID } = Astro.props;
 
     // --- BATCH STATE & LOGIC ---
     let selectedBatchFiles: File[] = [];
+    let batchPreviewUrls: string[] = [];
     const batchDropzone = document.getElementById("batch-dropzone") as HTMLDivElement;
     const batchFileInput = document.getElementById("batch-file-input") as HTMLInputElement;
     const batchPreviewContainer = document.getElementById("batch-files-preview-container") as HTMLDivElement;
@@ -217,6 +219,9 @@ const { email, tripID } = Astro.props;
             batchPreviewContainer.classList.add("hidden");
             batchSubmitBtn.disabled = true;
             batchFilesGrid.innerHTML = "";
+            // Revoke all preview URLs to free memory
+            batchPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+            batchPreviewUrls = [];
             return;
         }
 
@@ -225,13 +230,18 @@ const { email, tripID } = Astro.props;
         batchFilesCount.textContent = `${selectedBatchFiles.length} ${selectedBatchFiles.length === 1 ? "foto seleccionada" : "fotos seleccionadas"}`;
 
         batchFilesGrid.innerHTML = "";
+        // Revoke old preview URLs before creating new ones
+        batchPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+        batchPreviewUrls = [];
         selectedBatchFiles.forEach((file, index) => {
             const card = document.createElement("div");
             card.className = "relative rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-white aspect-square group";
             
             const img = document.createElement("img");
             img.className = "w-full h-full object-cover";
-            img.src = URL.createObjectURL(file);
+            const previewUrl = URL.createObjectURL(file);
+            batchPreviewUrls.push(previewUrl);
+            img.src = previewUrl;
             card.appendChild(img);
 
             const removeBtn = document.createElement("button");
@@ -270,23 +280,35 @@ const { email, tripID } = Astro.props;
         batchSubmitBtn.disabled = true;
         batchProgressWrapper.classList.remove("hidden");
         const total = selectedBatchFiles.length;
+        let completed = 0;
 
-        for (let i = 0; i < total; i++) {
-            const rawFile = selectedBatchFiles[i];
-            batchProgressLabel.textContent = `Procesando y subiendo ${i + 1} de ${total}...`;
-            
-            try {
-                // Compress client-side to WebP
-                const compressed = await compressImageToWebP(rawFile);
-                await uploadTripPhoto(email, tripId, compressed.file);
-            } catch (err) {
-                console.error(`Error subiendo foto ${rawFile.name}:`, err);
+        // Controlled concurrency: 3 uploads in parallel
+        const CONCURRENCY_LIMIT = 3;
+        const queue = [...selectedBatchFiles];
+
+        async function processWorker() {
+            while (queue.length > 0) {
+                const rawFile = queue.shift();
+                if (!rawFile) break;
+
+                try {
+                    // Compress client-side to WebP
+                    const compressed = await compressImageToWebP(rawFile);
+                    await uploadTripPhoto(email, tripId, compressed.file);
+                } catch (err) {
+                    console.error(`Error subiendo foto ${rawFile.name}:`, err);
+                } finally {
+                    completed++;
+                    const pct = Math.round((completed / total) * 100);
+                    batchProgressLabel.textContent = `Procesando y subiendo ${completed} de ${total}...`;
+                    batchProgressBar.style.width = `${pct}%`;
+                    batchProgressPercent.textContent = `${pct}%`;
+                }
             }
-
-            const pct = Math.round(((i + 1) / total) * 100);
-            batchProgressBar.style.width = `${pct}%`;
-            batchProgressPercent.textContent = `${pct}%`;
         }
+
+        const workers = Array.from({ length: Math.min(CONCURRENCY_LIMIT, total) }, () => processWorker());
+        await Promise.all(workers);
 
         // Finish
         setTimeout(() => {
@@ -355,8 +377,9 @@ const { email, tripID } = Astro.props;
             singleDropzonePlaceholder.classList.add("hidden");
             singlePreviewContainer.classList.remove("hidden");
             singleSubmitBtn.disabled = false;
-        } catch (err: any) {
-            alert(err.message || "Error al procesar la imagen.");
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Error al procesar la imagen.";
+            showToast(message, "error");
         }
     }
 
@@ -373,6 +396,7 @@ const { email, tripID } = Astro.props;
         if (!singleCompressedResult || !email || !tripId) return;
 
         singleSubmitBtn.disabled = true;
+        singleSubmitBtn.textContent = "Subiendo...";
         singleProgressWrapper.classList.remove("hidden");
 
         try {
@@ -387,16 +411,18 @@ const { email, tripID } = Astro.props;
             singlePreviewContainer.classList.add("hidden");
             singleProgressWrapper.classList.add("hidden");
             singleSubmitBtn.disabled = false;
+            singleSubmitBtn.textContent = "Subir foto";
 
             closeUploadModal();
+            showToast("Foto subida con éxito.", "success");
             window.dispatchEvent(new CustomEvent("trip-photos:updated"));
         } catch (err) {
             console.error("Error al subir foto:", err);
-            alert("No se pudo subir la imagen.");
+            showToast("No se pudo subir la imagen.", "error");
             singleProgressWrapper.classList.add("hidden");
             singleSubmitBtn.disabled = false;
+            singleSubmitBtn.textContent = "Subir foto";
         }
     });
 
     singleCancelBtn?.addEventListener("click", closeUploadModal);
-</script>

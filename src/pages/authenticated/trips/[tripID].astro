@@ -22,14 +22,8 @@ const tripSnap = await adminDb
     .get();
 const tripData = tripSnap.data();
 
-const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return "";
-    const parts = dateString.split("-");
-    if (parts.length === 3) {
-        return `${parts[2]}-${parts[1]}-${parts[0]}`;
-    }
-    return dateString;
-};
+import { formatDate } from "@/utils/formatDate";
+
 ---
 
 <BaseLayout id="layout" title={`Journey | ${tripID}`}>
@@ -106,6 +100,7 @@ const formatDate = (dateString: string | undefined) => {
 <script>
     import { compressImageToWebP } from "@/utils/imageCompressor";
     import { uploadTripCover, deleteEntireTrip } from "@/firebase/storageService";
+    import { showToast } from "@/utils/toast";
 
     const deleteBtn = document.getElementById("delete-trip-btn");
     const email = deleteBtn?.dataset.email;
@@ -120,7 +115,7 @@ const formatDate = (dateString: string | undefined) => {
                 window.location.href = "/authenticated/trips";
             } catch (err) {
                 console.error("Error al eliminar el viaje:", err);
-                alert("Error al eliminar el viaje.");
+                showToast("Error al eliminar el viaje.", "error");
                 deleteBtn.removeAttribute("disabled");
             }
         }
@@ -160,9 +155,10 @@ const formatDate = (dateString: string | undefined) => {
             descHeader?.classList.add("text-white/90", "drop-shadow");
 
             if (changeCoverText) changeCoverText.textContent = "Cambiar portada";
+            showToast("Portada actualizada con éxito.", "success");
         } catch (err) {
             console.error("Error al subir foto de portada:", err);
-            alert("No se pudo actualizar la foto de portada.");
+            showToast("No se pudo actualizar la foto de portada.", "error");
             if (changeCoverText) changeCoverText.textContent = "Cambiar portada";
         }
     });

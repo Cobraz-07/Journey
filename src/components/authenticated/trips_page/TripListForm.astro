@@ -5,6 +5,7 @@ import { Input } from "@/components/starwind/input";
 import { Button } from "@/components/starwind/button";
 import { Textarea } from "@/components/starwind/textarea";
 import { Icon } from "astro-icon/components";
+import { countries } from "@/utils/countries";
 
 const { email } = Astro.props;
 ---
@@ -15,8 +16,8 @@ const { email } = Astro.props;
             <DialogHeader class="mb-4">
                 <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white">Crear nuevo viaje</DialogTitle>
             </DialogHeader>
-            <Input name="trip title" id="title" type="text" placeholder="Título del viaje" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
-            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="description" placeholder="Descripción del viaje" />
+            <Input name="trip title" id="trip-title" type="text" placeholder="Título del viaje" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="trip-description" placeholder="Descripción del viaje" />
             
             <!-- Optional Cover Photo -->
             <p class="text-xs font-semibold text-[#6e826b]">Foto de Portada (Opcional)</p>
@@ -35,267 +36,18 @@ const { email } = Astro.props;
 
             <p class="text-xs font-semibold text-[#6e826b]">Fecha de Inicio / Fin</p>
             <div id="date-inputs" class="flex gap-4">
-                <Input name="trip start date" id="start-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
-                <Input name="trip end date" id="end-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+                <Input name="trip start date" id="trip-start-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+                <Input name="trip end date" id="trip-end-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
             </div>
             <Select name="country" class="w-full">
                 <SelectTrigger class="w-full rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required>
-                    <SelectValue id="country" placeholder="Selecciona un país" />
+                    <SelectValue id="trip-country" placeholder="Selecciona un país" />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectGroup>
-                        <SelectItem value="af">Afghanistan</SelectItem>
-                        <SelectItem value="ax">Åland Islands</SelectItem>
-                        <SelectItem value="al">Albania</SelectItem>
-                        <SelectItem value="dz">Algeria</SelectItem>
-                        <SelectItem value="as">American Samoa</SelectItem>
-                        <SelectItem value="ad">Andorra</SelectItem>
-                        <SelectItem value="ao">Angola</SelectItem>
-                        <SelectItem value="ai">Anguilla</SelectItem>
-                        <SelectItem value="aq">Antarctica</SelectItem>
-                        <SelectItem value="ag">Antigua and Barbuda</SelectItem>
-                        <SelectItem value="ar">Argentina</SelectItem>
-                        <SelectItem value="am">Armenia</SelectItem>
-                        <SelectItem value="aw">Aruba</SelectItem>
-                        <SelectItem value="au">Australia</SelectItem>
-                        <SelectItem value="at">Austria</SelectItem>
-                        <SelectItem value="az">Azerbaijan</SelectItem>
-                        <SelectItem value="bs">Bahamas</SelectItem>
-                        <SelectItem value="bh">Bahrain</SelectItem>
-                        <SelectItem value="bd">Bangladesh</SelectItem>
-                        <SelectItem value="bb">Barbados</SelectItem>
-                        <SelectItem value="by">Belarus</SelectItem>
-                        <SelectItem value="be">Belgium</SelectItem>
-                        <SelectItem value="bz">Belize</SelectItem>
-                        <SelectItem value="bj">Benin</SelectItem>
-                        <SelectItem value="bm">Bermuda</SelectItem>
-                        <SelectItem value="bt">Bhutan</SelectItem>
-                        <SelectItem value="bo">Bolivia (Plurinational State of)</SelectItem>
-                        <SelectItem value="ba">Bosnia and Herzegovina</SelectItem>
-                        <SelectItem value="bw">Botswana</SelectItem>
-                        <SelectItem value="bv">Bouvet Island</SelectItem>
-                        <SelectItem value="br">Brazil</SelectItem>
-                        <SelectItem value="io">British Indian Ocean Territory</SelectItem>
-                        <SelectItem value="bn">Brunei Darussalam</SelectItem>
-                        <SelectItem value="bg">Bulgaria</SelectItem>
-                        <SelectItem value="bf">Burkina Faso</SelectItem>
-                        <SelectItem value="bi">Burundi</SelectItem>
-                        <SelectItem value="cv">Cabo Verde</SelectItem>
-                        <SelectItem value="kh">Cambodia</SelectItem>
-                        <SelectItem value="cm">Cameroon</SelectItem>
-                        <SelectItem value="ca">Canada</SelectItem>
-                        <SelectItem value="bq">Caribbean Netherlands</SelectItem>
-                        <SelectItem value="ky">Cayman Islands</SelectItem>
-                        <SelectItem value="cf">Central African Republic</SelectItem>
-                        <SelectItem value="td">Chad</SelectItem>
-                        <SelectItem value="cl">Chile</SelectItem>
-                        <SelectItem value="cn">China</SelectItem>
-                        <SelectItem value="cx">Christmas Island</SelectItem>
-                        <SelectItem value="cc">Cocos (Keeling) Islands</SelectItem>
-                        <SelectItem value="co">Colombia</SelectItem>
-                        <SelectItem value="km">Comoros</SelectItem>
-                        <SelectItem value="cg">Congo</SelectItem>
-                        <SelectItem value="cd">Congo, Democratic Republic of the</SelectItem>
-                        <SelectItem value="ck">Cook Islands</SelectItem>
-                        <SelectItem value="cr">Costa Rica</SelectItem>
-                        <SelectItem value="hr">Croatia</SelectItem>
-                        <SelectItem value="cu">Cuba</SelectItem>
-                        <SelectItem value="cw">Curaçao</SelectItem>
-                        <SelectItem value="cy">Cyprus</SelectItem>
-                        <SelectItem value="cz">Czech Republic</SelectItem>
-                        <SelectItem value="ci">Côte d'Ivoire</SelectItem>
-                        <SelectItem value="dk">Denmark</SelectItem>
-                        <SelectItem value="dj">Djibouti</SelectItem>
-                        <SelectItem value="dm">Dominica</SelectItem>
-                        <SelectItem value="do">Dominican Republic</SelectItem>
-                        <SelectItem value="ec">Ecuador</SelectItem>
-                        <SelectItem value="eg">Egypt</SelectItem>
-                        <SelectItem value="sv">El Salvador</SelectItem>
-                        <SelectItem value="gq">Equatorial Guinea</SelectItem>
-                        <SelectItem value="er">Eritrea</SelectItem>
-                        <SelectItem value="ee">Estonia</SelectItem>
-                        <SelectItem value="sz">Eswatini (Swaziland)</SelectItem>
-                        <SelectItem value="et">Ethiopia</SelectItem>
-                        <SelectItem value="fk">Falkland Islands (Malvinas)</SelectItem>
-                        <SelectItem value="fo">Faroe Islands</SelectItem>
-                        <SelectItem value="fj">Fiji</SelectItem>
-                        <SelectItem value="fi">Finland</SelectItem>
-                        <SelectItem value="fr">France</SelectItem>
-                        <SelectItem value="gf">French Guiana</SelectItem>
-                        <SelectItem value="pf">French Polynesia</SelectItem>
-                        <SelectItem value="tf">French Southern Territories</SelectItem>
-                        <SelectItem value="ga">Gabon</SelectItem>
-                        <SelectItem value="gm">Gambia</SelectItem>
-                        <SelectItem value="ge">Georgia</SelectItem>
-                        <SelectItem value="de">Germany</SelectItem>
-                        <SelectItem value="gh">Ghana</SelectItem>
-                        <SelectItem value="gi">Gibraltar</SelectItem>
-                        <SelectItem value="gr">Greece</SelectItem>
-                        <SelectItem value="gl">Greenland</SelectItem>
-                        <SelectItem value="gd">Grenada</SelectItem>
-                        <SelectItem value="gp">Guadeloupe</SelectItem>
-                        <SelectItem value="gu">Guam</SelectItem>
-                        <SelectItem value="gt">Guatemala</SelectItem>
-                        <SelectItem value="gg">Guernsey</SelectItem>
-                        <SelectItem value="gn">Guinea</SelectItem>
-                        <SelectItem value="gw">Guinea-Bissau</SelectItem>
-                        <SelectItem value="gy">Guyana</SelectItem>
-                        <SelectItem value="ht">Haiti</SelectItem>
-                        <SelectItem value="hm">Heard Island and Mcdonald Islands</SelectItem>
-                        <SelectItem value="hn">Honduras</SelectItem>
-                        <SelectItem value="hk">Hong Kong</SelectItem>
-                        <SelectItem value="hu">Hungary</SelectItem>
-                        <SelectItem value="is">Iceland</SelectItem>
-                        <SelectItem value="in">India</SelectItem>
-                        <SelectItem value="id">Indonesia</SelectItem>
-                        <SelectItem value="ir">Iran</SelectItem>
-                        <SelectItem value="iq">Iraq</SelectItem>
-                        <SelectItem value="ie">Ireland</SelectItem>
-                        <SelectItem value="im">Isle of Man</SelectItem>
-                        <SelectItem value="il">Israel</SelectItem>
-                        <SelectItem value="it">Italy</SelectItem>
-                        <SelectItem value="jm">Jamaica</SelectItem>
-                        <SelectItem value="jp">Japan</SelectItem>
-                        <SelectItem value="je">Jersey</SelectItem>
-                        <SelectItem value="jo">Jordan</SelectItem>
-                        <SelectItem value="kz">Kazakhstan</SelectItem>
-                        <SelectItem value="ke">Kenya</SelectItem>
-                        <SelectItem value="ki">Kiribati</SelectItem>
-                        <SelectItem value="kp">Korea, North</SelectItem>
-                        <SelectItem value="kr">Korea, South</SelectItem>
-                        <SelectItem value="xk">Kosovo</SelectItem>
-                        <SelectItem value="kw">Kuwait</SelectItem>
-                        <SelectItem value="kg">Kyrgyzstan</SelectItem>
-                        <SelectItem value="la">Lao People's Democratic Republic</SelectItem>
-                        <SelectItem value="lv">Latvia</SelectItem>
-                        <SelectItem value="lb">Lebanon</SelectItem>
-                        <SelectItem value="ls">Lesotho</SelectItem>
-                        <SelectItem value="lr">Liberia</SelectItem>
-                        <SelectItem value="ly">Libya</SelectItem>
-                        <SelectItem value="li">Liechtenstein</SelectItem>
-                        <SelectItem value="lt">Lithuania</SelectItem>
-                        <SelectItem value="lu">Luxembourg</SelectItem>
-                        <SelectItem value="mo">Macao</SelectItem>
-                        <SelectItem value="mk">Macedonia North</SelectItem>
-                        <SelectItem value="mg">Madagascar</SelectItem>
-                        <SelectItem value="mw">Malawi</SelectItem>
-                        <SelectItem value="my">Malaysia</SelectItem>
-                        <SelectItem value="mv">Maldives</SelectItem>
-                        <SelectItem value="ml">Mali</SelectItem>
-                        <SelectItem value="mt">Malta</SelectItem>
-                        <SelectItem value="mh">Marshall Islands</SelectItem>
-                        <SelectItem value="mq">Martinique</SelectItem>
-                        <SelectItem value="mr">Mauritania</SelectItem>
-                        <SelectItem value="mu">Mauritius</SelectItem>
-                        <SelectItem value="yt">Mayotte</SelectItem>
-                        <SelectItem value="mx">Mexico</SelectItem>
-                        <SelectItem value="fm">Micronesia</SelectItem>
-                        <SelectItem value="md">Moldova</SelectItem>
-                        <SelectItem value="mc">Monaco</SelectItem>
-                        <SelectItem value="mn">Mongolia</SelectItem>
-                        <SelectItem value="me">Montenegro</SelectItem>
-                        <SelectItem value="ms">Montserrat</SelectItem>
-                        <SelectItem value="ma">Morocco</SelectItem>
-                        <SelectItem value="mz">Mozambique</SelectItem>
-                        <SelectItem value="mm">Myanmar (Burma)</SelectItem>
-                        <SelectItem value="na">Namibia</SelectItem>
-                        <SelectItem value="nr">Nauru</SelectItem>
-                        <SelectItem value="np">Nepal</SelectItem>
-                        <SelectItem value="nl">Netherlands</SelectItem>
-                        <SelectItem value="an">Netherlands Antilles</SelectItem>
-                        <SelectItem value="nc">New Caledonia</SelectItem>
-                        <SelectItem value="nz">New Zealand</SelectItem>
-                        <SelectItem value="ni">Nicaragua</SelectItem>
-                        <SelectItem value="ne">Niger</SelectItem>
-                        <SelectItem value="ng">Nigeria</SelectItem>
-                        <SelectItem value="nu">Niue</SelectItem>
-                        <SelectItem value="nf">Norfolk Island</SelectItem>
-                        <SelectItem value="mp">Northern Mariana Islands</SelectItem>
-                        <SelectItem value="no">Norway</SelectItem>
-                        <SelectItem value="om">Oman</SelectItem>
-                        <SelectItem value="pk">Pakistan</SelectItem>
-                        <SelectItem value="pw">Palau</SelectItem>
-                        <SelectItem value="ps">Palestine</SelectItem>
-                        <SelectItem value="pa">Panama</SelectItem>
-                        <SelectItem value="pg">Papua New Guinea</SelectItem>
-                        <SelectItem value="py">Paraguay</SelectItem>
-                        <SelectItem value="pe">Peru</SelectItem>
-                        <SelectItem value="ph">Philippines</SelectItem>
-                        <SelectItem value="pn">Pitcairn Islands</SelectItem>
-                        <SelectItem value="pl">Poland</SelectItem>
-                        <SelectItem value="pt">Portugal</SelectItem>
-                        <SelectItem value="pr">Puerto Rico</SelectItem>
-                        <SelectItem value="qa">Qatar</SelectItem>
-                        <SelectItem value="re">Reunion</SelectItem>
-                        <SelectItem value="ro">Romania</SelectItem>
-                        <SelectItem value="ru">Russian Federation</SelectItem>
-                        <SelectItem value="rw">Rwanda</SelectItem>
-                        <SelectItem value="bl">Saint Barthelemy</SelectItem>
-                        <SelectItem value="sh">Saint Helena</SelectItem>
-                        <SelectItem value="kn">Saint Kitts and Nevis</SelectItem>
-                        <SelectItem value="lc">Saint Lucia</SelectItem>
-                        <SelectItem value="mf">Saint Martin</SelectItem>
-                        <SelectItem value="pm">Saint Pierre and Miquelon</SelectItem>
-                        <SelectItem value="vc">Saint Vincent and the Grenadines</SelectItem>
-                        <SelectItem value="ws">Samoa</SelectItem>
-                        <SelectItem value="sm">San Marino</SelectItem>
-                        <SelectItem value="st">Sao Tome and Principe</SelectItem>
-                        <SelectItem value="sa">Saudi Arabia</SelectItem>
-                        <SelectItem value="sn">Senegal</SelectItem>
-                        <SelectItem value="rs">Serbia</SelectItem>
-                        <SelectItem value="cs">Serbia and Montenegro</SelectItem>
-                        <SelectItem value="sc">Seychelles</SelectItem>
-                        <SelectItem value="sl">Sierra Leone</SelectItem>
-                        <SelectItem value="sg">Singapore</SelectItem>
-                        <SelectItem value="sx">Sint Maarten</SelectItem>
-                        <SelectItem value="sk">Slovakia</SelectItem>
-                        <SelectItem value="si">Slovenia</SelectItem>
-                        <SelectItem value="sb">Solomon Islands</SelectItem>
-                        <SelectItem value="so">Somalia</SelectItem>
-                        <SelectItem value="za">South Africa</SelectItem>
-                        <SelectItem value="gs">South Georgia and the South Sandwich Islands</SelectItem>
-                        <SelectItem value="ss">South Sudan</SelectItem>
-                        <SelectItem value="es">Spain</SelectItem>
-                        <SelectItem value="lk">Sri Lanka</SelectItem>
-                        <SelectItem value="sd">Sudan</SelectItem>
-                        <SelectItem value="sr">Suriname</SelectItem>
-                        <SelectItem value="sj">Svalbard and Jan Mayen</SelectItem>
-                        <SelectItem value="se">Sweden</SelectItem>
-                        <SelectItem value="ch">Switzerland</SelectItem>
-                        <SelectItem value="sy">Syria</SelectItem>
-                        <SelectItem value="tw">Taiwan</SelectItem>
-                        <SelectItem value="tj">Tajikistan</SelectItem>
-                        <SelectItem value="tz">Tanzania</SelectItem>
-                        <SelectItem value="th">Thailand</SelectItem>
-                        <SelectItem value="tl">Timor-Leste</SelectItem>
-                        <SelectItem value="tg">Togo</SelectItem>
-                        <SelectItem value="tk">Tokelau</SelectItem>
-                        <SelectItem value="to">Tonga</SelectItem>
-                        <SelectItem value="tt">Trinidad and Tobago</SelectItem>
-                        <SelectItem value="tn">Tunisia</SelectItem>
-                        <SelectItem value="tr">Turkey (Türkiye)</SelectItem>
-                        <SelectItem value="tm">Turkmenistan</SelectItem>
-                        <SelectItem value="tc">Turks and Caicos Islands</SelectItem>
-                        <SelectItem value="tv">Tuvalu</SelectItem>
-                        <SelectItem value="um">U.S. Outlying Islands</SelectItem>
-                        <SelectItem value="ug">Uganda</SelectItem>
-                        <SelectItem value="ua">Ukraine</SelectItem>
-                        <SelectItem value="ae">United Arab Emirates</SelectItem>
-                        <SelectItem value="gb">United Kingdom</SelectItem>
-                        <SelectItem value="us">United States</SelectItem>
-                        <SelectItem value="uy">Uruguay</SelectItem>
-                        <SelectItem value="uz">Uzbekistan</SelectItem>
-                        <SelectItem value="vu">Vanuatu</SelectItem>
-                        <SelectItem value="va">Vatican City Holy See</SelectItem>
-                        <SelectItem value="ve">Venezuela</SelectItem>
-                        <SelectItem value="vn">Vietnam</SelectItem>
-                        <SelectItem value="vg">Virgin Islands, British</SelectItem>
-                        <SelectItem value="vi">Virgin Islands, U.S</SelectItem>
-                        <SelectItem value="wf">Wallis and Futuna</SelectItem>
-                        <SelectItem value="eh">Western Sahara</SelectItem>
-                        <SelectItem value="ye">Yemen</SelectItem>
-                        <SelectItem value="zm">Zambia</SelectItem>
-                        <SelectItem value="zw">Zimbabwe</SelectItem>
+                        {countries.map((c) => (
+                            <SelectItem value={c.code}>{c.name}</SelectItem>
+                        ))}
                     </SelectGroup>
                 </SelectContent>
             </Select>
@@ -308,16 +60,17 @@ const { email } = Astro.props;
 
 <script>
     import { db } from "@/firebase/config";
-    import { collection, doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+    import { collection, doc, setDoc } from "firebase/firestore";
     import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
     import { uploadTripCover } from "@/firebase/storageService";
+    import { showToast } from "@/utils/toast";
 
     const tripForm = document.querySelector("#trip-form") as HTMLFormElement;
-    const formTitle = document.getElementById("title") as HTMLInputElement;
-    const formDescription = document.getElementById("description") as HTMLTextAreaElement;
-    const formStartDate = document.getElementById("start-date") as HTMLInputElement;
-    const formEndDate = document.getElementById("end-date") as HTMLInputElement;
-    const formCountry = document.getElementById("country") as HTMLInputElement;
+    const formTitle = document.getElementById("trip-title") as HTMLInputElement;
+    const formDescription = document.getElementById("trip-description") as HTMLTextAreaElement;
+    const formStartDate = document.getElementById("trip-start-date") as HTMLInputElement;
+    const formEndDate = document.getElementById("trip-end-date") as HTMLInputElement;
+    const formCountry = document.getElementById("trip-country") as HTMLInputElement;
     const email = tripForm.dataset.message;
     const userDocRef = doc(db, "users", email ?? "unknown_user");
 
@@ -349,8 +102,9 @@ const { email } = Astro.props;
             savingsEl.textContent = `Optimizado WebP: ${(tripCoverCompressed.compressedSize / 1024).toFixed(0)} KB (-${tripCoverCompressed.savingsPercentage}%)`;
             coverPlaceholder.classList.add("hidden");
             previewWrapper.classList.remove("hidden");
-        } catch (err: any) {
-            alert(err.message || "Error al procesar la imagen.");
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Error al procesar la imagen.";
+            showToast(message, "error");
         }
     });
 
@@ -378,22 +132,18 @@ const { email } = Astro.props;
         }
 
         try {
-            // Get current tripCounter or initialize if not present
-            const userSnap = await getDoc(userDocRef);
-            let tripCounter = userSnap.data()?.tripCounter ?? 9999999999;
-            const tripId = `trip nº${tripCounter}`;
-            const tripDocRef = doc(collection(userDocRef, "trips"), tripId);
+            // Generate robust auto-ID for new trip document
+            const newTripDocRef = doc(collection(userDocRef, "trips"));
+            const tripId = newTripDocRef.id;
 
             let coverUrl = "";
-            let coverStoragePath = "";
 
             if (tripCoverCompressed) {
                 submitBtn.textContent = "Subiendo portada...";
-                // We'll upload cover
                 coverUrl = await uploadTripCover(email, tripId, tripCoverCompressed.file);
             }
 
-            await setDoc(tripDocRef, {
+            await setDoc(newTripDocRef, {
                 title: formTitle.value,
                 description: formDescription.value,
                 startDate: formStartDate.value,
@@ -402,14 +152,12 @@ const { email } = Astro.props;
                 countryCode: countryCode,
                 coverUrl: coverUrl || null,
                 createdAt: new Date().toISOString(),
-            }, { merge: true });
-
-            await updateDoc(userDocRef, { tripCounter: tripCounter - 1 });
+            });
 
             window.location.href = "/authenticated/trips";
         } catch (err) {
             console.error("Error creating trip:", err);
-            alert("No se pudo crear el viaje.");
+            showToast("No se pudo crear el viaje.", "error");
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.textContent = "Create Trip";
@@ -417,4 +165,3 @@ const { email } = Astro.props;
         }
     });
 </script>
-

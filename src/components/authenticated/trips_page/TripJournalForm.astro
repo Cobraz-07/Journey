@@ -14,8 +14,8 @@ const { email, tripID } = Astro.props;
             <DialogHeader class="mb-2">
                 <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white">Nuevo Registro en el Diario</DialogTitle>
             </DialogHeader>
-            <Input name="journal title" id="title" type="text" placeholder="Título del diario" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
-            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="description" placeholder="¿Qué aventuras viviste hoy?" />
+            <Input name="journal title" id="journal-title" type="text" placeholder="Título del diario" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="journal-description" placeholder="¿Qué aventuras viviste hoy?" />
             
             <p class="text-xs font-semibold text-[#6e826b]">Fecha del diario</p>
             <Input name="journal date" id="journal-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
@@ -57,11 +57,12 @@ const { email, tripID } = Astro.props;
     import { collection, doc, setDoc } from "firebase/firestore";
     import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
     import { uploadJournalImage } from "@/firebase/storageService";
+    import { showToast } from "@/utils/toast";
 
     const journalFormDialog = document.getElementById("journal-form-dialog") as HTMLDivElement;
     const journalForm = document.querySelector("#journal-form") as HTMLFormElement;
-    const formTitle = document.getElementById("title") as HTMLInputElement;
-    const formDescription = document.getElementById("description") as HTMLTextAreaElement;
+    const formTitle = document.getElementById("journal-title") as HTMLInputElement;
+    const formDescription = document.getElementById("journal-description") as HTMLTextAreaElement;
     const formDate = document.getElementById("journal-date") as HTMLInputElement;
     const email = journalForm.dataset.email;
     const tripID = journalFormDialog.dataset.tripId;
@@ -96,8 +97,9 @@ const { email, tripID } = Astro.props;
             savingsEl.textContent = `Optimizado WebP: ${(journalCompressedResult.compressedSize / 1024).toFixed(0)} KB (-${journalCompressedResult.savingsPercentage}%)`;
             imagePlaceholder.classList.add("hidden");
             previewWrapper.classList.remove("hidden");
-        } catch (err: any) {
-            alert(err.message || "Error al procesar la imagen.");
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Error al procesar la imagen.";
+            showToast(message, "error");
         }
     });
 
@@ -123,8 +125,11 @@ const { email, tripID } = Astro.props;
             const journalId = newJournalDocRef.id;
 
             let imageUrl = "";
+            let imageStoragePath = "";
             if (journalCompressedResult) {
-                imageUrl = await uploadJournalImage(email, tripID, journalId, journalCompressedResult.file);
+                const result = await uploadJournalImage(email, tripID, journalId, journalCompressedResult.file);
+                imageUrl = result.url;
+                imageStoragePath = result.storagePath;
             }
 
             await setDoc(newJournalDocRef, {
@@ -132,16 +137,16 @@ const { email, tripID } = Astro.props;
                 description: formDescription.value,
                 date: formDate.value,
                 imageUrl: imageUrl || null,
+                imageStoragePath: imageStoragePath || null,
                 createdAt: new Date().toISOString(),
             });
 
             window.location.href = `/authenticated/trips/${tripID}`;
         } catch (err) {
             console.error("Error creating journal:", err);
-            alert("No se pudo crear la entrada del diario.");
+            showToast("No se pudo crear la entrada del diario.", "error");
             submitBtn.disabled = false;
             progressWrapper.classList.add("hidden");
         }
     });
 </script>
-

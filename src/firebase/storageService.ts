@@ -7,6 +7,7 @@ import {
     deleteDoc,
     getDocs,
     getDoc,
+    writeBatch,
 } from "firebase/firestore";
 
 export interface TripPhoto {
@@ -100,6 +101,28 @@ export async function deleteTripPhoto(
 }
 
 /**
+ * Deletes a journal entry and its attached image from Storage if present.
+ */
+export async function deleteJournalEntry(
+    email: string,
+    tripId: string,
+    journalId: string,
+    storagePath?: string
+): Promise<void> {
+    const journalDocRef = doc(db, "users", email, "trips", tripId, "journal", journalId);
+    await deleteDoc(journalDocRef);
+
+    if (storagePath) {
+        try {
+            const storageRef = ref(projectStorage, storagePath);
+            await deleteObject(storageRef);
+        } catch (storageError) {
+            console.warn("Could not delete journal image from Storage:", storageError);
+        }
+    }
+}
+
+/**
  * Recursively deletes all files in a Firebase Storage directory.
  */
 export async function deleteStorageFolder(folderPath: string): Promise<void> {
@@ -122,33 +145,38 @@ export async function deleteStorageFolder(folderPath: string): Promise<void> {
 }
 
 /**
- * Deletes a trip and all its photos, journals and files from Firestore and Storage.
+ * Deletes a trip and all its photos, journals and files from Firestore and Storage using atomic batch writes.
  */
 export async function deleteEntireTrip(email: string, tripId: string): Promise<void> {
-    // 1. Delete all photo documents in Firestore
+    const batch = writeBatch(db);
+
+    // 1. Queue all photo documents in Firestore for batch deletion
     try {
         const photosColRef = collection(db, "users", email, "trips", tripId, "photos");
         const photosSnap = await getDocs(photosColRef);
-        await Promise.all(photosSnap.docs.map((docSnap) => deleteDoc(docSnap.ref)));
+        photosSnap.docs.forEach((docSnap) => batch.delete(docSnap.ref));
     } catch (err) {
-        console.warn("Error deleting trip photos docs:", err);
+        console.warn("Error queuing trip photos docs for batch delete:", err);
     }
 
-    // 2. Delete all journal documents in Firestore
+    // 2. Queue all journal documents in Firestore for batch deletion
     try {
         const journalColRef = collection(db, "users", email, "trips", tripId, "journal");
         const journalSnap = await getDocs(journalColRef);
-        await Promise.all(journalSnap.docs.map((docSnap) => deleteDoc(docSnap.ref)));
+        journalSnap.docs.forEach((docSnap) => batch.delete(docSnap.ref));
     } catch (err) {
-        console.warn("Error deleting trip journal docs:", err);
+        console.warn("Error queuing trip journal docs for batch delete:", err);
     }
 
-    // 3. Delete the trip folder from Firebase Storage
-    await deleteStorageFolder(`users/${email}/trips/${tripId}`);
-
-    // 4. Delete the trip document itself in Firestore
+    // 3. Queue the trip document itself in Firestore
     const tripDocRef = doc(db, "users", email, "trips", tripId);
-    await deleteDoc(tripDocRef);
+    batch.delete(tripDocRef);
+
+    // 4. Commit all Firestore document deletions atomically in a single request
+    await batch.commit();
+
+    // 5. Delete the trip folder from Firebase Storage (covers photos, covers, journal images)
+    await deleteStorageFolder(`users/${email}/trips/${tripId}`);
 }
 
 /**
@@ -204,18 +232,20 @@ export async function uploadTripCover(
 
 /**
  * Uploads an image attached to a journal entry.
+ * Returns both the download URL and the storage path for future cleanup.
  */
 export async function uploadJournalImage(
     email: string,
     tripId: string,
     journalId: string,
     file: File
-): Promise<string> {
+): Promise<{ url: string; storagePath: string }> {
     const storagePath = `users/${email}/trips/${tripId}/journals/${journalId}_${Date.now()}.webp`;
     const storageRef = ref(projectStorage, storagePath);
 
     const snapshot = await uploadBytes(storageRef, file, {
         contentType: "image/webp",
     });
-    return await getDownloadURL(snapshot.ref);
+    const url = await getDownloadURL(snapshot.ref);
+    return { url, storagePath };
 }

@@ -7,27 +7,27 @@ import { Button } from "@/components/starwind/button";
 <section class="flex flex-col pt-5 pl-4 pr-4 gap-6">
     <h2 class="text-[22px] font-extrabold">Create your account</h2>
     <form class="flex flex-col" id="create-account">
-        <Label class="mb-2 font-medium" for="email">Email</Label>
-        <Input name="email" id="email" type="email" placeholder="Enter your email" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
-        <Label class="mb-2 font-medium" for="password">Password</Label>
+        <Label class="mb-2 font-medium" for="register-email">Email</Label>
+        <Input name="email" id="register-email" type="email" placeholder="Enter your email" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
+        <Label class="mb-2 font-medium" for="register-password">Password</Label>
         <div class="relative flex items-center mb-6">
-            <Input name="password" id="password" type="password" placeholder="Enter your password" class="rounded-[12px] h-14 p-4 pr-12 text-[16px] text-[#63875E] bg-[#EBF0EB] w-full" />
+            <Input name="password" id="register-password" type="password" placeholder="Enter your password" class="rounded-[12px] h-14 p-4 pr-12 text-[16px] text-[#63875E] bg-[#EBF0EB] w-full" />
             <button
                 type="button"
-                id="toggle-password"
+                id="register-toggle-password"
                 class="absolute right-4 text-[#63875E] hover:text-[#4a6546] transition-colors focus:outline-none cursor-pointer flex items-center justify-center p-1"
                 aria-label="Toggle password visibility"
             >
-                <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg id="register-eye-icon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                <svg id="eye-off-icon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg id="register-eye-off-icon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                 </svg>
             </button>
         </div>
-        <Button variant="Form">Sign Up</Button>
+        <Button type="submit" variant="Form">Sign Up</Button>
     </form>
 </section>
 
@@ -35,13 +35,14 @@ import { Button } from "@/components/starwind/button";
     import { projectAuth, db } from "@/firebase/config";
     import { createUserWithEmailAndPassword } from "firebase/auth";
     import { doc, setDoc } from "firebase/firestore";
+    import { showToast } from "@/utils/toast";
 
     const createForm = document.querySelector("#create-account") as HTMLFormElement;
-    const formEmail = document.getElementById("email") as HTMLInputElement;
-    const formPassword = document.getElementById("password") as HTMLInputElement;
-    const togglePasswordBtn = document.getElementById("toggle-password");
-    const eyeIcon = document.getElementById("eye-icon");
-    const eyeOffIcon = document.getElementById("eye-off-icon");
+    const formEmail = document.getElementById("register-email") as HTMLInputElement;
+    const formPassword = document.getElementById("register-password") as HTMLInputElement;
+    const togglePasswordBtn = document.getElementById("register-toggle-password");
+    const eyeIcon = document.getElementById("register-eye-icon");
+    const eyeOffIcon = document.getElementById("register-eye-off-icon");
 
     togglePasswordBtn?.addEventListener("click", () => {
         const isPassword = formPassword.type === "password";
@@ -67,18 +68,23 @@ import { Button } from "@/components/starwind/button";
 
             // Send ID token to server to create a session cookie
             const idToken = await userCredential.user.getIdToken();
-            await fetch("/api/session", {
+            const res = await fetch("/api/session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ idToken }),
             });
 
+            if (!res.ok) {
+                throw new Error("Failed to create session");
+            }
+
             window.location.href = "/authenticated/trips";
-        } catch (error: any) {
-            if (error.code === "auth/email-already-in-use") {
-                alert("Email is already in use.");
+        } catch (error: unknown) {
+            const firebaseError = error as { code?: string };
+            if (firebaseError.code === "auth/email-already-in-use") {
+                showToast("Email is already in use.", "error");
             } else {
-                alert("An error occurred. Please try again.");
+                showToast("An error occurred. Please try again.", "error");
             }
         }
     });

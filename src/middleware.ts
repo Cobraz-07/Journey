@@ -4,8 +4,8 @@ import { getAdminAuth } from "./firebase/server";
 export const onRequest = defineMiddleware(async (context, next) => {
     const { pathname } = context.url;
 
-    // Skip auth verification for API routes
-    if (pathname.startsWith("/api/")) {
+    // Only skip auth for the session endpoint (it handles its own token verification)
+    if (pathname === "/api/session") {
         return next();
     }
 
