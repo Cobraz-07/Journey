@@ -6,6 +6,7 @@ import {
     setDoc,
     deleteDoc,
     getDocs,
+    getDoc,
 } from "firebase/firestore";
 
 export interface TripPhoto {
@@ -151,13 +152,26 @@ export async function deleteEntireTrip(email: string, tripId: string): Promise<v
 }
 
 /**
- * Uploads a trip cover photo and updates the trip's document in Firestore.
+ * Uploads a trip cover photo, deletes any previous cover from Storage, and updates the trip's document in Firestore.
  */
 export async function uploadTripCover(
     email: string,
     tripId: string,
     file: File
 ): Promise<string> {
+    const tripDocRef = doc(db, "users", email, "trips", tripId);
+
+    // Retrieve old coverStoragePath if it exists to delete it from Storage
+    let oldCoverStoragePath: string | undefined;
+    try {
+        const tripSnap = await getDoc(tripDocRef);
+        if (tripSnap.exists()) {
+            oldCoverStoragePath = tripSnap.data()?.coverStoragePath;
+        }
+    } catch (e) {
+        console.warn("Could not check existing trip cover:", e);
+    }
+
     const storagePath = `users/${email}/trips/${tripId}/cover_${Date.now()}.webp`;
     const storageRef = ref(projectStorage, storagePath);
 
@@ -166,7 +180,6 @@ export async function uploadTripCover(
     });
     const coverUrl = await getDownloadURL(snapshot.ref);
 
-    const tripDocRef = doc(db, "users", email, "trips", tripId);
     await setDoc(
         tripDocRef,
         {
@@ -175,6 +188,16 @@ export async function uploadTripCover(
         },
         { merge: true }
     );
+
+    // Delete previous cover from Storage if there was one
+    if (oldCoverStoragePath && oldCoverStoragePath !== storagePath) {
+        try {
+            const oldStorageRef = ref(projectStorage, oldCoverStoragePath);
+            await deleteObject(oldStorageRef);
+        } catch (delErr) {
+            console.warn("Could not delete old cover from Storage:", delErr);
+        }
+    }
 
     return coverUrl;
 }
