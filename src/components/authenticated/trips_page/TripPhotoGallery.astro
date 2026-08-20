@@ -1,5 +1,6 @@
 ---
 import { Skeleton } from "@/components/starwind/skeleton";
+import { DialogTrigger } from "@/components/starwind/dialog";
 import { Icon } from "astro-icon/components";
 import TripPhotoUploadModal from "./TripPhotoUploadModal.astro";
 import TripPhotoLightbox from "./TripPhotoLightbox.astro";
@@ -19,13 +20,13 @@ const { email, tripID } = Astro.props;
             <h3 class="text-xl font-bold text-[var(--text-color)]">Fotos del Viaje</h3>
             <span id="gallery-badge-count" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#ebf0eb] text-[#63875e] hidden">0</span>
         </div>
-        <button
-            data-dialog="trip-photo-upload-dialog"
-            class="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-[#63875e] text-white hover:bg-[#52704e] active:scale-95 transition-all shadow-sm"
+        <DialogTrigger
+            for="trip-photo-upload-dialog"
+            class="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-[#63875e] text-white hover:bg-[#52704e] active:scale-95 transition-all shadow-sm cursor-pointer"
         >
             <Icon name="image" class="w-4 h-4" />
             <span>Añadir Fotos</span>
-        </button>
+        </DialogTrigger>
     </div>
 
     <!-- Gallery Container -->
@@ -73,8 +74,16 @@ const { email, tripID } = Astro.props;
                         </svg>
                     </div>
                     <p class="font-semibold text-sm text-[var(--text-color)]">Aún no hay fotos en este viaje</p>
-                    <p class="text-xs text-[var(--lt-text-color)]">Guarda tus mejores momentos subiendo fotos individuales o en lote.</p>
+                    <p class="text-xs text-[var(--lt-text-color)] mb-2">Guarda tus mejores momentos subiendo fotos individuales o en lote.</p>
+                    <button id="empty-state-upload-btn" type="button" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#63875e] text-white hover:bg-[#52704e] transition-all shadow-xs cursor-pointer">
+                        Subir primera foto
+                    </button>
                 `;
+
+                document.getElementById("empty-state-upload-btn")?.addEventListener("click", () => {
+                    const trigger = document.querySelector('.starwind-dialog-trigger[data-dialog-for="trip-photo-upload-dialog"]') as HTMLButtonElement;
+                    trigger?.click();
+                });
                 return;
             }
 

@@ -110,10 +110,14 @@ export async function uploadTripCover(
     const coverUrl = await getDownloadURL(snapshot.ref);
 
     const tripDocRef = doc(db, "users", email, "trips", tripId);
-    await updateDoc(tripDocRef, {
-        coverUrl,
-        coverStoragePath: storagePath,
-    });
+    await setDoc(
+        tripDocRef,
+        {
+            coverUrl,
+            coverStoragePath: storagePath,
+        },
+        { merge: true }
+    );
 
     return coverUrl;
 }
