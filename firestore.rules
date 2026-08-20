@@ -18,13 +18,18 @@ service cloud.firestore {
     // Trips subcollection
     match /users/{email}/trips/{tripId} {
       allow read: if isOwner(email);
-      allow write: if isOwner(email)
-                   && request.resource.data.keys().hasOnly([
-                        'title', 'description', 'startDate', 'endDate',
-                        'country', 'countryCode', 'coverUrl', 'coverStoragePath', 'createdAt'
-                      ])
-                   && request.resource.data.title is string
-                   && request.resource.data.title.size() <= 200;
+      allow create: if isOwner(email)
+                    && request.resource.data.keys().hasOnly([
+                         'title', 'description', 'startDate', 'endDate',
+                         'country', 'countryCode', 'coverUrl', 'coverStoragePath', 'createdAt'
+                       ])
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() <= 200;
+      allow update: if isOwner(email)
+                    && request.resource.data.keys().hasOnly([
+                         'title', 'description', 'startDate', 'endDate',
+                         'country', 'countryCode', 'coverUrl', 'coverStoragePath', 'createdAt'
+                       ]);
       allow delete: if isOwner(email);
     }
 
@@ -43,13 +48,18 @@ service cloud.firestore {
     // Journal subcollection under trips
     match /users/{email}/trips/{tripId}/journal/{journalId} {
       allow read: if isOwner(email);
-      allow write: if isOwner(email)
-                   && request.resource.data.keys().hasOnly([
-                        'title', 'description', 'date', 'imageUrl',
-                        'imageStoragePath', 'createdAt'
-                      ])
-                   && request.resource.data.title is string
-                   && request.resource.data.title.size() <= 200;
+      allow create: if isOwner(email)
+                    && request.resource.data.keys().hasOnly([
+                         'title', 'description', 'date', 'imageUrl',
+                         'imageStoragePath', 'createdAt'
+                       ])
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() <= 200;
+      allow update: if isOwner(email)
+                    && request.resource.data.keys().hasOnly([
+                         'title', 'description', 'date', 'imageUrl',
+                         'imageStoragePath', 'createdAt'
+                       ]);
       allow delete: if isOwner(email);
     }
 

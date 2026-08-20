@@ -137,10 +137,13 @@ const { email } = Astro.props;
             const tripId = newTripDocRef.id;
 
             let coverUrl = "";
+            let coverStoragePath = "";
 
             if (tripCoverCompressed) {
                 submitBtn.textContent = "Subiendo portada...";
-                coverUrl = await uploadTripCover(email, tripId, tripCoverCompressed.file);
+                const coverResult = await uploadTripCover(email, tripId, tripCoverCompressed.file);
+                coverUrl = coverResult.url;
+                coverStoragePath = coverResult.storagePath;
             }
 
             await setDoc(newTripDocRef, {
@@ -151,6 +154,7 @@ const { email } = Astro.props;
                 country: formCountry.textContent,
                 countryCode: countryCode,
                 coverUrl: coverUrl || null,
+                coverStoragePath: coverStoragePath || null,
                 createdAt: new Date().toISOString(),
             });
 

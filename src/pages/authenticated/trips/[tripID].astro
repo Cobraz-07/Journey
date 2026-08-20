@@ -101,6 +101,8 @@ import { formatDate } from "@/utils/formatDate";
     import { compressImageToWebP } from "@/utils/imageCompressor";
     import { uploadTripCover, deleteEntireTrip } from "@/firebase/storageService";
     import { showToast } from "@/utils/toast";
+    import { db } from "@/firebase/config";
+    import { doc, getDoc, setDoc } from "firebase/firestore";
 
     const deleteBtn = document.getElementById("delete-trip-btn");
     const email = deleteBtn?.dataset.email;
@@ -141,10 +143,19 @@ import { formatDate } from "@/utils/formatDate";
             const compressed = await compressImageToWebP(rawFile, { maxWidth: 2000, maxHeight: 1200, quality: 0.88 });
             
             if (changeCoverText) changeCoverText.textContent = "Subiendo...";
-            const newCoverUrl = await uploadTripCover(email, tripID, compressed.file);
+            
+            const tripDocRef = doc(db, "users", email, "trips", tripID);
+            const tripSnap = await getDoc(tripDocRef);
+            const oldCoverStoragePath = tripSnap.exists() ? tripSnap.data()?.coverStoragePath : undefined;
+
+            const coverResult = await uploadTripCover(email, tripID, compressed.file, oldCoverStoragePath);
+            await setDoc(tripDocRef, {
+                coverUrl: coverResult.url,
+                coverStoragePath: coverResult.storagePath,
+            }, { merge: true });
 
             // Update UI instantly
-            coverImg.src = newCoverUrl;
+            coverImg.src = coverResult.url;
             coverImg.classList.remove("hidden");
             coverOverlay.classList.remove("hidden");
 
