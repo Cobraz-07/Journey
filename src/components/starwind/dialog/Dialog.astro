@@ -151,8 +151,18 @@ const { class: className, ...rest } = Astro.props;
         });
       });
 
-      // Close on click outside
+      // Close on click outside (backdrop click)
       this.dialog.addEventListener("click", (e) => {
+        // If the click happened on an element inside the dialog, ignore
+        if (e.target !== this.dialog) {
+          return;
+        }
+
+        // Ignore synthetic events (e.g. Android file picker return with 0,0 coordinates)
+        if (!e.isTrusted || (e.clientX === 0 && e.clientY === 0)) {
+          return;
+        }
+
         const dialogDimensions = this.dialog.getBoundingClientRect();
         const clickedInDialog =
           e.clientX >= dialogDimensions.left &&

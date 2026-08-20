@@ -176,7 +176,12 @@ const { email, tripID } = Astro.props;
     const batchProgressPercent = document.getElementById("batch-progress-percent") as HTMLElement;
     const batchProgressLabel = document.getElementById("batch-progress-label") as HTMLElement;
 
-    batchDropzone?.addEventListener("click", () => batchFileInput?.click());
+    batchFileInput?.addEventListener("click", (e) => e.stopPropagation());
+
+    batchDropzone?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        batchFileInput?.click();
+    });
 
     batchDropzone?.addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -306,8 +311,11 @@ const { email, tripID } = Astro.props;
     const singleCancelBtn = document.getElementById("single-cancel-btn") as HTMLButtonElement;
     const singleProgressWrapper = document.getElementById("single-progress-wrapper") as HTMLDivElement;
 
+    singleFileInput?.addEventListener("click", (e) => e.stopPropagation());
+
     singleDropzone?.addEventListener("click", (e) => {
         if (e.target === singleRemoveFileBtn) return;
+        e.stopPropagation();
         singleFileInput?.click();
     });
 

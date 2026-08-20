@@ -80,8 +80,11 @@ const { email, tripID } = Astro.props;
 
     let journalCompressedResult: CompressedImageResult | null = null;
 
+    imageInput?.addEventListener("click", (e) => e.stopPropagation());
+
     imageDropzone?.addEventListener("click", (e) => {
         if (e.target === removeImageBtn) return;
+        e.stopPropagation();
         imageInput?.click();
     });
 

@@ -333,8 +333,11 @@ const { email } = Astro.props;
     let tripCoverCompressed: CompressedImageResult | null = null;
     let countryCode = "";
 
+    coverInput?.addEventListener("click", (e) => e.stopPropagation());
+
     coverDropzone?.addEventListener("click", (e) => {
         if (e.target === removeCoverBtn) return;
+        e.stopPropagation();
         coverInput?.click();
     });
 
