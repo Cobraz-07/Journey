@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/starwind/skeleton";
 </section>
 
 <script>
-    import { db } from "@/firebase/config";
+    import { db, projectAuth } from "@/firebase/config";
     import { collection, getDocs, doc } from "firebase/firestore";
     import { escapeHtml } from "@/utils/escapeHtml";
     import { formatDate } from "@/utils/formatDate";
@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/starwind/skeleton";
 
     async function renderTrips() {
         try {
+            await projectAuth.authStateReady();
             const tripsSnapshot = await getDocs(tripsCollectionRef);
             if (tripsSnapshot.empty) {
                 tripList.innerHTML = `

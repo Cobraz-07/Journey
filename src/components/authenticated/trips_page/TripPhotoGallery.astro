@@ -49,6 +49,7 @@ const { uid, tripID } = Astro.props;
 </section>
 
 <script>
+    import { projectAuth } from "@/firebase/config";
     import { getTripPhotos, deleteTripPhoto, type TripPhoto } from "@/firebase/storageService";
     import { escapeHtml } from "@/utils/escapeHtml";
     import { showToast } from "@/utils/toast";
@@ -64,6 +65,7 @@ const { uid, tripID } = Astro.props;
         if (!uid || !tripId) return;
 
         try {
+            await projectAuth.authStateReady();
             loadedPhotos = await getTripPhotos(uid, tripId);
 
             if (loadedPhotos.length === 0) {

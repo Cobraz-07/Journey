@@ -13,7 +13,7 @@ const { tripID, uid } = Astro.props;
 </div>
 
 <script>
-    import { db } from "@/firebase/config";
+    import { db, projectAuth } from "@/firebase/config";
     import { collection, getDocs, doc } from "firebase/firestore";
     import { deleteJournalEntry } from "@/firebase/storageService";
     import { escapeHtml } from "@/utils/escapeHtml";
@@ -49,6 +49,7 @@ const { tripID, uid } = Astro.props;
 
     async function renderJournals() {
         try {
+            await projectAuth.authStateReady();
             const journalsSnapshot = await getDocs(journalCollectionRef);
             if (journalsSnapshot.empty) {
                 journalList.innerHTML = `
