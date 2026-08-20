@@ -1,0 +1,156 @@
+---
+import { Skeleton } from "@/components/starwind/skeleton";
+import { Icon } from "astro-icon/components";
+import TripPhotoUploadModal from "./TripPhotoUploadModal.astro";
+import TripPhotoLightbox from "./TripPhotoLightbox.astro";
+
+interface Props {
+    email: string;
+    tripID: string;
+}
+
+const { email, tripID } = Astro.props;
+---
+
+<section class="flex flex-col mx-6 my-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-4">
+        <div class="flex items-center gap-2">
+            <h3 class="text-xl font-bold text-[var(--text-color)]">Fotos del Viaje</h3>
+            <span id="gallery-badge-count" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#ebf0eb] text-[#63875e] hidden">0</span>
+        </div>
+        <button
+            data-dialog="trip-photo-upload-dialog"
+            class="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-[#63875e] text-white hover:bg-[#52704e] active:scale-95 transition-all shadow-sm"
+        >
+            <Icon name="image" class="w-4 h-4" />
+            <span>Añadir Fotos</span>
+        </button>
+    </div>
+
+    <!-- Gallery Container -->
+    <div
+        id="trip-photo-gallery"
+        data-email={email}
+        data-trip-id={tripID}
+        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 min-h-[140px]"
+    >
+        <!-- Skeletons on loading -->
+        <Skeleton class="h-36 w-full rounded-xl" />
+        <Skeleton class="h-36 w-full rounded-xl" />
+        <Skeleton class="h-36 w-full rounded-xl" />
+        <Skeleton class="h-36 w-full rounded-xl" />
+    </div>
+
+    <!-- Modals -->
+    <TripPhotoUploadModal email={email} tripID={tripID} />
+    <TripPhotoLightbox />
+</section>
+
+<script>
+    import { getTripPhotos, deleteTripPhoto, type TripPhoto } from "@/firebase/storageService";
+
+    const galleryEl = document.getElementById("trip-photo-gallery") as HTMLDivElement;
+    const badgeCountEl = document.getElementById("gallery-badge-count") as HTMLElement;
+    const email = galleryEl?.dataset.email;
+    const tripId = galleryEl?.dataset.tripId;
+
+    let loadedPhotos: TripPhoto[] = [];
+
+    async function loadGallery() {
+        if (!email || !tripId) return;
+
+        try {
+            loadedPhotos = await getTripPhotos(email, tripId);
+
+            if (loadedPhotos.length === 0) {
+                badgeCountEl.classList.add("hidden");
+                galleryEl.className = "flex flex-col items-center justify-center p-8 border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl bg-[#fafcfa] dark:bg-[#121712]/40 text-center gap-2";
+                galleryEl.innerHTML = `
+                    <div class="w-12 h-12 rounded-full bg-[#ebf0eb] dark:bg-neutral-800 flex items-center justify-center text-[#63875e] mb-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <p class="font-semibold text-sm text-[var(--text-color)]">Aún no hay fotos en este viaje</p>
+                    <p class="text-xs text-[var(--lt-text-color)]">Guarda tus mejores momentos subiendo fotos individuales o en lote.</p>
+                `;
+                return;
+            }
+
+            badgeCountEl.textContent = `${loadedPhotos.length}`;
+            badgeCountEl.classList.remove("hidden");
+            galleryEl.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3";
+            galleryEl.innerHTML = "";
+
+            loadedPhotos.forEach((photo, idx) => {
+                const card = document.createElement("div");
+                card.className = "group relative rounded-xl overflow-hidden aspect-square bg-neutral-100 dark:bg-neutral-800 shadow-sm hover:shadow-md cursor-pointer border border-neutral-200/60 dark:border-neutral-800 transition-all hover:scale-[1.02]";
+
+                card.innerHTML = `
+                    <img 
+                        src="${photo.url}" 
+                        alt="${photo.caption || "Trip Photo"}" 
+                        loading="lazy" 
+                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2.5">
+                        <div class="flex justify-end">
+                            <button data-delete-id="${photo.id}" data-storage-path="${photo.storagePath}" class="p-1.5 rounded-full bg-black/60 hover:bg-red-600 text-white transition-colors" title="Eliminar foto">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        ${photo.caption ? `<p class="text-white text-xs font-medium truncate drop-shadow">${photo.caption}</p>` : ""}
+                    </div>
+                `;
+
+                // Click opens lightbox
+                card.addEventListener("click", (e) => {
+                    const target = e.target as HTMLElement;
+                    const deleteBtn = target.closest("[data-delete-id]");
+                    if (deleteBtn) {
+                        e.stopPropagation();
+                        handleDelete(photo);
+                        return;
+                    }
+
+                    window.dispatchEvent(
+                        new CustomEvent("open-trip-lightbox", {
+                            detail: {
+                                photos: loadedPhotos,
+                                startIndex: idx,
+                                email,
+                                tripId,
+                            },
+                        })
+                    );
+                });
+
+                galleryEl.appendChild(card);
+            });
+        } catch (err) {
+            console.error("Error loading trip photos:", err);
+        }
+    }
+
+    async function handleDelete(photo: TripPhoto) {
+        if (!email || !tripId) return;
+        if (confirm("¿Deseas eliminar esta foto?")) {
+            try {
+                await deleteTripPhoto(email, tripId, photo.id, photo.storagePath);
+                loadGallery();
+            } catch (err) {
+                console.error("Error deleting photo:", err);
+                alert("Error al eliminar la foto.");
+            }
+        }
+    }
+
+    // Initial load
+    loadGallery();
+
+    // Listen for updates
+    window.addEventListener("trip-photos:updated", loadGallery);
+</script>

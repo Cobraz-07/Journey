@@ -1,0 +1,374 @@
+---
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/starwind/dialog";
+import { Button } from "@/components/starwind/button";
+import { Input } from "@/components/starwind/input";
+import { Icon } from "astro-icon/components";
+
+interface Props {
+    email: string;
+    tripID: string;
+}
+
+const { email, tripID } = Astro.props;
+---
+
+<Dialog id="trip-photo-upload-dialog" data-email={email} data-trip-id={tripID}>
+    <DialogContent class="w-[94vw] max-w-xl rounded-2xl p-6 bg-[#f7f9f7] dark:bg-[#151c15] border border-neutral-200 dark:border-neutral-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader class="mb-4">
+            <DialogTitle class="text-xl font-bold text-[#121712] dark:text-neutral-100 flex items-center gap-2">
+                <Icon name="image" class="w-6 h-6 text-[#63875e]" />
+                Subir Fotos al Viaje
+            </DialogTitle>
+        </DialogHeader>
+
+        <!-- Mode Selector Tabs -->
+        <div class="flex p-1 mb-5 bg-[#ebf0eb] dark:bg-neutral-800 rounded-xl">
+            <button id="tab-batch-mode" type="button" class="flex-1 py-2 px-3 text-sm font-semibold rounded-lg transition-all bg-white dark:bg-neutral-700 text-[#121712] dark:text-white shadow-sm flex items-center justify-center gap-1.5">
+                <span>⚡ Subida Múltiple</span>
+            </button>
+            <button id="tab-single-mode" type="button" class="flex-1 py-2 px-3 text-sm font-semibold rounded-lg transition-all text-[#6e826b] dark:text-neutral-400 hover:text-black dark:hover:text-white flex items-center justify-center gap-1.5">
+                <span>📝 Foto con Detalle</span>
+            </button>
+        </div>
+
+        <!-- BATCH UPLOAD SECTION -->
+        <div id="batch-section" class="flex flex-col gap-4">
+            <!-- Dropzone -->
+            <div id="batch-dropzone" class="border-2 border-dashed border-[#aadba3] dark:border-[#63875e] hover:border-[#63875e] bg-white/60 dark:bg-neutral-900/60 rounded-xl p-6 text-center cursor-pointer transition-all hover:bg-white dark:hover:bg-neutral-900 flex flex-col items-center justify-center gap-2">
+                <input id="batch-file-input" type="file" multiple accept="image/*" class="hidden" />
+                <div class="w-12 h-12 rounded-full bg-[#ebf0eb] dark:bg-neutral-800 flex items-center justify-center text-[#63875e]">
+                    <Icon name="image" class="w-6 h-6" />
+                </div>
+                <p class="font-semibold text-sm text-[#121712] dark:text-neutral-200">
+                    Arrastra varias fotos aquí o <span class="text-[#63875e] underline">explora tus archivos</span>
+                </p>
+                <p class="text-xs text-[#6e826b] dark:text-neutral-400">
+                    JPG, PNG, WebP (Se comprimirán automáticamente a WebP)
+                </p>
+            </div>
+
+            <!-- Selected Files List -->
+            <div id="batch-files-preview-container" class="hidden flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <span id="batch-files-count" class="text-xs font-bold text-[#6e826b] dark:text-neutral-400 uppercase tracking-wider"></span>
+                    <button id="batch-clear-btn" type="button" class="text-xs text-red-500 hover:underline">Limpiar selección</button>
+                </div>
+                <div id="batch-files-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1"></div>
+            </div>
+
+            <!-- Upload Progress -->
+            <div id="batch-progress-wrapper" class="hidden flex-col gap-2">
+                <div class="flex justify-between text-xs font-semibold text-[#6e826b] dark:text-neutral-300">
+                    <span id="batch-progress-label">Comprimiendo y subiendo...</span>
+                    <span id="batch-progress-percent">0%</span>
+                </div>
+                <div class="w-full bg-[#ebf0eb] dark:bg-neutral-800 h-2.5 rounded-full overflow-hidden">
+                    <div id="batch-progress-bar" class="bg-[#63875e] h-full w-0 transition-all duration-300 rounded-full"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-2">
+                <Button id="batch-cancel-btn" type="button" variant="outline" class="rounded-xl">Cancelar</Button>
+                <Button id="batch-submit-btn" type="button" variant="Form" class="rounded-xl flex items-center gap-2" disabled>
+                    <span>Subir Fotos</span>
+                </Button>
+            </div>
+        </div>
+
+        <!-- SINGLE PHOTO SECTION (WITH CAPTION) -->
+        <div id="single-section" class="hidden flex-col gap-4">
+            <!-- Single Dropzone / Preview -->
+            <div id="single-dropzone" class="border-2 border-dashed border-[#aadba3] dark:border-[#63875e] hover:border-[#63875e] bg-white/60 dark:bg-neutral-900/60 rounded-xl p-5 text-center cursor-pointer transition-all hover:bg-white dark:hover:bg-neutral-900 flex flex-col items-center justify-center gap-2 relative min-h-[160px]">
+                <input id="single-file-input" type="file" accept="image/*" class="hidden" />
+                
+                <div id="single-dropzone-placeholder" class="flex flex-col items-center gap-2">
+                    <div class="w-12 h-12 rounded-full bg-[#ebf0eb] dark:bg-neutral-800 flex items-center justify-center text-[#63875e]">
+                        <Icon name="image" class="w-6 h-6" />
+                    </div>
+                    <p class="font-semibold text-sm text-[#121712] dark:text-neutral-200">
+                        Selecciona una foto
+                    </p>
+                    <p class="text-xs text-[#6e826b] dark:text-neutral-400">
+                        Podrás añadirle una descripción o pie de foto
+                    </p>
+                </div>
+
+                <div id="single-preview-container" class="hidden w-full relative">
+                    <img id="single-preview-img" src="" alt="Preview" class="max-h-48 w-auto mx-auto rounded-lg object-contain shadow" />
+                    <button id="single-remove-file-btn" type="button" class="absolute top-1 right-1 bg-black/60 hover:bg-black text-white p-1 rounded-full text-xs">✕</button>
+                    <div id="single-savings-badge" class="mt-2 text-xs font-semibold text-[#63875e] text-center"></div>
+                </div>
+            </div>
+
+            <!-- Caption Input -->
+            <div class="flex flex-col gap-1.5">
+                <label for="single-caption-input" class="text-xs font-semibold text-[#6e826b] dark:text-neutral-400">Descripción o pie de foto (opcional)</label>
+                <Input id="single-caption-input" placeholder="Ej: Atardecer en el mirador, día 3..." class="rounded-xl h-11 p-3 text-sm text-[#63875E] bg-[#EBF0EB] border-0" />
+            </div>
+
+            <!-- Single Progress -->
+            <div id="single-progress-wrapper" class="hidden flex-col gap-1.5">
+                <div class="flex justify-between text-xs font-semibold text-[#6e826b]">
+                    <span id="single-progress-label">Subiendo...</span>
+                </div>
+                <div class="w-full bg-[#ebf0eb] h-2 rounded-full overflow-hidden">
+                    <div id="single-progress-bar" class="bg-[#63875e] h-full w-1/2 animate-pulse rounded-full"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-2">
+                <Button id="single-cancel-btn" type="button" variant="outline" class="rounded-xl">Cancelar</Button>
+                <Button id="single-submit-btn" type="button" variant="Form" class="rounded-xl" disabled>
+                    <span>Subir Foto</span>
+                </Button>
+            </div>
+        </div>
+    </DialogContent>
+</Dialog>
+
+<script>
+    import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
+    import { uploadTripPhoto } from "@/firebase/storageService";
+
+    const modalDialog = document.getElementById("trip-photo-upload-dialog") as any;
+    const email = modalDialog?.dataset.email;
+    const tripId = modalDialog?.dataset.tripId;
+
+    // Tabs
+    const tabBatch = document.getElementById("tab-batch-mode") as HTMLButtonElement;
+    const tabSingle = document.getElementById("tab-single-mode") as HTMLButtonElement;
+    const batchSection = document.getElementById("batch-section") as HTMLDivElement;
+    const singleSection = document.getElementById("single-section") as HTMLDivElement;
+
+    function setTab(mode: "batch" | "single") {
+        if (mode === "batch") {
+            tabBatch.classList.add("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
+            tabBatch.classList.remove("text-[#6e826b]", "dark:text-neutral-400");
+            tabSingle.classList.remove("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
+            tabSingle.classList.add("text-[#6e826b]", "dark:text-neutral-400");
+            batchSection.classList.remove("hidden");
+            singleSection.classList.add("hidden");
+        } else {
+            tabSingle.classList.add("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
+            tabSingle.classList.remove("text-[#6e826b]", "dark:text-neutral-400");
+            tabBatch.classList.remove("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
+            tabBatch.classList.add("text-[#6e826b]", "dark:text-neutral-400");
+            singleSection.classList.remove("hidden");
+            batchSection.classList.add("hidden");
+        }
+    }
+
+    tabBatch?.addEventListener("click", () => setTab("batch"));
+    tabSingle?.addEventListener("click", () => setTab("single"));
+
+    // --- BATCH STATE & LOGIC ---
+    let selectedBatchFiles: File[] = [];
+    const batchDropzone = document.getElementById("batch-dropzone") as HTMLDivElement;
+    const batchFileInput = document.getElementById("batch-file-input") as HTMLInputElement;
+    const batchPreviewContainer = document.getElementById("batch-files-preview-container") as HTMLDivElement;
+    const batchFilesGrid = document.getElementById("batch-files-grid") as HTMLDivElement;
+    const batchFilesCount = document.getElementById("batch-files-count") as HTMLElement;
+    const batchClearBtn = document.getElementById("batch-clear-btn") as HTMLButtonElement;
+    const batchSubmitBtn = document.getElementById("batch-submit-btn") as HTMLButtonElement;
+    const batchCancelBtn = document.getElementById("batch-cancel-btn") as HTMLButtonElement;
+    const batchProgressWrapper = document.getElementById("batch-progress-wrapper") as HTMLDivElement;
+    const batchProgressBar = document.getElementById("batch-progress-bar") as HTMLDivElement;
+    const batchProgressPercent = document.getElementById("batch-progress-percent") as HTMLElement;
+    const batchProgressLabel = document.getElementById("batch-progress-label") as HTMLElement;
+
+    batchDropzone?.addEventListener("click", () => batchFileInput?.click());
+
+    batchDropzone?.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        batchDropzone.classList.add("bg-[#aadba3]/20");
+    });
+    batchDropzone?.addEventListener("dragleave", () => {
+        batchDropzone.classList.remove("bg-[#aadba3]/20");
+    });
+    batchDropzone?.addEventListener("drop", (e) => {
+        e.preventDefault();
+        batchDropzone.classList.remove("bg-[#aadba3]/20");
+        if (e.dataTransfer?.files?.length) {
+            handleBatchFiles(Array.from(e.dataTransfer.files));
+        }
+    });
+
+    batchFileInput?.addEventListener("change", () => {
+        if (batchFileInput.files?.length) {
+            handleBatchFiles(Array.from(batchFileInput.files));
+        }
+    });
+
+    function handleBatchFiles(files: File[]) {
+        const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+        if (!imageFiles.length) return;
+
+        selectedBatchFiles = [...selectedBatchFiles, ...imageFiles];
+        renderBatchPreviews();
+    }
+
+    function renderBatchPreviews() {
+        if (!selectedBatchFiles.length) {
+            batchPreviewContainer.classList.add("hidden");
+            batchSubmitBtn.disabled = true;
+            batchFilesGrid.innerHTML = "";
+            return;
+        }
+
+        batchPreviewContainer.classList.remove("hidden");
+        batchSubmitBtn.disabled = false;
+        batchFilesCount.textContent = `${selectedBatchFiles.length} ${selectedBatchFiles.length === 1 ? "foto seleccionada" : "fotos seleccionadas"}`;
+
+        batchFilesGrid.innerHTML = "";
+        selectedBatchFiles.forEach((file, index) => {
+            const card = document.createElement("div");
+            card.className = "relative rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-white aspect-square group";
+            
+            const img = document.createElement("img");
+            img.className = "w-full h-full object-cover";
+            img.src = URL.createObjectURL(file);
+            card.appendChild(img);
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "absolute top-1 right-1 bg-black/70 hover:bg-black text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]";
+            removeBtn.textContent = "✕";
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                selectedBatchFiles.splice(index, 1);
+                renderBatchPreviews();
+            };
+            card.appendChild(removeBtn);
+
+            batchFilesGrid.appendChild(card);
+        });
+    }
+
+    batchClearBtn?.addEventListener("click", () => {
+        selectedBatchFiles = [];
+        renderBatchPreviews();
+    });
+
+    batchSubmitBtn?.addEventListener("click", async () => {
+        if (!selectedBatchFiles.length || !email || !tripId) return;
+
+        batchSubmitBtn.disabled = true;
+        batchProgressWrapper.classList.remove("hidden");
+        const total = selectedBatchFiles.length;
+
+        for (let i = 0; i < total; i++) {
+            const rawFile = selectedBatchFiles[i];
+            batchProgressLabel.textContent = `Procesando y subiendo ${i + 1} de ${total}...`;
+            
+            try {
+                // Compress client-side to WebP
+                const compressed = await compressImageToWebP(rawFile);
+                await uploadTripPhoto(email, tripId, compressed.file);
+            } catch (err) {
+                console.error(`Error subiendo foto ${rawFile.name}:`, err);
+            }
+
+            const pct = Math.round(((i + 1) / total) * 100);
+            batchProgressBar.style.width = `${pct}%`;
+            batchProgressPercent.textContent = `${pct}%`;
+        }
+
+        // Finish
+        setTimeout(() => {
+            selectedBatchFiles = [];
+            renderBatchPreviews();
+            batchProgressWrapper.classList.add("hidden");
+            batchSubmitBtn.disabled = false;
+            // Close dialog
+            modalDialog?.querySelector("button[type=button]")?.click(); // Starwind close trigger
+            const closeBtn = document.querySelector("#trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
+            closeBtn?.click();
+            window.dispatchEvent(new CustomEvent("trip-photos:updated"));
+        }, 500);
+    });
+
+    batchCancelBtn?.addEventListener("click", () => {
+        const closeBtn = document.querySelector("#trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
+        closeBtn?.click();
+    });
+
+    // --- SINGLE PHOTO STATE & LOGIC ---
+    let singleCompressedResult: CompressedImageResult | null = null;
+    const singleDropzone = document.getElementById("single-dropzone") as HTMLDivElement;
+    const singleFileInput = document.getElementById("single-file-input") as HTMLInputElement;
+    const singleDropzonePlaceholder = document.getElementById("single-dropzone-placeholder") as HTMLDivElement;
+    const singlePreviewContainer = document.getElementById("single-preview-container") as HTMLDivElement;
+    const singlePreviewImg = document.getElementById("single-preview-img") as HTMLImageElement;
+    const singleSavingsBadge = document.getElementById("single-savings-badge") as HTMLElement;
+    const singleRemoveFileBtn = document.getElementById("single-remove-file-btn") as HTMLButtonElement;
+    const singleCaptionInput = document.getElementById("single-caption-input") as HTMLInputElement;
+    const singleSubmitBtn = document.getElementById("single-submit-btn") as HTMLButtonElement;
+    const singleCancelBtn = document.getElementById("single-cancel-btn") as HTMLButtonElement;
+    const singleProgressWrapper = document.getElementById("single-progress-wrapper") as HTMLDivElement;
+
+    singleDropzone?.addEventListener("click", (e) => {
+        if (e.target === singleRemoveFileBtn) return;
+        singleFileInput?.click();
+    });
+
+    singleFileInput?.addEventListener("change", async () => {
+        if (!singleFileInput.files?.[0]) return;
+        const file = singleFileInput.files[0];
+
+        try {
+            singleCompressedResult = await compressImageToWebP(file);
+            singlePreviewImg.src = singleCompressedResult.previewUrl;
+            singleSavingsBadge.textContent = `Optimizado a WebP: ${(singleCompressedResult.compressedSize / 1024).toFixed(0)} KB (-${singleCompressedResult.savingsPercentage}% ahorro)`;
+            
+            singleDropzonePlaceholder.classList.add("hidden");
+            singlePreviewContainer.classList.remove("hidden");
+            singleSubmitBtn.disabled = false;
+        } catch (err: any) {
+            alert(err.message || "Error al procesar la imagen.");
+        }
+    });
+
+    singleRemoveFileBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        singleCompressedResult = null;
+        singleFileInput.value = "";
+        singleDropzonePlaceholder.classList.remove("hidden");
+        singlePreviewContainer.classList.add("hidden");
+        singleSubmitBtn.disabled = true;
+    });
+
+    singleSubmitBtn?.addEventListener("click", async () => {
+        if (!singleCompressedResult || !email || !tripId) return;
+
+        singleSubmitBtn.disabled = true;
+        singleProgressWrapper.classList.remove("hidden");
+
+        try {
+            const caption = singleCaptionInput?.value || "";
+            await uploadTripPhoto(email, tripId, singleCompressedResult.file, caption);
+            
+            // Clean
+            singleCompressedResult = null;
+            singleFileInput.value = "";
+            singleCaptionInput.value = "";
+            singleDropzonePlaceholder.classList.remove("hidden");
+            singlePreviewContainer.classList.add("hidden");
+            singleProgressWrapper.classList.add("hidden");
+            singleSubmitBtn.disabled = false;
+
+            const closeBtn = document.querySelector("#trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
+            closeBtn?.click();
+            window.dispatchEvent(new CustomEvent("trip-photos:updated"));
+        } catch (err) {
+            console.error("Error al subir foto:", err);
+            alert("No se pudo subir la imagen.");
+            singleProgressWrapper.classList.add("hidden");
+            singleSubmitBtn.disabled = false;
+        }
+    });
+
+    singleCancelBtn?.addEventListener("click", () => {
+        const closeBtn = document.querySelector("#trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
+        closeBtn?.click();
+    });
+</script>

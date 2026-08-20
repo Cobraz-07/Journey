@@ -4,26 +4,43 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGr
 import { Input } from "@/components/starwind/input";
 import { Button } from "@/components/starwind/button";
 import { Textarea } from "@/components/starwind/textarea";
+import { Icon } from "astro-icon/components";
 
 const { email } = Astro.props;
 ---
 
 <Dialog id="trip-form-dialog">
-    <DialogContent class="w-9/10 h-8/10 rounded-xl">
+    <DialogContent class="w-9/10 max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6">
         <form id="trip-form" data-message={email} method="dialog" class="flex flex-col gap-4 h-full">
-            <DialogHeader class="mb-6">
-                <DialogTitle>Create new trip</DialogTitle>
+            <DialogHeader class="mb-4">
+                <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white">Crear nuevo viaje</DialogTitle>
             </DialogHeader>
-            <Input name="trip title" id="title" type="text" placeholder="Trip Title" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
-            <Textarea class="rounded-[12px] mb-6 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="description" placeholder="Trip Description" />
-            <p>Start Date / End Date</p>
+            <Input name="trip title" id="title" type="text" placeholder="Título del viaje" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="description" placeholder="Descripción del viaje" />
+            
+            <!-- Optional Cover Photo -->
+            <p class="text-xs font-semibold text-[#6e826b]">Foto de Portada (Opcional)</p>
+            <div id="trip-cover-dropzone" class="border-2 border-dashed border-[#aadba3] hover:border-[#63875e] bg-white/60 dark:bg-neutral-900/40 rounded-xl p-4 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5 relative">
+                <input id="trip-cover-input" type="file" accept="image/*" class="hidden" />
+                <div id="trip-cover-placeholder" class="flex items-center gap-2 text-[#63875e]">
+                    <Icon name="image" class="w-5 h-5" />
+                    <span class="text-xs font-medium">Añadir foto de portada</span>
+                </div>
+                <div id="trip-cover-preview-wrapper" class="hidden relative w-full">
+                    <img id="trip-cover-preview" src="" alt="Preview" class="max-h-32 mx-auto rounded-lg object-cover shadow" />
+                    <button id="trip-cover-remove-btn" type="button" class="absolute top-0 right-0 bg-black/70 hover:bg-black text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">✕</button>
+                    <p id="trip-cover-savings" class="text-[11px] text-[#63875e] mt-1 font-medium"></p>
+                </div>
+            </div>
+
+            <p class="text-xs font-semibold text-[#6e826b]">Fecha de Inicio / Fin</p>
             <div id="date-inputs" class="flex gap-4">
-                <Input name="trip start date" id="start-date" type="date" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
-                <Input name="trip end date" id="end-date" type="date" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
+                <Input name="trip start date" id="start-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+                <Input name="trip end date" id="end-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
             </div>
             <Select name="country" class="w-full">
-                <SelectTrigger class="w-full rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" required>
-                    <SelectValue id="country" placeholder="Country" />
+                <SelectTrigger class="w-full rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required>
+                    <SelectValue id="country" placeholder="Selecciona un país" />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectGroup>
@@ -292,6 +309,8 @@ const { email } = Astro.props;
 <script>
     import { db } from "@/firebase/config";
     import { collection, doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+    import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
+    import { uploadTripCover } from "@/firebase/storageService";
 
     const tripForm = document.querySelector("#trip-form") as HTMLFormElement;
     const formTitle = document.getElementById("title") as HTMLInputElement;
@@ -302,7 +321,43 @@ const { email } = Astro.props;
     const email = tripForm.dataset.message;
     const userDocRef = doc(db, "users", email ?? "unknown_user");
 
+    // Cover Photo Elements
+    const coverDropzone = document.getElementById("trip-cover-dropzone") as HTMLDivElement;
+    const coverInput = document.getElementById("trip-cover-input") as HTMLInputElement;
+    const coverPlaceholder = document.getElementById("trip-cover-placeholder") as HTMLDivElement;
+    const previewWrapper = document.getElementById("trip-cover-preview-wrapper") as HTMLDivElement;
+    const previewImg = document.getElementById("trip-cover-preview") as HTMLImageElement;
+    const savingsEl = document.getElementById("trip-cover-savings") as HTMLElement;
+    const removeCoverBtn = document.getElementById("trip-cover-remove-btn") as HTMLButtonElement;
+
+    let tripCoverCompressed: CompressedImageResult | null = null;
     let countryCode = "";
+
+    coverDropzone?.addEventListener("click", (e) => {
+        if (e.target === removeCoverBtn) return;
+        coverInput?.click();
+    });
+
+    coverInput?.addEventListener("change", async () => {
+        if (!coverInput.files?.[0]) return;
+        try {
+            tripCoverCompressed = await compressImageToWebP(coverInput.files[0], { maxWidth: 2000, maxHeight: 1200, quality: 0.88 });
+            previewImg.src = tripCoverCompressed.previewUrl;
+            savingsEl.textContent = `Optimizado WebP: ${(tripCoverCompressed.compressedSize / 1024).toFixed(0)} KB (-${tripCoverCompressed.savingsPercentage}%)`;
+            coverPlaceholder.classList.add("hidden");
+            previewWrapper.classList.remove("hidden");
+        } catch (err: any) {
+            alert(err.message || "Error al procesar la imagen.");
+        }
+    });
+
+    removeCoverBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        tripCoverCompressed = null;
+        coverInput.value = "";
+        previewWrapper.classList.add("hidden");
+        coverPlaceholder.classList.remove("hidden");
+    });
 
     document.querySelector(".starwind-select")?.addEventListener("starwind-select:change", (event) => {
         const customEvent = event as CustomEvent;
@@ -311,25 +366,52 @@ const { email } = Astro.props;
 
     tripForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        if (!email) return;
 
-        // Get current tripCounter or initialize if not present
-        const userSnap = await getDoc(userDocRef);
-        let tripCounter = userSnap.data()?.tripCounter ?? 9999999999;
+        const submitBtn = tripForm.querySelector("button[type=submit]") as HTMLButtonElement;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Creando viaje...";
+        }
 
-        const tripDocRef = doc(collection(userDocRef, "trips"), `trip nº${tripCounter}`);
+        try {
+            // Get current tripCounter or initialize if not present
+            const userSnap = await getDoc(userDocRef);
+            let tripCounter = userSnap.data()?.tripCounter ?? 9999999999;
+            const tripId = `trip nº${tripCounter}`;
+            const tripDocRef = doc(collection(userDocRef, "trips"), tripId);
 
-        await setDoc(tripDocRef, {
-            title: `${formTitle.value}`,
-            description: `${formDescription.value}`,
-            startDate: `${formStartDate.value}`,
-            endDate: `${formEndDate.value}`,
-            country: `${formCountry.textContent}`,
-            countryCode: countryCode,
-            createdAt: new Date().toISOString(),
-        });
+            let coverUrl = "";
+            let coverStoragePath = "";
 
-        await updateDoc(userDocRef, { tripCounter: tripCounter - 1 });
+            if (tripCoverCompressed) {
+                submitBtn.textContent = "Subiendo portada...";
+                // We'll upload cover
+                coverUrl = await uploadTripCover(email, tripId, tripCoverCompressed.file);
+            }
 
-        window.location.href = "/authenticated/trips";
+            await setDoc(tripDocRef, {
+                title: formTitle.value,
+                description: formDescription.value,
+                startDate: formStartDate.value,
+                endDate: formEndDate.value,
+                country: formCountry.textContent,
+                countryCode: countryCode,
+                coverUrl: coverUrl || null,
+                createdAt: new Date().toISOString(),
+            }, { merge: true });
+
+            await updateDoc(userDocRef, { tripCounter: tripCounter - 1 });
+
+            window.location.href = "/authenticated/trips";
+        } catch (err) {
+            console.error("Error creating trip:", err);
+            alert("No se pudo crear el viaje.");
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Create Trip";
+            }
+        }
     });
 </script>
+

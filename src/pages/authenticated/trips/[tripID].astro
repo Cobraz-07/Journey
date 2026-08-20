@@ -6,6 +6,7 @@ import BackBTN from "@/components/global/headers/BackBTN.astro";
 import TripJournalHeader from "@/components/authenticated/trips_page/TripJournalHeader.astro";
 import TripJournalForm from "@/components/authenticated/trips_page/TripJournalForm.astro";
 import TripJournalList from "@/components/authenticated/trips_page/TripJournalList.astro";
+import TripPhotoGallery from "@/components/authenticated/trips_page/TripPhotoGallery.astro";
 import { Icon } from "astro-icon/components";
 
 const email = Astro.locals.userEmail;
@@ -33,15 +34,70 @@ const formatDate = (dateString: string | undefined) => {
 
 <BaseLayout id="layout" title={`Journey | ${tripID}`}>
     <BackBTN href="/authenticated/trips" />
-    <div class="flex justify-between items-center absolute top-4 right-4">
-        <button data-email={email} data-id={tripID} id="delete-trip-btn" title="Delete Trip"><Icon class="w-7.5 h-7.5" name="delete" /></button>
+    <div class="flex justify-between items-center absolute top-4 right-4 z-20">
+        <button data-email={email} data-id={tripID} id="delete-trip-btn" class="p-1 rounded-full hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors" title="Delete Trip"><Icon class="w-7.5 h-7.5 text-red-500" name="delete" /></button>
     </div>
     <TitleSimple title="Trip Details" />
-    <section class="flex flex-col mt-16 w-full mx-6">
-        <h2 class="text-3xl font-bold mb-2 text-[var(--text-color)]">{tripData?.title ?? "Unnamed Trip"}</h2>
-        <p class="mb-4 w-8/10 wrap-break-word text-[var(--lt-text-color)]">{tripData?.description ?? "No description available."}</p>
-        <h6 class="text-[var(--lt-text-color)]">{formatDate(tripData?.startDate)} / {formatDate(tripData?.endDate)}</h6>
+
+    <!-- Trip Hero / Cover Photo Banner -->
+    <section class="flex flex-col mt-14 w-full px-6">
+        <div class="relative w-full rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm mb-6 bg-gradient-to-tr from-[#63875e]/20 to-[#aadba3]/30 min-h-[160px] flex items-end">
+            <!-- Cover image if present -->
+            <img 
+                id="trip-cover-img" 
+                src={tripData?.coverUrl || ""} 
+                alt="Cover photo" 
+                class={`absolute inset-0 w-full h-full object-cover ${tripData?.coverUrl ? "" : "hidden"}`} 
+            />
+
+            <!-- Dark overlay when cover image is present -->
+            <div id="cover-overlay" class={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent ${tripData?.coverUrl ? "" : "hidden"}`}></div>
+
+            <!-- Country Flag Badge -->
+            {tripData?.countryCode && (
+                <div class="absolute top-3 left-3 z-10 bg-white/90 dark:bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
+                    <img src={`https://flagcdn.com/${tripData.countryCode}.svg`} width="20" class="h-4 rounded-sm object-cover" alt={tripData.countryCode} />
+                    <span class="text-xs font-semibold text-neutral-800 dark:text-neutral-200">{tripData?.country || ""}</span>
+                </div>
+            )}
+
+            <!-- Change Cover Photo Button -->
+            <div class="absolute top-3 right-3 z-10">
+                <input id="cover-file-input" type="file" accept="image/*" class="hidden" />
+                <button 
+                    id="change-cover-btn" 
+                    type="button" 
+                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-black/60 hover:bg-black text-white backdrop-blur-md transition-all shadow"
+                    title="Cambiar foto de portada"
+                >
+                    <Icon name="image" class="w-3.5 h-3.5" />
+                    <span id="change-cover-text">{tripData?.coverUrl ? "Cambiar portada" : "Añadir portada"}</span>
+                </button>
+            </div>
+
+            <!-- Trip Header Details -->
+            <div class="relative z-10 p-5 w-full">
+                <h2 id="trip-title-header" class={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-1 ${tripData?.coverUrl ? "text-white drop-shadow-md" : "text-[var(--text-color)]"}`}>
+                    {tripData?.title ?? "Unnamed Trip"}
+                </h2>
+                <p id="trip-desc-header" class={`text-sm mb-2 max-w-2xl line-clamp-3 ${tripData?.coverUrl ? "text-white/90 drop-shadow" : "text-[var(--lt-text-color)]"}`}>
+                    {tripData?.description ?? "No description available."}
+                </p>
+                <div class="flex items-center gap-2">
+                    <span class={`text-xs font-semibold px-2 py-0.5 rounded-md ${tripData?.coverUrl ? "bg-black/40 text-white/90 backdrop-blur-sm" : "bg-[#ebf0eb] text-[#63875e]"}`}>
+                        📅 {formatDate(tripData?.startDate)} — {formatDate(tripData?.endDate)}
+                    </span>
+                </div>
+            </div>
+        </div>
     </section>
+
+    <!-- Trip Photos Gallery Component -->
+    <TripPhotoGallery email={email} tripID={tripID ?? "unknown_trip"} />
+
+    <hr class="w-9/10 mx-auto my-4 border-neutral-200 dark:border-neutral-800" />
+
+    <!-- Trip Journal Section -->
     <TripJournalHeader />
     <TripJournalForm email={email} tripID={tripID} />
     <TripJournalList email={email} tripID={tripID} />
@@ -50,6 +106,8 @@ const formatDate = (dateString: string | undefined) => {
 <script>
     import { db } from "@/firebase/config";
     import { doc, deleteDoc } from "firebase/firestore";
+    import { compressImageToWebP } from "@/utils/imageCompressor";
+    import { uploadTripCover } from "@/firebase/storageService";
 
     const deleteBtn = document.getElementById("delete-trip-btn");
     const email = deleteBtn?.dataset.email;
@@ -58,7 +116,51 @@ const formatDate = (dateString: string | undefined) => {
     const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
 
     deleteBtn?.addEventListener("click", async () => {
-        await deleteDoc(tripDocRef);
-        window.location.href = "/authenticated/trips";
+        if (confirm("¿Estás seguro de que deseas eliminar este viaje por completo?")) {
+            await deleteDoc(tripDocRef);
+            window.location.href = "/authenticated/trips";
+        }
+    });
+
+    // Cover Photo Upload Logic
+    const changeCoverBtn = document.getElementById("change-cover-btn");
+    const changeCoverText = document.getElementById("change-cover-text");
+    const coverFileInput = document.getElementById("cover-file-input") as HTMLInputElement;
+    const coverImg = document.getElementById("trip-cover-img") as HTMLImageElement;
+    const coverOverlay = document.getElementById("cover-overlay") as HTMLDivElement;
+    const titleHeader = document.getElementById("trip-title-header");
+    const descHeader = document.getElementById("trip-desc-header");
+
+    changeCoverBtn?.addEventListener("click", () => coverFileInput?.click());
+
+    coverFileInput?.addEventListener("change", async () => {
+        if (!coverFileInput.files?.[0] || !email || !tripID) return;
+        const rawFile = coverFileInput.files[0];
+
+        try {
+            if (changeCoverText) changeCoverText.textContent = "Comprimiendo...";
+            const compressed = await compressImageToWebP(rawFile, { maxWidth: 2000, maxHeight: 1200, quality: 0.88 });
+            
+            if (changeCoverText) changeCoverText.textContent = "Subiendo...";
+            const newCoverUrl = await uploadTripCover(email, tripID, compressed.file);
+
+            // Update UI instantly
+            coverImg.src = newCoverUrl;
+            coverImg.classList.remove("hidden");
+            coverOverlay.classList.remove("hidden");
+
+            titleHeader?.classList.remove("text-[var(--text-color)]");
+            titleHeader?.classList.add("text-white", "drop-shadow-md");
+
+            descHeader?.classList.remove("text-[var(--lt-text-color)]");
+            descHeader?.classList.add("text-white/90", "drop-shadow");
+
+            if (changeCoverText) changeCoverText.textContent = "Cambiar portada";
+        } catch (err) {
+            console.error("Error al subir foto de portada:", err);
+            alert("No se pudo actualizar la foto de portada.");
+            if (changeCoverText) changeCoverText.textContent = "Cambiar portada";
+        }
     });
 </script>
+

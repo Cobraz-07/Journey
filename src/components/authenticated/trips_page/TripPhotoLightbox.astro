@@ -1,0 +1,236 @@
+---
+// TripPhotoLightbox.astro - Carousel viewer smaller than full screen
+---
+
+<dialog id="photo-lightbox-dialog" class="fixed inset-0 z-50 p-0 m-auto bg-transparent backdrop:bg-black/75 backdrop:backdrop-blur-md max-w-4xl w-[92vw] max-h-[88vh] h-auto rounded-2xl shadow-2xl border border-white/10 overflow-hidden text-white outline-none">
+    <div class="relative flex flex-col h-full max-h-[88vh] bg-[#121712]/95 backdrop-blur-xl">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 py-3.5 border-b border-white/10 bg-black/30">
+            <div class="flex items-center gap-3">
+                <span id="lightbox-counter" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/10 text-white/90">
+                    1 / 1
+                </span>
+                <span id="lightbox-caption" class="text-sm font-medium text-white/80 truncate max-w-[200px] sm:max-w-md"></span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button id="lightbox-delete-btn" class="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors" title="Eliminar foto">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+                <button id="lightbox-close-btn" class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Cerrar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Image Stage -->
+        <div class="relative flex-1 flex items-center justify-center p-4 min-h-[300px] max-h-[calc(88vh-120px)] overflow-hidden select-none">
+            <!-- Prev Button -->
+            <button id="lightbox-prev-btn" class="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/80 hover:scale-105 active:scale-95 transition-all border border-white/10 shadow-lg" title="Foto anterior (Flecha izquierda)">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+
+            <!-- Image display -->
+            <div class="relative max-h-full max-w-full flex items-center justify-center">
+                <img id="lightbox-image" src="" alt="Trip Photo" class="max-h-[65vh] w-auto max-w-full object-contain rounded-lg shadow-lg transition-all duration-200" />
+            </div>
+
+            <!-- Next Button -->
+            <button id="lightbox-next-btn" class="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/80 hover:scale-105 active:scale-95 transition-all border border-white/10 shadow-lg" title="Siguiente foto (Flecha derecha)">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Footer Info -->
+        <div class="flex items-center justify-between px-5 py-2.5 border-t border-white/10 bg-black/20 text-xs text-white/60">
+            <span id="lightbox-date"></span>
+            <span class="hidden sm:inline text-white/40">Usa las flechas ← → para navegar o Esc para salir</span>
+        </div>
+    </div>
+</dialog>
+
+<script>
+    import { deleteTripPhoto, type TripPhoto } from "@/firebase/storageService";
+
+    interface LightboxState {
+        photos: TripPhoto[];
+        currentIndex: number;
+        email: string;
+        tripId: string;
+    }
+
+    const state: LightboxState = {
+        photos: [],
+        currentIndex: 0,
+        email: "",
+        tripId: "",
+    };
+
+    const dialog = document.getElementById("photo-lightbox-dialog") as HTMLDialogElement;
+    const imgEl = document.getElementById("lightbox-image") as HTMLImageElement;
+    const counterEl = document.getElementById("lightbox-counter") as HTMLElement;
+    const captionEl = document.getElementById("lightbox-caption") as HTMLElement;
+    const dateEl = document.getElementById("lightbox-date") as HTMLElement;
+    const prevBtn = document.getElementById("lightbox-prev-btn") as HTMLButtonElement;
+    const nextBtn = document.getElementById("lightbox-next-btn") as HTMLButtonElement;
+    const closeBtn = document.getElementById("lightbox-close-btn") as HTMLButtonElement;
+    const deleteBtn = document.getElementById("lightbox-delete-btn") as HTMLButtonElement;
+
+    function renderCurrentPhoto() {
+        if (!state.photos.length || state.currentIndex < 0 || state.currentIndex >= state.photos.length) {
+            closeLightbox();
+            return;
+        }
+
+        const photo = state.photos[state.currentIndex];
+        imgEl.src = photo.url;
+        counterEl.textContent = `${state.currentIndex + 1} / ${state.photos.length}`;
+        captionEl.textContent = photo.caption || "Sin descripción";
+
+        if (photo.createdAt) {
+            const date = new Date(photo.createdAt);
+            dateEl.textContent = date.toLocaleDateString("es-ES", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        } else {
+            dateEl.textContent = "";
+        }
+
+        // Hide navigation if only 1 photo
+        if (state.photos.length <= 1) {
+            prevBtn.style.display = "none";
+            nextBtn.style.display = "none";
+        } else {
+            prevBtn.style.display = "flex";
+            nextBtn.style.display = "flex";
+        }
+    }
+
+    function showNext() {
+        if (state.photos.length <= 1) return;
+        state.currentIndex = (state.currentIndex + 1) % state.photos.length;
+        renderCurrentPhoto();
+    }
+
+    function showPrev() {
+        if (state.photos.length <= 1) return;
+        state.currentIndex = (state.currentIndex - 1 + state.photos.length) % state.photos.length;
+        renderCurrentPhoto();
+    }
+
+    function openLightbox(photos: TripPhoto[], startIndex: number, email: string, tripId: string) {
+        state.photos = photos;
+        state.currentIndex = startIndex;
+        state.email = email;
+        state.tripId = tripId;
+
+        renderCurrentPhoto();
+        dialog?.showModal();
+    }
+
+    function closeLightbox() {
+        dialog?.close();
+    }
+
+    // Event listeners
+    prevBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showPrev();
+    });
+
+    nextBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showNext();
+    });
+
+    closeBtn?.addEventListener("click", closeLightbox);
+
+    // Close on backdrop click
+    dialog?.addEventListener("click", (e) => {
+        const rect = dialog.getBoundingClientRect();
+        const isInDialog = (
+            rect.top <= e.clientY &&
+            e.clientY <= rect.top + rect.height &&
+            rect.left <= e.clientX &&
+            e.clientX <= rect.left + rect.width
+        );
+        if (!isInDialog) {
+            closeLightbox();
+        }
+    });
+
+    // Keyboard navigation
+    window.addEventListener("keydown", (e) => {
+        if (!dialog?.open) return;
+        if (e.key === "ArrowRight") {
+            showNext();
+        } else if (e.key === "ArrowLeft") {
+            showPrev();
+        } else if (e.key === "Escape") {
+            closeLightbox();
+        }
+    });
+
+    // Delete photo action
+    deleteBtn?.addEventListener("click", async () => {
+        if (!state.photos.length) return;
+        const currentPhoto = state.photos[state.currentIndex];
+        
+        if (confirm("¿Estás seguro de que quieres eliminar esta foto?")) {
+            try {
+                await deleteTripPhoto(state.email, state.tripId, currentPhoto.id, currentPhoto.storagePath);
+                state.photos.splice(state.currentIndex, 1);
+                
+                // Notify gallery to re-render
+                window.dispatchEvent(new CustomEvent("trip-photos:updated"));
+
+                if (state.photos.length === 0) {
+                    closeLightbox();
+                } else {
+                    if (state.currentIndex >= state.photos.length) {
+                        state.currentIndex = state.photos.length - 1;
+                    }
+                    renderCurrentPhoto();
+                }
+            } catch (err) {
+                console.error("Error al eliminar la foto:", err);
+                alert("Ocurrió un error al intentar eliminar la foto.");
+            }
+        }
+    });
+
+    // Touch swipe support for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    dialog?.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    dialog?.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchEndX - touchStartX;
+        if (Math.abs(diff) > 50) {
+            if (diff < 0) showNext();
+            else showPrev();
+        }
+    }, { passive: true });
+
+    // Expose global opener event
+    window.addEventListener("open-trip-lightbox", ((e: CustomEvent) => {
+        const { photos, startIndex, email, tripId } = e.detail;
+        openLightbox(photos, startIndex, email, tripId);
+    }) as EventListener);
+</script>

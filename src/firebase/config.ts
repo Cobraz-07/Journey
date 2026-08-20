@@ -4,6 +4,7 @@ import { initializeApp } from "firebase/app";
 // https://firebase.google.com/docs/web/setup#available-libraries
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -22,6 +23,7 @@ const app = initializeApp(firebaseConfig);
 
 export const projectAuth = getAuth(app);
 export const db = getFirestore(app);
+export const projectStorage = getStorage(app);
 
 setPersistence(projectAuth, browserLocalPersistence)
     .then(() => {
@@ -30,3 +32,4 @@ setPersistence(projectAuth, browserLocalPersistence)
     .catch((error) => {
         console.error("Error setting persistence mode:", error);
     });
+

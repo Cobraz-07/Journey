@@ -46,18 +46,27 @@ import { Skeleton } from "@/components/starwind/skeleton";
                 return dateString; // Return original if format is unexpected
             };
 
+            const coverHtml = tripData?.coverUrl 
+                ? `<div class="relative w-14 h-14 rounded-xl overflow-hidden shadow-sm shrink-0 border border-neutral-200 dark:border-neutral-700 bg-neutral-100">
+                    <img src="${tripData.coverUrl}" class="w-full h-full object-cover" alt="Cover" loading="lazy" />
+                    ${tripData?.countryCode ? `<img src="https://flagcdn.com/${tripData.countryCode}.svg" class="absolute bottom-1 right-1 w-4 h-3 rounded-xs shadow object-cover" alt="${tripData.countryCode}" />` : ""}
+                   </div>`
+                : `<div class="w-14 h-14 rounded-xl bg-[#ebf0eb] dark:bg-neutral-800 flex items-center justify-center shrink-0 border border-neutral-200 dark:border-neutral-700 shadow-sm">
+                    <img src="https://flagcdn.com/${tripData?.countryCode}.svg" width="34" class="h-6 rounded-xs object-cover shadow-xs" alt="${tripData?.countryCode}" />
+                   </div>`;
+
             html += `
-                <a href="/authenticated/trips/${tripID ?? "Unnamed_Trip"}">
-                    <div class="w-full flex items-center gap-4">
-                        <img src="https://flagcdn.com/${tripData?.countryCode}.svg" width="40" class="h-7.5 trip-img" alt="${tripData?.countryCode}" />
-                        <div id="text-div">
-                            <h4 class="font-bold">${tripData?.title ?? "Unnamed Trip"}</h4>
-                            <h6 class="text-[var(--lt-text-color)]">${tripData?.country ?? "Nowhere"}</h6>
-                            <h6 class="text-[var(--lt-text-color)]">${formatDate(tripData?.startDate)} / ${formatDate(tripData?.endDate)}</h6>
+                <a href="/authenticated/trips/${tripID ?? "Unnamed_Trip"}" class="hover:bg-neutral-50 dark:hover:bg-neutral-900/40 p-2 rounded-2xl transition-all">
+                    <div class="w-full flex items-center gap-3.5">
+                        ${coverHtml}
+                        <div id="text-div" class="flex-1 min-w-0">
+                            <h4 class="font-bold text-base text-[var(--text-color)] truncate">${tripData?.title ?? "Unnamed Trip"}</h4>
+                            <h6 class="text-xs font-semibold text-[#63875e] truncate">${tripData?.country ?? "Nowhere"}</h6>
+                            <h6 class="text-xs text-[var(--lt-text-color)] font-medium mt-0.5">${formatDate(tripData?.startDate)} / ${formatDate(tripData?.endDate)}</h6>
                         </div>
                     </div>
                 </a>
-                <p id="separator" class="w-9/10 bg-neutral-200 h-0.5 m-auto"></p>
+                <p id="separator" class="w-9/10 bg-neutral-200/70 dark:bg-neutral-800 h-0.5 m-auto"></p>
             `;
         });
         tripList.innerHTML = html;

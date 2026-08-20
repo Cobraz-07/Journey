@@ -3,22 +3,50 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/starwind/input";
 import { Button } from "@/components/starwind/button";
 import { Textarea } from "@/components/starwind/textarea";
+import { Icon } from "astro-icon/components";
 
 const { email, tripID } = Astro.props;
 ---
 
 <Dialog id="journal-form-dialog" data-trip-id={tripID}>
-    <DialogContent class="w-9/10 h-8/10 rounded-xl">
+    <DialogContent class="w-9/10 max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6">
         <form id="journal-form" data-email={email} method="dialog" class="flex flex-col gap-4 h-full">
-            <DialogHeader class="mb-6">
-                <DialogTitle>Create new journal</DialogTitle>
+            <DialogHeader class="mb-2">
+                <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white">Nuevo Registro en el Diario</DialogTitle>
             </DialogHeader>
-            <Input name="journal title" id="title" type="text" placeholder="Journal Title" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
-            <Textarea class="rounded-[12px] mb-6 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="description" placeholder="Journal Description" />
-            <p>Journal Date</p>
-            <Input name="journal date" id="journal-date" type="date" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
-            <DialogFooter class="mt-auto">
-                <Button type="submit" variant="Form">Create Journal</Button>
+            <Input name="journal title" id="title" type="text" placeholder="Título del diario" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="description" placeholder="¿Qué aventuras viviste hoy?" />
+            
+            <p class="text-xs font-semibold text-[#6e826b]">Fecha del diario</p>
+            <Input name="journal date" id="journal-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+
+            <!-- Optional Image Attachment -->
+            <p class="text-xs font-semibold text-[#6e826b]">Foto adjunta (Opcional)</p>
+            <div id="journal-image-dropzone" class="border-2 border-dashed border-[#aadba3] hover:border-[#63875e] bg-white/60 dark:bg-neutral-900/40 rounded-xl p-4 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5 relative">
+                <input id="journal-image-input" type="file" accept="image/*" class="hidden" />
+                <div id="journal-image-placeholder" class="flex items-center gap-2 text-[#63875e]">
+                    <Icon name="image" class="w-5 h-5" />
+                    <span class="text-xs font-medium">Añadir una foto a este día</span>
+                </div>
+                <div id="journal-image-preview-wrapper" class="hidden relative w-full">
+                    <img id="journal-image-preview" src="" alt="Preview" class="max-h-36 mx-auto rounded-lg object-contain shadow" />
+                    <button id="journal-image-remove-btn" type="button" class="absolute top-0 right-0 bg-black/70 hover:bg-black text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">✕</button>
+                    <p id="journal-image-savings" class="text-[11px] text-[#63875e] mt-1 font-medium"></p>
+                </div>
+            </div>
+
+            <!-- Upload progress bar -->
+            <div id="journal-upload-progress" class="hidden flex-col gap-1">
+                <div class="flex justify-between text-xs text-[#6e826b] font-medium">
+                    <span id="journal-progress-label">Guardando y subiendo foto...</span>
+                </div>
+                <div class="w-full bg-[#ebf0eb] h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-[#63875e] h-full w-full animate-pulse rounded-full"></div>
+                </div>
+            </div>
+
+            <DialogFooter class="mt-4">
+                <Button id="journal-submit-btn" type="submit" variant="Form" class="rounded-xl w-full">Guardar Diario</Button>
             </DialogFooter>
         </form>
     </DialogContent>
@@ -27,6 +55,8 @@ const { email, tripID } = Astro.props;
 <script>
     import { db } from "@/firebase/config";
     import { collection, doc, setDoc } from "firebase/firestore";
+    import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
+    import { uploadJournalImage } from "@/firebase/storageService";
 
     const journalFormDialog = document.getElementById("journal-form-dialog") as HTMLDivElement;
     const journalForm = document.querySelector("#journal-form") as HTMLFormElement;
@@ -37,19 +67,78 @@ const { email, tripID } = Astro.props;
     const tripID = journalFormDialog.dataset.tripId;
     const userDocRef = doc(db, "users", email ?? "unknown_user");
 
+    // Journal Image handling
+    const imageDropzone = document.getElementById("journal-image-dropzone") as HTMLDivElement;
+    const imageInput = document.getElementById("journal-image-input") as HTMLInputElement;
+    const imagePlaceholder = document.getElementById("journal-image-placeholder") as HTMLDivElement;
+    const previewWrapper = document.getElementById("journal-image-preview-wrapper") as HTMLDivElement;
+    const previewImg = document.getElementById("journal-image-preview") as HTMLImageElement;
+    const savingsEl = document.getElementById("journal-image-savings") as HTMLElement;
+    const removeImageBtn = document.getElementById("journal-image-remove-btn") as HTMLButtonElement;
+    const submitBtn = document.getElementById("journal-submit-btn") as HTMLButtonElement;
+    const progressWrapper = document.getElementById("journal-upload-progress") as HTMLDivElement;
+
+    let journalCompressedResult: CompressedImageResult | null = null;
+
+    imageDropzone?.addEventListener("click", (e) => {
+        if (e.target === removeImageBtn) return;
+        imageInput?.click();
+    });
+
+    imageInput?.addEventListener("change", async () => {
+        if (!imageInput.files?.[0]) return;
+        try {
+            journalCompressedResult = await compressImageToWebP(imageInput.files[0]);
+            previewImg.src = journalCompressedResult.previewUrl;
+            savingsEl.textContent = `Optimizado WebP: ${(journalCompressedResult.compressedSize / 1024).toFixed(0)} KB (-${journalCompressedResult.savingsPercentage}%)`;
+            imagePlaceholder.classList.add("hidden");
+            previewWrapper.classList.remove("hidden");
+        } catch (err: any) {
+            alert(err.message || "Error al procesar la imagen.");
+        }
+    });
+
+    removeImageBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        journalCompressedResult = null;
+        imageInput.value = "";
+        previewWrapper.classList.add("hidden");
+        imagePlaceholder.classList.remove("hidden");
+    });
+
     journalForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        if (!email || !tripID) return;
 
-        const tripDocRef = doc(collection(userDocRef, "trips"), `${tripID}`);
+        submitBtn.disabled = true;
+        progressWrapper.classList.remove("hidden");
 
-        // Add the journal entry to the 'journal' subcollection
-        const journalCollectionRef = collection(tripDocRef, "journal");
-        await setDoc(doc(journalCollectionRef), {
-            title: `${formTitle.value}`,
-            description: `${formDescription.value}`,
-            date: `${formDate.value}`,
-        });
+        try {
+            const tripDocRef = doc(collection(userDocRef, "trips"), `${tripID}`);
+            const journalCollectionRef = collection(tripDocRef, "journal");
+            const newJournalDocRef = doc(journalCollectionRef);
+            const journalId = newJournalDocRef.id;
 
-        window.location.href = `/authenticated/trips/${tripID}`;
+            let imageUrl = "";
+            if (journalCompressedResult) {
+                imageUrl = await uploadJournalImage(email, tripID, journalId, journalCompressedResult.file);
+            }
+
+            await setDoc(newJournalDocRef, {
+                title: formTitle.value,
+                description: formDescription.value,
+                date: formDate.value,
+                imageUrl: imageUrl || null,
+                createdAt: new Date().toISOString(),
+            });
+
+            window.location.href = `/authenticated/trips/${tripID}`;
+        } catch (err) {
+            console.error("Error creating journal:", err);
+            alert("No se pudo crear la entrada del diario.");
+            submitBtn.disabled = false;
+            progressWrapper.classList.add("hidden");
+        }
     });
 </script>
+
