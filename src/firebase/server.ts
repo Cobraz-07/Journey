@@ -9,16 +9,32 @@ let _db: Firestore | undefined;
 function getApp(): App {
     if (!_app) {
         const activeApps = getApps();
-        _app =
-            activeApps.length === 0
-                ? initializeApp({
-                      credential: cert({
-                          projectId: process.env.FIREBASE_PROJECT_ID,
-                          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-                          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-                      }),
-                  })
-                : activeApps[0];
+        if (activeApps.length === 0) {
+            try {
+                let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+                if (privateKey) {
+                    // Remove surrounding quotes if they exist (Vercel sometimes passes them)
+                    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+                        privateKey = privateKey.slice(1, -1);
+                    }
+                    // Replace literal escaped newlines with actual newlines
+                    privateKey = privateKey.replace(/\\n/g, "\n");
+                }
+
+                _app = initializeApp({
+                    credential: cert({
+                        projectId: process.env.FIREBASE_PROJECT_ID,
+                        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                        privateKey: privateKey,
+                    }),
+                });
+            } catch (error) {
+                console.error("Firebase Admin Initialization Error:", error);
+                throw error;
+            }
+        } else {
+            _app = activeApps[0];
+        }
     }
     return _app;
 }
