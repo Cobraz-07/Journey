@@ -5,14 +5,14 @@ import { Input } from "@/components/starwind/input";
 import { Icon } from "astro-icon/components";
 
 interface Props {
-    email: string;
+    uid: string;
     tripID: string;
 }
 
-const { email, tripID } = Astro.props;
+const { uid, tripID } = Astro.props;
 ---
 
-<Dialog id="trip-photo-upload-dialog" data-email={email} data-trip-id={tripID}>
+<Dialog id="trip-photo-upload-dialog" data-uid={uid} data-trip-id={tripID}>
     <DialogContent class="w-[94vw] max-w-xl rounded-2xl p-6 bg-[#f7f9f7] dark:bg-[#151c15] border border-neutral-200 dark:border-neutral-800 shadow-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader class="mb-4">
             <DialogTitle class="text-xl font-bold text-[#121712] dark:text-neutral-100 flex items-center gap-2">
@@ -132,7 +132,7 @@ const { email, tripID } = Astro.props;
     import { showToast } from "@/utils/toast";
 
     const modalDialog = document.getElementById("trip-photo-upload-dialog") as any;
-    const email = modalDialog?.dataset.email;
+    const uid = modalDialog?.dataset.uid;
     const tripId = modalDialog?.dataset.tripId;
 
     // Tabs
@@ -275,7 +275,7 @@ const { email, tripID } = Astro.props;
     }
 
     batchSubmitBtn?.addEventListener("click", async () => {
-        if (!selectedBatchFiles.length || !email || !tripId) return;
+        if (!selectedBatchFiles.length || !uid || !tripId) return;
 
         batchSubmitBtn.disabled = true;
         batchProgressWrapper.classList.remove("hidden");
@@ -294,7 +294,7 @@ const { email, tripID } = Astro.props;
                 try {
                     // Compress client-side to WebP
                     const compressed = await compressImageToWebP(rawFile);
-                    await uploadTripPhoto(email, tripId, compressed.file);
+                    await uploadTripPhoto(uid, tripId, compressed.file);
                 } catch (err) {
                     console.error(`Error subiendo foto ${rawFile.name}:`, err);
                 } finally {
@@ -393,7 +393,7 @@ const { email, tripID } = Astro.props;
     });
 
     singleSubmitBtn?.addEventListener("click", async () => {
-        if (!singleCompressedResult || !email || !tripId) return;
+        if (!singleCompressedResult || !uid || !tripId) return;
 
         singleSubmitBtn.disabled = true;
         singleSubmitBtn.textContent = "Subiendo...";
@@ -401,7 +401,7 @@ const { email, tripID } = Astro.props;
 
         try {
             const caption = singleCaptionInput?.value || "";
-            await uploadTripPhoto(email, tripId, singleCompressedResult.file, caption);
+            await uploadTripPhoto(uid, tripId, singleCompressedResult.file, caption);
             
             // Clean
             singleCompressedResult = null;
@@ -424,5 +424,6 @@ const { email, tripID } = Astro.props;
             singleSubmitBtn.textContent = "Subir foto";
         }
     });
-
+            
     singleCancelBtn?.addEventListener("click", closeUploadModal);
+</script>

@@ -1,12 +1,17 @@
 ---
+interface Props {
+    email?: string | null;
+    uid?: string | null;
+}
+
 const { email } = Astro.props;
-const index = email?.indexOf("@");
-const strippedEmail = email?.substring(0, index);
+const index = email ? email.indexOf("@") : -1;
+const strippedEmail = index !== -1 && email ? email.substring(0, index) : "TRAVELER";
 ---
 
 <section class="flex flex-col items-center my-15 mb-0 h-[128px] text-center">
     <div>
-        <h2 class="text-[20px] font-extrabold">{strippedEmail?.toUpperCase()}</h2>
-        <h4 class="font-extralight">{email}</h4>
+        <h2 class="text-[20px] font-extrabold">{strippedEmail.toUpperCase()}</h2>
+        <h4 class="font-extralight text-sm text-[var(--lt-text-color)]">{email ?? "Anonymous User"}</h4>
     </div>
 </section>

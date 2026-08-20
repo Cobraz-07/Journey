@@ -7,13 +7,14 @@ import TripListHeader from "@/components/authenticated/trips_page/TripListHeader
 import TripListForm from "@/components/authenticated/trips_page/TripListForm.astro";
 
 const toggled = "bg-[var(--brand-color)]";
-const email = Astro.locals.userEmail;
+const uid = Astro.locals.uid;
+if (!uid) return Astro.redirect("/signin");
 ---
 
 <BaseLayout title="Journey | Trips">
     <TitleSimple title="Journey" />
     <TripListHeader />
-    <TripListForm email={email} />
-    <TripList email={email} />
+    <TripListForm uid={uid} />
+    <TripList uid={uid} />
     <AppFooter iconStateHome={toggled} />
 </BaseLayout>

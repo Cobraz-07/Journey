@@ -5,12 +5,12 @@ import { Button } from "@/components/starwind/button";
 import { Textarea } from "@/components/starwind/textarea";
 import { Icon } from "astro-icon/components";
 
-const { email, tripID } = Astro.props;
+const { uid, tripID } = Astro.props;
 ---
 
 <Dialog id="journal-form-dialog" data-trip-id={tripID}>
     <DialogContent class="w-9/10 max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6">
-        <form id="journal-form" data-email={email} method="dialog" class="flex flex-col gap-4 h-full">
+        <form id="journal-form" data-uid={uid} method="dialog" class="flex flex-col gap-4 h-full">
             <DialogHeader class="mb-2">
                 <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white">Nuevo Registro en el Diario</DialogTitle>
             </DialogHeader>
@@ -64,9 +64,9 @@ const { email, tripID } = Astro.props;
     const formTitle = document.getElementById("journal-title") as HTMLInputElement;
     const formDescription = document.getElementById("journal-description") as HTMLTextAreaElement;
     const formDate = document.getElementById("journal-date") as HTMLInputElement;
-    const email = journalForm.dataset.email;
-    const tripID = journalFormDialog.dataset.tripId;
-    const userDocRef = doc(db, "users", email ?? "unknown_user");
+    const uid = journalForm?.dataset.uid;
+    const tripID = journalFormDialog?.dataset.tripId;
+    const userDocRef = doc(db, "users", uid ?? "unknown_user");
 
     // Journal Image handling
     const imageDropzone = document.getElementById("journal-image-dropzone") as HTMLDivElement;
@@ -111,9 +111,9 @@ const { email, tripID } = Astro.props;
         imagePlaceholder.classList.remove("hidden");
     });
 
-    journalForm.addEventListener("submit", async (e) => {
+    journalForm?.addEventListener("submit", async (e) => {
         e.preventDefault();
-        if (!email || !tripID) return;
+        if (!uid || !tripID) return;
 
         submitBtn.disabled = true;
         progressWrapper.classList.remove("hidden");
@@ -127,7 +127,7 @@ const { email, tripID } = Astro.props;
             let imageUrl = "";
             let imageStoragePath = "";
             if (journalCompressedResult) {
-                const result = await uploadJournalImage(email, tripID, journalId, journalCompressedResult.file);
+                const result = await uploadJournalImage(uid, tripID, journalId, journalCompressedResult.file);
                 imageUrl = result.url;
                 imageStoragePath = result.storagePath;
             }

@@ -27,12 +27,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
         }
     }
 
-    // Protect authenticated routes
-    if (!user && pathname.startsWith("/authenticated") && context.request.method === "GET") {
-        return context.redirect("/register");
+    // Protect all authenticated routes regardless of HTTP method
+    if (!user && pathname.startsWith("/authenticated")) {
+        if (context.request.method === "GET") {
+            return context.redirect("/signin");
+        }
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+        });
     }
 
-    // Redirect authenticated users away from public auth pages
+    // Redirect authenticated users away from public landing & auth pages
     if (user && (pathname === "/signin" || pathname === "/register" || pathname === "/")) {
         return context.redirect("/authenticated/trips");
     }

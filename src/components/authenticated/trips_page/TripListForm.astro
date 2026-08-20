@@ -6,12 +6,12 @@ import { Textarea } from "@/components/starwind/textarea";
 import { Icon } from "astro-icon/components";
 import { countries } from "@/utils/countries";
 
-const { email } = Astro.props;
+const { uid } = Astro.props;
 ---
 
 <Dialog id="trip-form-dialog">
     <DialogContent class="w-9/10 max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6">
-        <form id="trip-form" data-message={email} method="dialog" class="flex flex-col gap-4 h-full">
+        <form id="trip-form" data-uid={uid} method="dialog" class="flex flex-col gap-4 h-full">
             <DialogHeader class="mb-4">
                 <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white">Crear nuevo viaje</DialogTitle>
             </DialogHeader>
@@ -125,8 +125,8 @@ const { email } = Astro.props;
     const formDescription = document.getElementById("trip-description") as HTMLTextAreaElement;
     const formStartDate = document.getElementById("trip-start-date") as HTMLInputElement;
     const formEndDate = document.getElementById("trip-end-date") as HTMLInputElement;
-    const email = tripForm.dataset.message;
-    const userDocRef = doc(db, "users", email ?? "unknown_user");
+    const uid = tripForm?.dataset.uid;
+    const userDocRef = doc(db, "users", uid ?? "unknown_user");
 
     // Country Combobox with Search
     const comboboxTrigger = document.getElementById("country-combobox-trigger") as HTMLButtonElement;
@@ -251,9 +251,9 @@ const { email } = Astro.props;
         coverPlaceholder.classList.remove("hidden");
     });
 
-    tripForm.addEventListener("submit", async (e) => {
+    tripForm?.addEventListener("submit", async (e) => {
         e.preventDefault();
-        if (!email) return;
+        if (!uid) return;
 
         if (!countryCodeInput.value || !countryNameInput.value) {
             showToast("Por favor, selecciona un país.", "error");
@@ -276,7 +276,7 @@ const { email } = Astro.props;
 
             if (tripCoverCompressed) {
                 submitBtn.textContent = "Subiendo portada...";
-                const coverResult = await uploadTripCover(email, tripId, tripCoverCompressed.file);
+                const coverResult = await uploadTripCover(uid, tripId, tripCoverCompressed.file);
                 coverUrl = coverResult.url;
                 coverStoragePath = coverResult.storagePath;
             }

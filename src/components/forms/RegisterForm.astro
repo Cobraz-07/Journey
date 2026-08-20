@@ -61,9 +61,10 @@ import { Button } from "@/components/starwind/button";
                 formPassword.value,
             );
 
-            // Create user document in Firestore
-            await setDoc(doc(db, "users", formEmail.value), {
+            // Create user document in Firestore under immutable UID
+            await setDoc(doc(db, "users", userCredential.user.uid), {
                 email: formEmail.value,
+                createdAt: new Date().toISOString(),
             });
 
             // Send ID token to server to create a session cookie

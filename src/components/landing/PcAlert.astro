@@ -7,8 +7,8 @@ import Flame from "@tabler/icons/outline/flame.svg";
     <AlertTitle><Flame />Danger!</AlertTitle>
     <AlertDescription> Use on mobile is mandatory for a good experience! (PWA) </AlertDescription>
 </Alert>
-<script defer>
+<script is:inline>
     if (document.documentElement.clientWidth > 600) {
-        document.getElementById("alert").classList.remove("hidden");
+        document.getElementById("alert")?.classList.remove("hidden");
     }
 </script>

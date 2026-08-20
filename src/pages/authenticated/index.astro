@@ -8,11 +8,13 @@ import SignOutButton from "@/components/authenticated/account_page/SignOutButton
 
 const toggled = "bg-[var(--brand-color)]";
 const email = Astro.locals.userEmail;
+const uid = Astro.locals.uid;
+if (!uid) return Astro.redirect("/signin");
 ---
 
 <BaseLayout title="Journey | Account">
     <TitleSimple title="Settings" />
-    <User email={email} />
+    <User email={email} uid={uid} />
     <SettingsAccordion />
     <SignOutButton />
     <AppFooter iconStateUser={toggled} />

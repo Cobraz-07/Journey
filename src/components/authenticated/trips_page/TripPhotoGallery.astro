@@ -6,11 +6,11 @@ import TripPhotoUploadModal from "./TripPhotoUploadModal.astro";
 import TripPhotoLightbox from "./TripPhotoLightbox.astro";
 
 interface Props {
-    email: string;
+    uid: string;
     tripID: string;
 }
 
-const { email, tripID } = Astro.props;
+const { uid, tripID } = Astro.props;
 ---
 
 <section class="flex flex-col mx-6 my-6">
@@ -32,7 +32,7 @@ const { email, tripID } = Astro.props;
     <!-- Gallery Container -->
     <div
         id="trip-photo-gallery"
-        data-email={email}
+        data-uid={uid}
         data-trip-id={tripID}
         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 min-h-[140px]"
     >
@@ -44,7 +44,7 @@ const { email, tripID } = Astro.props;
     </div>
 
     <!-- Modals -->
-    <TripPhotoUploadModal email={email} tripID={tripID} />
+    <TripPhotoUploadModal uid={uid} tripID={tripID} />
     <TripPhotoLightbox />
 </section>
 
@@ -55,16 +55,16 @@ const { email, tripID } = Astro.props;
 
     const galleryEl = document.getElementById("trip-photo-gallery") as HTMLDivElement;
     const badgeCountEl = document.getElementById("gallery-badge-count") as HTMLElement;
-    const email = galleryEl?.dataset.email;
+    const uid = galleryEl?.dataset.uid;
     const tripId = galleryEl?.dataset.tripId;
 
     let loadedPhotos: TripPhoto[] = [];
 
     async function loadGallery() {
-        if (!email || !tripId) return;
+        if (!uid || !tripId) return;
 
         try {
-            loadedPhotos = await getTripPhotos(email, tripId);
+            loadedPhotos = await getTripPhotos(uid, tripId);
 
             if (loadedPhotos.length === 0) {
                 badgeCountEl.classList.add("hidden");
@@ -112,7 +112,7 @@ const { email, tripID } = Astro.props;
                     />
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2.5">
                         <div class="flex justify-end">
-                            <button data-delete-id="${safeId}" data-storage-path="${safeStoragePath}" class="p-1.5 rounded-full bg-black/60 hover:bg-red-600 text-white transition-colors" title="Eliminar foto">
+                            <button data-delete-id="${safeId}" data-storage-path="${safeStoragePath}" class="p-1.5 rounded-full bg-black/60 hover:bg-red-600 text-white transition-colors cursor-pointer" title="Eliminar foto">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
@@ -137,7 +137,7 @@ const { email, tripID } = Astro.props;
                             detail: {
                                 photos: loadedPhotos,
                                 startIndex: idx,
-                                email,
+                                uid,
                                 tripId,
                             },
                         })
@@ -152,10 +152,10 @@ const { email, tripID } = Astro.props;
     }
 
     async function handleDelete(photo: TripPhoto) {
-        if (!email || !tripId) return;
+        if (!uid || !tripId) return;
         if (confirm("¿Deseas eliminar esta foto?")) {
             try {
-                await deleteTripPhoto(email, tripId, photo.id, photo.storagePath);
+                await deleteTripPhoto(uid, tripId, photo.id, photo.storagePath);
                 loadGallery();
             } catch (err) {
                 console.error("Error al eliminar la foto:", err);

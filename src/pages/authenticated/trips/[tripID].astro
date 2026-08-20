@@ -8,28 +8,31 @@ import TripJournalForm from "@/components/authenticated/trips_page/TripJournalFo
 import TripJournalList from "@/components/authenticated/trips_page/TripJournalList.astro";
 import TripPhotoGallery from "@/components/authenticated/trips_page/TripPhotoGallery.astro";
 import { Icon } from "astro-icon/components";
+import { formatDate } from "@/utils/formatDate";
 
-const email = Astro.locals.userEmail;
-if (!email) return Astro.redirect("/register");
+const uid = Astro.locals.uid;
+if (!uid) return Astro.redirect("/signin");
 
 const { tripID } = Astro.params;
 const adminDb = await getAdminDb();
 const tripSnap = await adminDb
     .collection("users")
-    .doc(email)
+    .doc(uid)
     .collection("trips")
     .doc(tripID ?? "unknown_trip")
     .get();
+
+if (!tripSnap.exists) {
+    return Astro.redirect("/authenticated/trips");
+}
+
 const tripData = tripSnap.data();
-
-import { formatDate } from "@/utils/formatDate";
-
 ---
 
-<BaseLayout id="layout" title={`Journey | ${tripID}`}>
+<BaseLayout id="layout" title={`Journey | ${tripData?.title ?? tripID}`}>
     <BackBTN href="/authenticated/trips" />
     <div class="flex justify-between items-center absolute top-4 right-4 z-20">
-        <button data-email={email} data-id={tripID} id="delete-trip-btn" class="p-1 rounded-full hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors" title="Delete Trip"><Icon class="w-7.5 h-7.5 text-red-500" name="delete" /></button>
+        <button data-uid={uid} data-id={tripID} id="delete-trip-btn" class="p-1 rounded-full hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors cursor-pointer" title="Delete Trip"><Icon class="w-7.5 h-7.5 text-red-500" name="delete" /></button>
     </div>
     <TitleSimple title="Trip Details" />
 
@@ -61,7 +64,7 @@ import { formatDate } from "@/utils/formatDate";
                 <button 
                     id="change-cover-btn" 
                     type="button" 
-                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-black/60 hover:bg-black text-white backdrop-blur-md transition-all shadow"
+                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-black/60 hover:bg-black text-white backdrop-blur-md transition-all shadow cursor-pointer"
                     title="Cambiar foto de portada"
                 >
                     <Icon name="image" class="w-3.5 h-3.5" />
@@ -87,14 +90,14 @@ import { formatDate } from "@/utils/formatDate";
     </section>
 
     <!-- Trip Photos Gallery Component -->
-    <TripPhotoGallery email={email} tripID={tripID ?? "unknown_trip"} />
+    <TripPhotoGallery uid={uid} tripID={tripID ?? "unknown_trip"} />
 
     <hr class="w-9/10 mx-auto my-4 border-neutral-200 dark:border-neutral-800" />
 
     <!-- Trip Journal Section -->
     <TripJournalHeader />
-    <TripJournalForm email={email} tripID={tripID} />
-    <TripJournalList email={email} tripID={tripID} />
+    <TripJournalForm uid={uid} tripID={tripID} />
+    <TripJournalList uid={uid} tripID={tripID} />
 </BaseLayout>
 
 <script>
@@ -105,15 +108,15 @@ import { formatDate } from "@/utils/formatDate";
     import { doc, getDoc, setDoc } from "firebase/firestore";
 
     const deleteBtn = document.getElementById("delete-trip-btn");
-    const email = deleteBtn?.dataset.email;
+    const uid = deleteBtn?.dataset.uid;
     const tripID = deleteBtn?.dataset.id;
 
     deleteBtn?.addEventListener("click", async () => {
-        if (!email || !tripID) return;
+        if (!uid || !tripID) return;
         if (confirm("¿Estás seguro de que deseas eliminar este viaje por completo? Se borrarán todas sus fotos y entradas del diario.")) {
             deleteBtn.setAttribute("disabled", "true");
             try {
-                await deleteEntireTrip(email, tripID);
+                await deleteEntireTrip(uid, tripID);
                 window.location.href = "/authenticated/trips";
             } catch (err) {
                 console.error("Error al eliminar el viaje:", err);
@@ -135,7 +138,7 @@ import { formatDate } from "@/utils/formatDate";
     changeCoverBtn?.addEventListener("click", () => coverFileInput?.click());
 
     coverFileInput?.addEventListener("change", async () => {
-        if (!coverFileInput.files?.[0] || !email || !tripID) return;
+        if (!coverFileInput.files?.[0] || !uid || !tripID) return;
         const rawFile = coverFileInput.files[0];
 
         try {
@@ -144,11 +147,11 @@ import { formatDate } from "@/utils/formatDate";
             
             if (changeCoverText) changeCoverText.textContent = "Subiendo...";
             
-            const tripDocRef = doc(db, "users", email, "trips", tripID);
+            const tripDocRef = doc(db, "users", uid, "trips", tripID);
             const tripSnap = await getDoc(tripDocRef);
             const oldCoverStoragePath = tripSnap.exists() ? tripSnap.data()?.coverStoragePath : undefined;
 
-            const coverResult = await uploadTripCover(email, tripID, compressed.file, oldCoverStoragePath);
+            const coverResult = await uploadTripCover(uid, tripID, compressed.file, oldCoverStoragePath);
             await setDoc(tripDocRef, {
                 coverUrl: coverResult.url,
                 coverStoragePath: coverResult.storagePath,
