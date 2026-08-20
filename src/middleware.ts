@@ -15,7 +15,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     if (sessionCookie) {
         try {
-            const decodedClaims = await getAdminAuth().verifySessionCookie(sessionCookie, true);
+            const adminAuth = await getAdminAuth();
+            const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
             user = {
                 email: decodedClaims.email ?? null,
                 uid: decodedClaims.uid,

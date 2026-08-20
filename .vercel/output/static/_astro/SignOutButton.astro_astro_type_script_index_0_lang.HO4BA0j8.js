@@ -1,0 +1,1 @@
+import{p as o}from"./config.3yrMbHhZ.js";const e=document.querySelector("#logout-button");e.addEventListener("click",async t=>{t.preventDefault(),await o.signOut(),await fetch("/api/session",{method:"DELETE"}),window.location.href="/"});

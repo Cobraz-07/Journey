@@ -12,7 +12,8 @@ const email = Astro.locals.userEmail;
 if (!email) return Astro.redirect("/register");
 
 const { tripID } = Astro.params;
-const tripSnap = await getAdminDb()
+const adminDb = await getAdminDb();
+const tripSnap = await adminDb
     .collection("users")
     .doc(email)
     .collection("trips")

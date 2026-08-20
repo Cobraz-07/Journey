@@ -1,5 +1,5 @@
 import { d as defineMiddleware, s as sequence } from './chunks/index_DdsliIQq.mjs';
-import { g as getAdminAuth } from './chunks/server_BKb5tyQR.mjs';
+import { g as getAdminAuth } from './chunks/server_DzZAxVwU.mjs';
 import 'es-module-lexer';
 import './chunks/astro-designed-error-pages_CnhSHa__.mjs';
 import 'kleur/colors';

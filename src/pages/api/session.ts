@@ -9,10 +9,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     try {
         // Verify the ID token first
-        await getAdminAuth().verifyIdToken(idToken);
+        const adminAuth = await getAdminAuth();
+        await adminAuth.verifyIdToken(idToken);
 
         // Create a session cookie
-        const sessionCookie = await getAdminAuth().createSessionCookie(idToken, {
+        const sessionCookie = await adminAuth.createSessionCookie(idToken, {
             expiresIn: FIVE_DAYS_MS,
         });
 

@@ -1,23 +1,24 @@
-import { initializeApp, cert, getApps, type App } from "firebase-admin/app";
-import { getAuth, type Auth } from "firebase-admin/auth";
-import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import type { App } from "firebase-admin/app";
+import type { Auth } from "firebase-admin/auth";
+import type { Firestore } from "firebase-admin/firestore";
 
 let _app: App | undefined;
 let _auth: Auth | undefined;
 let _db: Firestore | undefined;
 
-function getApp(): App {
+async function getApp(): Promise<App> {
     if (!_app) {
+        // Dynamically import to prevent Vercel top-level module resolution issues
+        const { initializeApp, cert, getApps } = await import("firebase-admin/app");
         const activeApps = getApps();
+
         if (activeApps.length === 0) {
             try {
                 let privateKey = process.env.FIREBASE_PRIVATE_KEY;
                 if (privateKey) {
-                    // Remove surrounding quotes if they exist (Vercel sometimes passes them)
                     if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
                         privateKey = privateKey.slice(1, -1);
                     }
-                    // Replace literal escaped newlines with actual newlines
                     privateKey = privateKey.replace(/\\n/g, "\n");
                 }
 
@@ -39,16 +40,18 @@ function getApp(): App {
     return _app;
 }
 
-export function getAdminAuth(): Auth {
+export async function getAdminAuth(): Promise<Auth> {
     if (!_auth) {
-        _auth = getAuth(getApp());
+        const { getAuth } = await import("firebase-admin/auth");
+        _auth = getAuth(await getApp());
     }
     return _auth;
 }
 
-export function getAdminDb(): Firestore {
+export async function getAdminDb(): Promise<Firestore> {
     if (!_db) {
-        _db = getFirestore(getApp());
+        const { getFirestore } = await import("firebase-admin/firestore");
+        _db = getFirestore(await getApp());
     }
     return _db;
 }

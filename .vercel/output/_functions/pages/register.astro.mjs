@@ -1,7 +1,7 @@
 import { e as createComponent, m as maybeRenderHead, k as renderComponent, l as renderScript, r as renderTemplate } from '../chunks/astro/server_BJAPvbWO.mjs';
 import 'kleur/colors';
-import { a as $$Button, b as $$BaseLayout, c as $$TitleSimple } from '../chunks/Button_BHopYc5W.mjs';
-import { $ as $$BackBTN } from '../chunks/BackBTN_DcBTNL1O.mjs';
+import { a as $$Button, b as $$BaseLayout, c as $$TitleSimple } from '../chunks/Button_DLkSxqWC.mjs';
+import { $ as $$BackBTN } from '../chunks/BackBTN_CJth6bM7.mjs';
 import { $ as $$Label, a as $$BackLink } from '../chunks/BackLink_DzbeztwT.mjs';
 import { $ as $$Input } from '../chunks/Input_DZy9T-Ad.mjs';
 export { renderers } from '../renderers.mjs';

@@ -1,4 +1,4 @@
-import{d as l,b as d,f as p,g as u}from"./config.BW1lg-O3.js";const r=document.getElementById("trip-list"),f=r.dataset.message,h=l(d,"users",f??"unknown_user"),m=p(h,"trips");async function x(){const a=await u(m);if(a.empty){r.innerHTML=`
+import{d as l,b as d,f as p,g as u}from"./config.3yrMbHhZ.js";const r=document.getElementById("trip-list"),f=r.dataset.message,h=l(d,"users",f??"unknown_user"),m=p(h,"trips");async function x(){const a=await u(m);if(a.empty){r.innerHTML=`
                 <div class="flex flex-col items-center justify-center w-full h-60">
                     <h3 class="text-xl font-semibold text-center text-[var(--lt-text-color)]">No trips added yet</h3>
                     <p class="text-center text-[var(--lt-text-color)]">Start by adding a new trip to plan your next adventure!</p>

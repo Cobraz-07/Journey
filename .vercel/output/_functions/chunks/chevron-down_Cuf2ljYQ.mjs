@@ -1,6 +1,6 @@
 import { e as createComponent, f as createAstro, m as maybeRenderHead, h as addAttribute, k as renderComponent, r as renderTemplate } from './astro/server_BJAPvbWO.mjs';
 import 'kleur/colors';
-import { $ as $$Icon } from './Button_BHopYc5W.mjs';
+import { $ as $$Icon } from './Button_DLkSxqWC.mjs';
 import { c as createSvgComponent } from './runtime_Nslmv-Fb.mjs';
 
 const $$Astro = createAstro();
