@@ -104,21 +104,25 @@ const formatDate = (dateString: string | undefined) => {
 </BaseLayout>
 
 <script>
-    import { db } from "@/firebase/config";
-    import { doc, deleteDoc } from "firebase/firestore";
     import { compressImageToWebP } from "@/utils/imageCompressor";
-    import { uploadTripCover } from "@/firebase/storageService";
+    import { uploadTripCover, deleteEntireTrip } from "@/firebase/storageService";
 
     const deleteBtn = document.getElementById("delete-trip-btn");
     const email = deleteBtn?.dataset.email;
     const tripID = deleteBtn?.dataset.id;
-    const userDocRef = doc(db, "users", email ?? "unknown_user");
-    const tripDocRef = doc(userDocRef, "trips", tripID ?? "unknown_trip");
 
     deleteBtn?.addEventListener("click", async () => {
-        if (confirm("¿Estás seguro de que deseas eliminar este viaje por completo?")) {
-            await deleteDoc(tripDocRef);
-            window.location.href = "/authenticated/trips";
+        if (!email || !tripID) return;
+        if (confirm("¿Estás seguro de que deseas eliminar este viaje por completo? Se borrarán todas sus fotos y entradas del diario.")) {
+            deleteBtn.setAttribute("disabled", "true");
+            try {
+                await deleteEntireTrip(email, tripID);
+                window.location.href = "/authenticated/trips";
+            } catch (err) {
+                console.error("Error al eliminar el viaje:", err);
+                alert("Error al eliminar el viaje.");
+                deleteBtn.removeAttribute("disabled");
+            }
         }
     });
 

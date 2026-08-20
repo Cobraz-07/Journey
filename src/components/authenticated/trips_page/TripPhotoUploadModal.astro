@@ -254,6 +254,16 @@ const { email, tripID } = Astro.props;
         renderBatchPreviews();
     });
 
+    function closeUploadModal() {
+        const closeBtn = document.querySelector("#trip-photo-upload-dialog .starwind-dialog-close, #trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
+        if (closeBtn) {
+            closeBtn.click();
+        } else {
+            const d = document.querySelector("#trip-photo-upload-dialog dialog") as HTMLDialogElement;
+            d?.close();
+        }
+    }
+
     batchSubmitBtn?.addEventListener("click", async () => {
         if (!selectedBatchFiles.length || !email || !tripId) return;
 
@@ -284,18 +294,12 @@ const { email, tripID } = Astro.props;
             renderBatchPreviews();
             batchProgressWrapper.classList.add("hidden");
             batchSubmitBtn.disabled = false;
-            // Close dialog
-            modalDialog?.querySelector("button[type=button]")?.click(); // Starwind close trigger
-            const closeBtn = document.querySelector("#trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
-            closeBtn?.click();
+            closeUploadModal();
             window.dispatchEvent(new CustomEvent("trip-photos:updated"));
-        }, 500);
+        }, 400);
     });
 
-    batchCancelBtn?.addEventListener("click", () => {
-        const closeBtn = document.querySelector("#trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
-        closeBtn?.click();
-    });
+    batchCancelBtn?.addEventListener("click", closeUploadModal);
 
     // --- SINGLE PHOTO STATE & LOGIC ---
     let singleCompressedResult: CompressedImageResult | null = null;
@@ -319,10 +323,30 @@ const { email, tripID } = Astro.props;
         singleFileInput?.click();
     });
 
+    singleDropzone?.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        singleDropzone.classList.add("bg-[#aadba3]/20");
+    });
+    singleDropzone?.addEventListener("dragleave", () => {
+        singleDropzone.classList.remove("bg-[#aadba3]/20");
+    });
+    singleDropzone?.addEventListener("drop", async (e) => {
+        e.preventDefault();
+        singleDropzone.classList.remove("bg-[#aadba3]/20");
+        if (e.dataTransfer?.files?.[0]) {
+            const file = e.dataTransfer.files[0];
+            if (file.type.startsWith("image/")) {
+                await processSingleFile(file);
+            }
+        }
+    });
+
     singleFileInput?.addEventListener("change", async () => {
         if (!singleFileInput.files?.[0]) return;
-        const file = singleFileInput.files[0];
+        await processSingleFile(singleFileInput.files[0]);
+    });
 
+    async function processSingleFile(file: File) {
         try {
             singleCompressedResult = await compressImageToWebP(file);
             singlePreviewImg.src = singleCompressedResult.previewUrl;
@@ -334,7 +358,7 @@ const { email, tripID } = Astro.props;
         } catch (err: any) {
             alert(err.message || "Error al procesar la imagen.");
         }
-    });
+    }
 
     singleRemoveFileBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -364,8 +388,7 @@ const { email, tripID } = Astro.props;
             singleProgressWrapper.classList.add("hidden");
             singleSubmitBtn.disabled = false;
 
-            const closeBtn = document.querySelector("#trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
-            closeBtn?.click();
+            closeUploadModal();
             window.dispatchEvent(new CustomEvent("trip-photos:updated"));
         } catch (err) {
             console.error("Error al subir foto:", err);
@@ -375,8 +398,5 @@ const { email, tripID } = Astro.props;
         }
     });
 
-    singleCancelBtn?.addEventListener("click", () => {
-        const closeBtn = document.querySelector("#trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
-        closeBtn?.click();
-    });
+    singleCancelBtn?.addEventListener("click", closeUploadModal);
 </script>

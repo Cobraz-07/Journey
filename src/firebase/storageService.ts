@@ -1,14 +1,11 @@
 import { projectStorage, db } from "@/firebase/config";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject, listAll } from "firebase/storage";
 import {
     collection,
     doc,
     setDoc,
     deleteDoc,
     getDocs,
-    updateDoc,
-    query,
-    orderBy,
 } from "firebase/firestore";
 
 export interface TripPhoto {
@@ -60,13 +57,21 @@ export async function uploadTripPhoto(
  */
 export async function getTripPhotos(email: string, tripId: string): Promise<TripPhoto[]> {
     const photosColRef = collection(db, "users", email, "trips", tripId, "photos");
-    const q = query(photosColRef, orderBy("createdAt", "desc"));
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(photosColRef);
 
-    return snapshot.docs.map((docSnap) => ({
+    const photos = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...(docSnap.data() as Omit<TripPhoto, "id">),
     }));
+
+    // Sort in memory to avoid Firestore requiring index
+    photos.sort((a, b) => {
+        const dateA = a.createdAt || "";
+        const dateB = b.createdAt || "";
+        return dateB.localeCompare(dateA);
+    });
+
+    return photos;
 }
 
 /**
@@ -91,6 +96,58 @@ export async function deleteTripPhoto(
             console.warn("Could not delete file from Storage (might already be deleted):", storageError);
         }
     }
+}
+
+/**
+ * Recursively deletes all files in a Firebase Storage directory.
+ */
+export async function deleteStorageFolder(folderPath: string): Promise<void> {
+    try {
+        const folderRef = ref(projectStorage, folderPath);
+        const res = await listAll(folderRef);
+
+        // Delete all files in current folder
+        const deletePromises = res.items.map((itemRef) => deleteObject(itemRef));
+        await Promise.all(deletePromises);
+
+        // Recursively delete subfolders
+        const subfolderPromises = res.prefixes.map((prefixRef) =>
+            deleteStorageFolder(prefixRef.fullPath)
+        );
+        await Promise.all(subfolderPromises);
+    } catch (err) {
+        console.warn(`Could not delete storage folder ${folderPath}:`, err);
+    }
+}
+
+/**
+ * Deletes a trip and all its photos, journals and files from Firestore and Storage.
+ */
+export async function deleteEntireTrip(email: string, tripId: string): Promise<void> {
+    // 1. Delete all photo documents in Firestore
+    try {
+        const photosColRef = collection(db, "users", email, "trips", tripId, "photos");
+        const photosSnap = await getDocs(photosColRef);
+        await Promise.all(photosSnap.docs.map((docSnap) => deleteDoc(docSnap.ref)));
+    } catch (err) {
+        console.warn("Error deleting trip photos docs:", err);
+    }
+
+    // 2. Delete all journal documents in Firestore
+    try {
+        const journalColRef = collection(db, "users", email, "trips", tripId, "journal");
+        const journalSnap = await getDocs(journalColRef);
+        await Promise.all(journalSnap.docs.map((docSnap) => deleteDoc(docSnap.ref)));
+    } catch (err) {
+        console.warn("Error deleting trip journal docs:", err);
+    }
+
+    // 3. Delete the trip folder from Firebase Storage
+    await deleteStorageFolder(`users/${email}/trips/${tripId}`);
+
+    // 4. Delete the trip document itself in Firestore
+    const tripDocRef = doc(db, "users", email, "trips", tripId);
+    await deleteDoc(tripDocRef);
 }
 
 /**
