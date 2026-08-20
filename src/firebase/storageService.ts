@@ -19,6 +19,22 @@ export interface TripPhoto {
 }
 
 /**
+ * Extracts the storage path from a standard Firebase Storage download URL.
+ */
+export function getStoragePathFromUrl(url?: string | null): string | undefined {
+    if (!url) return undefined;
+    try {
+        const matches = url.match(/\/o\/(.+?)\?/);
+        if (matches && matches[1]) {
+            return decodeURIComponent(matches[1]);
+        }
+    } catch {
+        // Fallback or invalid URL
+    }
+    return undefined;
+}
+
+/**
  * Uploads a photo to a trip's gallery, saving the file in Storage and metadata in Firestore.
  */
 export async function uploadTripPhoto(
@@ -82,16 +98,19 @@ export async function deleteTripPhoto(
     email: string,
     tripId: string,
     photoId: string,
-    storagePath?: string
+    storagePath?: string,
+    photoUrl?: string
 ): Promise<void> {
     // Delete from Firestore
     const photoDocRef = doc(db, "users", email, "trips", tripId, "photos", photoId);
     await deleteDoc(photoDocRef);
 
-    // Delete from Storage if path is provided
-    if (storagePath) {
+    const targetPath = storagePath || getStoragePathFromUrl(photoUrl);
+
+    // Delete from Storage if path is resolved
+    if (targetPath) {
         try {
-            const storageRef = ref(projectStorage, storagePath);
+            const storageRef = ref(projectStorage, targetPath);
             await deleteObject(storageRef);
         } catch (storageError) {
             console.warn("Could not delete file from Storage (might already be deleted):", storageError);
@@ -106,14 +125,17 @@ export async function deleteJournalEntry(
     email: string,
     tripId: string,
     journalId: string,
-    storagePath?: string
+    storagePath?: string,
+    imageUrl?: string
 ): Promise<void> {
     const journalDocRef = doc(db, "users", email, "trips", tripId, "journal", journalId);
     await deleteDoc(journalDocRef);
 
-    if (storagePath) {
+    const targetPath = storagePath || getStoragePathFromUrl(imageUrl);
+
+    if (targetPath) {
         try {
-            const storageRef = ref(projectStorage, storagePath);
+            const storageRef = ref(projectStorage, targetPath);
             await deleteObject(storageRef);
         } catch (storageError) {
             console.warn("Could not delete journal image from Storage:", storageError);

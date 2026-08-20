@@ -36,9 +36,10 @@ const { tripID, email } = Astro.props;
         if (deleteButton && email && tripId) {
             const journalId = deleteButton.dataset.deleteJournal;
             const storagePath = deleteButton.dataset.deleteStoragePath;
+            const imageUrl = deleteButton.dataset.deleteImageUrl;
             if (journalId) {
                 try {
-                    await deleteJournalEntry(email, tripId, journalId, storagePath);
+                    await deleteJournalEntry(email, tripId, journalId, storagePath, imageUrl);
                     // Re-render journals instead of full page reload
                     renderJournals();
                 } catch (error) {
@@ -91,7 +92,7 @@ const { tripID, email } = Astro.props;
                             <h4 class="font-bold text-base text-[var(--text-color)]">${safeTitle}</h4>
                             <p class="text-xs text-[var(--lt-text-color)] font-medium mt-0.5">${formatDate(journalData?.date)}</p>
                         </div>
-                        <button data-delete-journal="${escapeHtml(journal.id)}" data-delete-storage-path="${safeStoragePath}" class="p-1.5 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" title="Delete Journal">
+                        <button data-delete-journal="${escapeHtml(journal.id)}" data-delete-storage-path="${safeStoragePath}" data-delete-image-url="${safeImageUrl}" class="p-1.5 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" title="Delete Journal">
                             <img src="/delete.svg" class="w-4.5 h-4.5" />
                         </button>
                     </div>

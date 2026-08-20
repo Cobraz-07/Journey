@@ -1,6 +1,5 @@
 ---
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/starwind/dialog";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from "@/components/starwind/select";
 import { Input } from "@/components/starwind/input";
 import { Button } from "@/components/starwind/button";
 import { Textarea } from "@/components/starwind/textarea";
@@ -39,18 +38,74 @@ const { email } = Astro.props;
                 <Input name="trip start date" id="trip-start-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
                 <Input name="trip end date" id="trip-end-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
             </div>
-            <Select name="country" class="w-full">
-                <SelectTrigger class="w-full rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required>
-                    <SelectValue id="trip-country" placeholder="Selecciona un país" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectGroup>
+
+            <!-- Country Selector with Real-time Search -->
+            <div class="relative flex flex-col gap-1 w-full" id="country-combobox">
+                <p class="text-xs font-semibold text-[#6e826b]">País de destino</p>
+                
+                <!-- Trigger button -->
+                <button
+                    type="button"
+                    id="country-combobox-trigger"
+                    class="w-full flex items-center justify-between rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB] border border-transparent focus:border-[#aadba3] transition-all cursor-pointer text-left select-none"
+                    aria-expanded="false"
+                >
+                    <div class="flex items-center gap-2.5 truncate">
+                        <img id="country-selected-flag" src="" class="w-5 h-3.5 rounded-xs object-cover shadow-xs hidden" alt="" />
+                        <span id="country-selected-name" class="text-[#63875E] font-medium truncate">Selecciona un país</span>
+                    </div>
+                    <svg class="w-4 h-4 text-[#63875E] shrink-0 transition-transform duration-200" id="country-combobox-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <!-- Hidden inputs for validation & data -->
+                <input type="hidden" id="trip-country-name" name="country" required />
+                <input type="hidden" id="trip-country-code" name="countryCode" required />
+
+                <!-- Dropdown menu -->
+                <div
+                    id="country-combobox-dropdown"
+                    class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-64"
+                >
+                    <!-- Search Input Box -->
+                    <div class="p-2 border-b border-neutral-100 dark:border-neutral-800 sticky top-0 bg-white dark:bg-neutral-900 z-10">
+                        <div class="relative flex items-center">
+                            <svg class="w-4 h-4 text-[#63875E] absolute left-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input
+                                type="text"
+                                id="country-search-input"
+                                placeholder="Escribe para buscar país..."
+                                autocomplete="off"
+                                class="w-full bg-[#EBF0EB] text-[#63875E] placeholder:text-[#63875E]/60 text-sm rounded-lg pl-9 pr-3 py-2 outline-none border border-transparent focus:border-[#63875e]/40 transition-colors"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Filtered List Items -->
+                    <div id="country-options-list" class="overflow-y-auto flex-1 divide-y divide-neutral-50 dark:divide-neutral-800/40">
                         {countries.map((c) => (
-                            <SelectItem value={c.code}>{c.name}</SelectItem>
+                            <button
+                                type="button"
+                                data-country-code={c.code}
+                                data-country-name={c.name}
+                                class="country-option-item w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-neutral-800 dark:text-neutral-200 hover:bg-[#EBF0EB] dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                            >
+                                <img src={`https://flagcdn.com/${c.code}.svg`} class="w-4.5 h-3 rounded-xs object-cover shadow-xs shrink-0" alt="" loading="lazy" />
+                                <span class="truncate font-medium">{c.name}</span>
+                            </button>
                         ))}
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div id="country-empty-state" class="hidden p-4 text-center text-xs text-neutral-400">
+                        No se encontró ningún país
+                    </div>
+                </div>
+            </div>
+
             <DialogFooter class="mt-auto">
                 <Button type="submit" variant="Form">Create Trip</Button>
             </DialogFooter>
@@ -70,9 +125,90 @@ const { email } = Astro.props;
     const formDescription = document.getElementById("trip-description") as HTMLTextAreaElement;
     const formStartDate = document.getElementById("trip-start-date") as HTMLInputElement;
     const formEndDate = document.getElementById("trip-end-date") as HTMLInputElement;
-    const formCountry = document.getElementById("trip-country") as HTMLInputElement;
     const email = tripForm.dataset.message;
     const userDocRef = doc(db, "users", email ?? "unknown_user");
+
+    // Country Combobox with Search
+    const comboboxTrigger = document.getElementById("country-combobox-trigger") as HTMLButtonElement;
+    const comboboxDropdown = document.getElementById("country-combobox-dropdown") as HTMLDivElement;
+    const comboboxArrow = document.getElementById("country-combobox-arrow") as HTMLElement;
+    const searchInput = document.getElementById("country-search-input") as HTMLInputElement;
+    const selectedFlag = document.getElementById("country-selected-flag") as HTMLImageElement;
+    const selectedName = document.getElementById("country-selected-name") as HTMLElement;
+    const countryNameInput = document.getElementById("trip-country-name") as HTMLInputElement;
+    const countryCodeInput = document.getElementById("trip-country-code") as HTMLInputElement;
+    const optionsList = document.getElementById("country-options-list") as HTMLDivElement;
+    const emptyState = document.getElementById("country-empty-state") as HTMLDivElement;
+    const optionItems = optionsList.querySelectorAll(".country-option-item") as NodeListOf<HTMLButtonElement>;
+
+    let isComboboxOpen = false;
+
+    function openCombobox() {
+        isComboboxOpen = true;
+        comboboxDropdown.classList.remove("hidden");
+        comboboxArrow.classList.add("rotate-180");
+        searchInput.value = "";
+        filterCountryOptions("");
+        setTimeout(() => searchInput.focus(), 60);
+    }
+
+    function closeCombobox() {
+        isComboboxOpen = false;
+        comboboxDropdown.classList.add("hidden");
+        comboboxArrow.classList.remove("rotate-180");
+    }
+
+    function filterCountryOptions(query: string) {
+        const normalized = query.toLowerCase().trim();
+        let visibleCount = 0;
+
+        optionItems.forEach((item) => {
+            const name = (item.dataset.countryName || "").toLowerCase();
+            const code = (item.dataset.countryCode || "").toLowerCase();
+            const matches = name.includes(normalized) || code.includes(normalized);
+
+            item.classList.toggle("hidden", !matches);
+            if (matches) visibleCount++;
+        });
+
+        emptyState.classList.toggle("hidden", visibleCount > 0);
+    }
+
+    comboboxTrigger?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (isComboboxOpen) closeCombobox();
+        else openCombobox();
+    });
+
+    searchInput?.addEventListener("input", (e) => {
+        filterCountryOptions((e.target as HTMLInputElement).value);
+    });
+
+    searchInput?.addEventListener("click", (e) => e.stopPropagation());
+
+    optionsList?.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        const option = target.closest(".country-option-item") as HTMLButtonElement;
+        if (option) {
+            const code = option.dataset.countryCode || "";
+            const name = option.dataset.countryName || "";
+
+            countryCodeInput.value = code;
+            countryNameInput.value = name;
+
+            selectedName.textContent = name;
+            selectedFlag.src = `https://flagcdn.com/${code}.svg`;
+            selectedFlag.classList.remove("hidden");
+
+            closeCombobox();
+        }
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!document.getElementById("country-combobox")?.contains(e.target as Node)) {
+            closeCombobox();
+        }
+    });
 
     // Cover Photo Elements
     const coverDropzone = document.getElementById("trip-cover-dropzone") as HTMLDivElement;
@@ -84,7 +220,6 @@ const { email } = Astro.props;
     const removeCoverBtn = document.getElementById("trip-cover-remove-btn") as HTMLButtonElement;
 
     let tripCoverCompressed: CompressedImageResult | null = null;
-    let countryCode = "";
 
     coverInput?.addEventListener("click", (e) => e.stopPropagation());
 
@@ -116,14 +251,14 @@ const { email } = Astro.props;
         coverPlaceholder.classList.remove("hidden");
     });
 
-    document.querySelector(".starwind-select")?.addEventListener("starwind-select:change", (event) => {
-        const customEvent = event as CustomEvent;
-        countryCode = customEvent.detail.value;
-    });
-
     tripForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         if (!email) return;
+
+        if (!countryCodeInput.value || !countryNameInput.value) {
+            showToast("Por favor, selecciona un país.", "error");
+            return;
+        }
 
         const submitBtn = tripForm.querySelector("button[type=submit]") as HTMLButtonElement;
         if (submitBtn) {
@@ -151,8 +286,8 @@ const { email } = Astro.props;
                 description: formDescription.value,
                 startDate: formStartDate.value,
                 endDate: formEndDate.value,
-                country: formCountry.textContent,
-                countryCode: countryCode,
+                country: countryNameInput.value,
+                countryCode: countryCodeInput.value,
                 coverUrl: coverUrl || null,
                 coverStoragePath: coverStoragePath || null,
                 createdAt: new Date().toISOString(),
