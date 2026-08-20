@@ -1,1 +1,0 @@
-import{d as e,a as n,b as s}from"./config.3yrMbHhZ.js";const t=document.getElementById("delete-trip-btn"),a=t?.dataset.email,o=t?.dataset.id,i=e(s,"users",a??"unknown_user"),c=e(i,"trips",o??"unknown_trip");t?.addEventListener("click",async()=>{await n(c),window.location.href="/authenticated/trips"});
