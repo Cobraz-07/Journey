@@ -67,7 +67,7 @@ import { Button } from "@/components/starwind/button";
                 body: JSON.stringify({ idToken }),
             });
 
-            window.location.href = "/authenticated/";
+            window.location.href = "/authenticated/trips";
         } catch (error: any) {
             if (error.code === "auth/invalid-credential") {
                 alert("Your email or password is incorrect, try again.");

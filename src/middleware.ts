@@ -34,7 +34,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // Redirect authenticated users away from public auth pages
     if (user && (pathname === "/signin" || pathname === "/register" || pathname === "/")) {
-        return context.redirect("/authenticated/");
+        return context.redirect("/authenticated/trips");
     }
 
     // Set verified user info in locals
