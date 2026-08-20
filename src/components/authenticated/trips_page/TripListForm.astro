@@ -114,7 +114,7 @@ const { uid } = Astro.props;
 </Dialog>
 
 <script>
-    import { db } from "@/firebase/config";
+    import { db, projectAuth } from "@/firebase/config";
     import { collection, doc, setDoc } from "firebase/firestore";
     import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
     import { uploadTripCover } from "@/firebase/storageService";
@@ -267,6 +267,7 @@ const { uid } = Astro.props;
         }
 
         try {
+            await projectAuth.authStateReady();
             // Generate robust auto-ID for new trip document
             const newTripDocRef = doc(collection(userDocRef, "trips"));
             const tripId = newTripDocRef.id;

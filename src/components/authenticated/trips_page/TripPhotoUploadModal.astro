@@ -127,6 +127,7 @@ const { uid, tripID } = Astro.props;
 </Dialog>
 
 <script>
+    import { projectAuth } from "@/firebase/config";
     import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
     import { uploadTripPhoto } from "@/firebase/storageService";
     import { showToast } from "@/utils/toast";
@@ -277,6 +278,7 @@ const { uid, tripID } = Astro.props;
     batchSubmitBtn?.addEventListener("click", async () => {
         if (!selectedBatchFiles.length || !uid || !tripId) return;
 
+        await projectAuth.authStateReady();
         batchSubmitBtn.disabled = true;
         batchProgressWrapper.classList.remove("hidden");
         const total = selectedBatchFiles.length;
@@ -400,6 +402,7 @@ const { uid, tripID } = Astro.props;
         singleProgressWrapper.classList.remove("hidden");
 
         try {
+            await projectAuth.authStateReady();
             const caption = singleCaptionInput?.value || "";
             await uploadTripPhoto(uid, tripId, singleCompressedResult.file, caption);
             

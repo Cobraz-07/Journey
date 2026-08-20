@@ -53,7 +53,7 @@ const { uid, tripID } = Astro.props;
 </Dialog>
 
 <script>
-    import { db } from "@/firebase/config";
+    import { db, projectAuth } from "@/firebase/config";
     import { collection, doc, setDoc } from "firebase/firestore";
     import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
     import { uploadJournalImage } from "@/firebase/storageService";
@@ -119,6 +119,7 @@ const { uid, tripID } = Astro.props;
         progressWrapper.classList.remove("hidden");
 
         try {
+            await projectAuth.authStateReady();
             const tripDocRef = doc(collection(userDocRef, "trips"), `${tripID}`);
             const journalCollectionRef = collection(tripDocRef, "journal");
             const newJournalDocRef = doc(journalCollectionRef);
