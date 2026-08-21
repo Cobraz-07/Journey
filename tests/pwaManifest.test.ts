@@ -13,6 +13,7 @@ describe("PWA Manifest & Assets Validation", () => {
         const manifest = JSON.parse(manifestRaw);
 
         expect(manifest.name).toBeDefined();
+        expect(manifest.id).toBe("/");
         expect(manifest.short_name).toBe("Journey");
         expect(manifest.display).toBe("standalone");
         expect(manifest.start_url).toBe("/");
@@ -20,6 +21,8 @@ describe("PWA Manifest & Assets Validation", () => {
         expect(manifest.theme_color).toBe("#f2f0eb");
         expect(Array.isArray(manifest.icons)).toBe(true);
         expect(manifest.icons.length).toBeGreaterThanOrEqual(4);
+        expect(Array.isArray(manifest.screenshots)).toBe(true);
+        expect(manifest.screenshots.length).toBeGreaterThanOrEqual(2);
     });
 
     it("should verify that all icons referenced in manifest.json physically exist", () => {
