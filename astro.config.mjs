@@ -8,7 +8,11 @@ export default defineConfig({
   output: "server",
   compressHTML: true,
   integrations: [icon()],
-  adapter: vercel(),
+  adapter: vercel({
+    webAnalytics: {
+      enabled: true,
+    },
+  }),
   vite: {
     plugins: [tailwindcss()],
     build: {
