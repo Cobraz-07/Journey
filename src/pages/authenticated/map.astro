@@ -11,7 +11,7 @@ if (!uid) return Astro.redirect("/signin");
 
 <BaseLayout title="Journey | World Map">
     <TitleSimple title="World Map" />
-    <div class="pb-24">
+    <div class="pb-20 max-w-4xl mx-auto">
         <VisitedCountriesMap uid={uid} />
     </div>
     <AppFooter iconStateMap={toggled} />

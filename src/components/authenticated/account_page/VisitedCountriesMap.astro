@@ -8,57 +8,49 @@ interface Props {
 const { uid } = Astro.props;
 ---
 
-<section class="w-full max-w-4xl mx-auto px-4 mb-8" id="visited-map-section" data-uid={uid}>
-    <!-- Section Header & Stats Dashboard -->
-    <div class="bg-white/70 dark:bg-neutral-900/60 backdrop-blur-md rounded-3xl p-5 md:p-6 border border-neutral-200/70 dark:border-neutral-800 shadow-xs mb-4">
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-5">
-            <div>
-                <h3 class="text-lg font-bold text-[var(--text-color)] flex items-center gap-2">
-                    <span>🗺️</span> Your World Map
-                </h3>
-                <p class="text-xs text-[var(--lt-text-color)]">Countries colored automatically based on your adventures</p>
-            </div>
-        </div>
-
+<section class="w-full mx-auto px-3 sm:px-4" id="visited-map-section" data-uid={uid}>
+    <!-- Main Card Container -->
+    <div class="bg-white/70 dark:bg-neutral-900/60 backdrop-blur-md rounded-2xl sm:rounded-3xl p-3 sm:p-5 border border-neutral-200/70 dark:border-neutral-800 shadow-xs">
+        
         <!-- 5-Metric Traveler Stats Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mb-5">
+        <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2.5 mb-3">
             <!-- 1. World Explored % -->
-            <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl p-3 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center">
-                <span class="text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider">World Explored</span>
-                <span id="stat-world-percent" class="text-lg font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—%</span>
+            <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-xl sm:rounded-2xl py-2 px-1.5 sm:p-2.5 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center">
+                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">World</span>
+                <span id="stat-world-percent" class="text-sm sm:text-base font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—%</span>
             </div>
 
             <!-- 2. Continents Visited -->
-            <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl p-3 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center" title="Visited Continents">
-                <span class="text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider">Continents</span>
-                <span id="stat-continents-count" class="text-lg font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">— / 7</span>
+            <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-xl sm:rounded-2xl py-2 px-1.5 sm:p-2.5 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center" title="Visited Continents">
+                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">Continents</span>
+                <span id="stat-continents-count" class="text-sm sm:text-base font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">— / 7</span>
             </div>
 
             <!-- 3. Total Days Traveled -->
-            <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl p-3 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center">
-                <span class="text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider">Days Traveled</span>
-                <span id="stat-total-days" class="text-lg font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—</span>
+            <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-xl sm:rounded-2xl py-2 px-1.5 sm:p-2.5 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center">
+                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">Days</span>
+                <span id="stat-total-days" class="text-sm sm:text-base font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—</span>
             </div>
 
             <!-- 4. Countries Visited -->
-            <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl p-3 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center">
-                <span class="text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider">Countries</span>
-                <span id="stat-visited-count" class="text-lg font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—</span>
+            <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-xl sm:rounded-2xl py-2 px-1.5 sm:p-2.5 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center">
+                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">Countries</span>
+                <span id="stat-visited-count" class="text-sm sm:text-base font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—</span>
             </div>
 
             <!-- 5. Total Trips -->
-            <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl p-3 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center col-span-2 sm:col-span-1">
-                <span class="text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider">Total Trips</span>
-                <span id="stat-total-trips" class="text-lg font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—</span>
+            <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-xl sm:rounded-2xl py-2 px-1.5 sm:p-2.5 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center col-span-2 sm:col-span-1">
+                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">Trips</span>
+                <span id="stat-total-trips" class="text-sm sm:text-base font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—</span>
             </div>
         </div>
 
         <!-- SVG Map Container -->
-        <div class="relative w-full aspect-[1010/580] bg-[#f4f7f3] dark:bg-[#1a2119] rounded-2xl overflow-hidden border border-[#e0e7df] dark:border-neutral-800 flex items-center justify-center group/map">
+        <div class="relative w-full aspect-[1010/540] max-h-[52vh] bg-[#f4f7f3] dark:bg-[#1a2119] rounded-xl sm:rounded-2xl overflow-hidden border border-[#e0e7df] dark:border-neutral-800 flex items-center justify-center group/map">
             <!-- Loading Skeleton Overlay -->
             <div id="map-loading-overlay" class="absolute inset-0 bg-[#f4f7f3]/80 dark:bg-[#1a2119]/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-10 transition-opacity duration-300">
                 <div class="w-6 h-6 border-2 border-[#63875e] border-t-transparent rounded-full animate-spin"></div>
-                <span class="text-xs text-[#6e826b] font-medium">Loading map and adventures...</span>
+                <span class="text-xs text-[#6e826b] font-medium">Loading adventures...</span>
             </div>
 
             <!-- World SVG -->
@@ -85,12 +77,12 @@ const { uid } = Astro.props;
                 type="button"
                 aria-label="View Map in Landscape"
                 title="View Map in Landscape"
-                class="absolute bottom-3 right-3 z-20 bg-white/90 dark:bg-neutral-800/90 hover:bg-[#63875e] hover:text-white dark:hover:bg-[#63875e] text-[#121712] dark:text-white p-2 sm:px-3 sm:py-2 rounded-xl shadow-md border border-neutral-200/80 dark:border-neutral-700 transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5 text-xs font-semibold backdrop-blur-md cursor-pointer"
+                class="absolute bottom-2.5 right-2.5 z-20 bg-white/90 dark:bg-neutral-800/90 hover:bg-[#63875e] hover:text-white dark:hover:bg-[#63875e] text-[#121712] dark:text-white p-2 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl shadow-md border border-neutral-200/80 dark:border-neutral-700 transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5 text-xs font-semibold backdrop-blur-md cursor-pointer"
             >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                 </svg>
-                <span class="hidden sm:inline">Landscape View</span>
+                <span class="hidden sm:inline text-[11px]">Landscape</span>
             </button>
 
             <!-- Floating Interactive Tooltip -->
@@ -107,9 +99,11 @@ const { uid } = Astro.props;
         </div>
 
         <!-- Visited Countries Chips Section -->
-        <div id="visited-chips-container" class="mt-4 pt-3 border-t border-neutral-200/60 dark:border-neutral-800">
-            <h4 class="text-xs font-bold text-[#6e826b] dark:text-neutral-400 mb-2 uppercase tracking-wider">Discovered Countries</h4>
-            <div id="visited-chips-list" class="flex flex-wrap gap-2">
+        <div id="visited-chips-container" class="mt-2.5 pt-2 border-t border-neutral-200/60 dark:border-neutral-800">
+            <div class="flex items-center justify-between mb-1.5">
+                <h4 class="text-[11px] font-bold text-[#6e826b] dark:text-neutral-400 uppercase tracking-wider">Discovered Destinations</h4>
+            </div>
+            <div id="visited-chips-list" class="flex flex-wrap gap-1.5 max-h-20 sm:max-h-24 overflow-y-auto">
                 <span class="text-xs text-neutral-400 italic">Loading destinations...</span>
             </div>
         </div>
@@ -266,7 +260,7 @@ const { uid } = Astro.props;
                     }
                 }
                 if (statTotalDays) {
-                    statTotalDays.textContent = summary.totalDaysTraveled === 1 ? "1 day" : `${summary.totalDaysTraveled} days`;
+                    statTotalDays.textContent = summary.totalDaysTraveled === 1 ? "1 d" : `${summary.totalDaysTraveled} d`;
                 }
                 if (statVisitedCount) statVisitedCount.textContent = `${summary.visitedCountriesCount}`;
                 if (statTotalTrips) statTotalTrips.textContent = `${summary.totalTripsCount}`;
@@ -298,11 +292,11 @@ const { uid } = Astro.props;
                                 <button
                                     type="button"
                                     data-country-code="${safeCode}"
-                                    class="country-chip group flex items-center gap-2 bg-[#ebf0eb] hover:bg-[#63875e] dark:bg-neutral-800 hover:text-white dark:hover:bg-[#63875e] text-[#121712] dark:text-neutral-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
+                                    class="country-chip group flex items-center gap-1.5 bg-[#ebf0eb] hover:bg-[#63875e] dark:bg-neutral-800 hover:text-white dark:hover:bg-[#63875e] text-[#121712] dark:text-neutral-200 px-2.5 py-1 rounded-full text-xs font-semibold transition-all shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
                                 >
-                                    <img src="https://flagcdn.com/${safeCode}.svg" width="18" height="13" class="rounded-xs object-cover shadow-2xs" alt="${safeCode}" />
+                                    <img src="https://flagcdn.com/${safeCode}.svg" width="16" height="11" class="rounded-xs object-cover shadow-2xs" alt="${safeCode}" />
                                     <span>${safeName}</span>
-                                    <span class="text-[10px] bg-black/10 dark:bg-white/10 group-hover:bg-white/20 px-1.5 py-0.5 rounded-full">${tripsLabel}</span>
+                                    <span class="text-[10px] bg-black/10 dark:bg-white/10 group-hover:bg-white/20 px-1.5 py-0.2 rounded-full">${tripsLabel}</span>
                                 </button>
                             `;
                         }).join("");
