@@ -14,12 +14,17 @@
             </div>
             
             <div class="flex items-center gap-2">
-                <button id="lightbox-delete-btn" class="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors" title="Delete photo">
+                <button id="lightbox-download-btn" class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer" title="Download photo">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                </button>
+                <button id="lightbox-delete-btn" class="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer" title="Delete photo">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                 </button>
-                <button id="lightbox-close-btn" class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Close">
+                <button id="lightbox-close-btn" class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer" title="Close">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -88,6 +93,7 @@
         const nextBtn = document.getElementById("lightbox-next-btn") as HTMLButtonElement;
         const closeBtn = document.getElementById("lightbox-close-btn") as HTMLButtonElement;
         const deleteBtn = document.getElementById("lightbox-delete-btn") as HTMLButtonElement;
+        const downloadBtn = document.getElementById("lightbox-download-btn") as HTMLButtonElement;
 
         function renderCurrentPhoto() {
             if (!state.photos.length || state.currentIndex < 0 || state.currentIndex >= state.photos.length) {
@@ -233,6 +239,44 @@
                     console.error("Error deleting photo:", err);
                     showToast("An error occurred while trying to delete the photo.", "error");
                 }
+            }
+        });
+
+        // Download photo action
+        downloadBtn?.addEventListener("click", async () => {
+            if (!state.photos.length) return;
+            const currentPhoto = state.photos[state.currentIndex];
+            if (!currentPhoto?.url) return;
+
+            try {
+                showToast("Downloading photo...", "info");
+                const response = await fetch(currentPhoto.url);
+                if (!response.ok) throw new Error("Network response was not ok");
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+
+                const link = document.createElement("a");
+                link.href = blobUrl;
+                const safeName = (currentPhoto.caption || "journey_photo")
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9_-]/g, "_")
+                    .replace(/_+/g, "_");
+                link.download = `${safeName || "journey_photo"}.webp`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+            } catch (err) {
+                console.error("Direct fetch download failed, falling back to window.open:", err);
+                const link = document.createElement("a");
+                link.href = currentPhoto.url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.download = "journey_photo.webp";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
         });
 
