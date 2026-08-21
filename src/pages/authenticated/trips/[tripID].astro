@@ -7,6 +7,8 @@ import TripJournalHeader from "@/components/authenticated/trips_page/TripJournal
 import TripJournalForm from "@/components/authenticated/trips_page/TripJournalForm.astro";
 import TripJournalList from "@/components/authenticated/trips_page/TripJournalList.astro";
 import TripPhotoGallery from "@/components/authenticated/trips_page/TripPhotoGallery.astro";
+import TripShareModal from "@/components/authenticated/trips_page/TripShareModal.astro";
+import { DialogTrigger } from "@/components/starwind/dialog";
 import { Icon } from "astro-icon/components";
 import { formatDate } from "@/utils/formatDate";
 
@@ -31,7 +33,10 @@ const tripData = tripSnap.data();
 
 <BaseLayout id="layout" title={`Journey | ${tripData?.title ?? tripID}`}>
     <BackBTN href="/authenticated/trips" />
-    <div class="flex justify-between items-center absolute top-4 right-4 z-20">
+    <div class="flex items-center gap-1.5 absolute top-4 right-4 z-20">
+        <DialogTrigger for="trip-share-dialog" class="p-1.5 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-800 text-[#63875e] transition-colors cursor-pointer" title="Share Trip Showcase">
+            <Icon class="w-6 h-6" name="share" />
+        </DialogTrigger>
         <button data-uid={uid} data-id={tripID} id="delete-trip-btn" class="p-1 rounded-full hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors cursor-pointer" title="Delete Trip"><Icon class="w-7.5 h-7.5 text-red-500" name="delete" /></button>
     </div>
     <TitleSimple title="Trip Details" />
@@ -103,6 +108,9 @@ const tripData = tripSnap.data();
     <TripJournalHeader />
     <TripJournalForm uid={uid} tripID={tripID} />
     <TripJournalList uid={uid} tripID={tripID} />
+
+    <!-- Trip Share Modal -->
+    <TripShareModal uid={uid} tripID={tripID ?? "unknown_trip"} />
 </BaseLayout>
 
 <script>

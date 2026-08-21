@@ -4,6 +4,7 @@ import {
     collection,
     doc,
     setDoc,
+    getDoc,
     deleteDoc,
     getDocs,
     writeBatch,
@@ -299,8 +300,17 @@ export async function deleteEntireTrip(uid: string, tripId: string): Promise<voi
         console.warn("Error queuing trip journal docs for batch delete:", err);
     }
 
-    // 3. Queue the trip document itself in Firestore
+    // 3. Queue the trip document and its public share index if present
     const tripDocRef = doc(db, "users", uid, "trips", tripId);
+    try {
+        const tripSnap = await getDoc(tripDocRef);
+        const shareToken = tripSnap.data()?.shareToken;
+        if (shareToken) {
+            batch.delete(doc(db, "publicTrips", shareToken));
+        }
+    } catch (err) {
+        console.warn("Could not check public share index on trip deletion:", err);
+    }
     batch.delete(tripDocRef);
 
     // 4. Commit all Firestore document deletions atomically in a single request

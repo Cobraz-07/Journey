@@ -127,6 +127,15 @@
                 dateEl.textContent = "";
             }
 
+            // Hide delete button if in read-only / public showcase mode
+            if (deleteBtn) {
+                if (!state.uid || !state.tripId) {
+                    deleteBtn.style.display = "none";
+                } else {
+                    deleteBtn.style.display = "flex";
+                }
+            }
+
             // Hide navigation if only 1 photo
             if (state.photos.length <= 1) {
                 if (prevBtn) prevBtn.style.display = "none";

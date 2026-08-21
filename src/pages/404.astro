@@ -1,0 +1,23 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import TitleSimple from "@/components/global/headers/TitleSimple.astro";
+---
+
+<BaseLayout title="Journey | Page Not Found">
+    <TitleSimple title="Journey" />
+    <main class="w-full max-w-md mx-auto px-6 py-16 flex flex-col items-center text-center gap-4">
+        <div class="w-16 h-16 rounded-full bg-[#ebf0eb] dark:bg-neutral-800 flex items-center justify-center text-3xl mb-2">
+            🧭
+        </div>
+        <h1 class="text-2xl font-extrabold text-[var(--text-color)]">Destination Not Found</h1>
+        <p class="text-sm text-[var(--lt-text-color)] leading-relaxed">
+            This adventure showcase does not exist or its public share link has expired or been revoked by the author.
+        </p>
+        <a
+            href="/"
+            class="mt-4 px-6 py-2.5 rounded-full text-xs font-bold bg-[#63875e] hover:bg-[#52704e] text-white transition-all shadow-sm active:scale-95"
+        >
+            Return to Journey Home
+        </a>
+    </main>
+</BaseLayout>
