@@ -5,6 +5,7 @@ import User from "@/components/authenticated/account_page/User.astro";
 import SettingsAccordion from "@/components/authenticated/account_page/SettingsAccordion.astro";
 import AppFooter from "@/components/global/footers/AppFooter.astro";
 import SignOutButton from "@/components/authenticated/account_page/SignOutButton.astro";
+import InstallPwaButton from "@/components/authenticated/account_page/InstallPwaButton.astro";
 
 const toggled = "bg-[var(--brand-color)]";
 const email = Astro.locals.userEmail;
@@ -15,6 +16,7 @@ if (!uid) return Astro.redirect("/signin");
 <BaseLayout title="Journey | Account">
     <TitleSimple title="Settings" />
     <User email={email} uid={uid} />
+    <InstallPwaButton />
     <SettingsAccordion />
     <SignOutButton />
     <AppFooter iconStateUser={toggled} />

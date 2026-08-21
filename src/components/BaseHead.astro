@@ -3,23 +3,33 @@ const { title } = Astro.props;
 ---
 
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+<!-- Web App Manifest -->
 <link rel="manifest" href="/manifest.json" />
 
 <!-- Basic Meta Tags -->
 <title>{title}</title>
-<meta name="description" content="An app for tracking your past trips, adding pictures and journaling." />
-<meta name="keywords" content="Travel, Tracker, Journal" />
+<meta name="description" content="Tu diario de viajes personal y álbum de fotos en la nube." />
+<meta name="keywords" content="Travel, Tracker, Journal, Trips, Photos" />
 <meta name="author" content="COBRAZ" />
+<meta name="application-name" content="Journey" />
 
-<!-- Favicons -->
-<link rel="icon" href="/icon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/icon.svg" />
-<link rel="android-chrome-192x192" href="/icon.svg" />
-<link rel="android-chrome-512x512" href="/icon.svg" />
+<!-- iOS / Apple Web App Capabilities -->
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Journey" />
 
-<!-- Favicon for IE -->
-<link rel="shortcut icon" href="/icon.svg" type="image/x-icon" />
+<!-- Theme Color for Mobile Browsers (Light & Dark matching app background) -->
+<meta name="theme-color" content="#f2f0eb" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#121712" media="(prefers-color-scheme: dark)" />
+
+<!-- Favicons & Touch Icons -->
+<link rel="icon" href="/icons/favicon-32x32.png" sizes="32x32" type="image/png" />
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+<link rel="shortcut icon" href="/icons/favicon-32x32.png" type="image/png" />
 
 <!-- Canonical URL -->
 <link rel="canonical" href="https://appjourney.vercel.app/" />
@@ -28,13 +38,18 @@ const { title } = Astro.props;
 <meta name="robots" content="index, follow" />
 <meta name="googlebot" content="index, follow" />
 
-<!-- Theme Color for Mobile Browsers -->
-<meta name="theme-color" content="#ffffff" />
-
-<!-- For IE -->
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" />
+
+<!-- Service Worker Registration for PWA Installability -->
+<script is:inline>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        // Silent catch for dev/offline environments
+      });
+    });
+  }
+</script>

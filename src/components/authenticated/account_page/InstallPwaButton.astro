@@ -1,0 +1,94 @@
+---
+import Button from "@/components/starwind/button";
+---
+
+<div id="pwa-install-container" class="hidden flex-col items-center justify-center w-full px-6 mb-6">
+    <div class="w-full max-w-md bg-white/70 dark:bg-neutral-900/60 backdrop-blur-md rounded-2xl p-4 border border-neutral-200/70 dark:border-neutral-800 shadow-xs flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#63875e]/15 flex items-center justify-center text-[#63875e] shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+            </div>
+            <div>
+                <h4 class="text-sm font-bold text-[var(--text-color)]">Instalar Journey</h4>
+                <p class="text-xs text-[var(--lt-text-color)]" id="pwa-install-subtitle">Añadir a la pantalla de inicio</p>
+            </div>
+        </div>
+        <Button id="pwa-install-btn" variant="outline" class="rounded-full text-xs font-semibold px-4 py-1.5 h-auto shrink-0 bg-[#63875e] text-white hover:bg-[#52724d] border-transparent">
+            Instalar
+        </Button>
+    </div>
+</div>
+
+<script>
+    let deferredPrompt: any = null;
+
+    function initPwaInstall() {
+        const container = document.getElementById("pwa-install-container");
+        const installBtn = document.getElementById("pwa-install-btn");
+        const subtitle = document.getElementById("pwa-install-subtitle");
+        if (!container || !installBtn) return;
+        if (container.dataset.bound === "true") return;
+        container.dataset.bound = "true";
+
+        // Check if already running in standalone mode (already installed)
+        const isStandalone = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone === true;
+        if (isStandalone) {
+            container.classList.add("hidden");
+            return;
+        }
+
+        // Check for iOS Safari
+        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        if (isIos) {
+            container.classList.remove("hidden");
+            if (subtitle) subtitle.textContent = "Pulsa Compartir ⎋ y 'Añadir a inicio'";
+            installBtn.textContent = "Instrucciones";
+            installBtn.addEventListener("click", () => {
+                alert("Para instalar Journey en tu iPhone/iPad:\n\n1. Pulsa el botón Compartir (⎋) en la barra de Safari.\n2. Selecciona 'Añadir a la pantalla de inicio' (+).\n3. Pulsa 'Añadir' arriba a la derecha.");
+            });
+            return;
+        }
+
+        // Chromium / Android beforeinstallprompt
+        if (deferredPrompt) {
+            container.classList.remove("hidden");
+        }
+
+        installBtn.addEventListener("click", async () => {
+            if (!deferredPrompt) {
+                alert("Para instalar la app, abre el menú del navegador (⋮) y selecciona 'Instalar aplicación' o 'Añadir a pantalla de inicio'.");
+                return;
+            }
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === "accepted") {
+                container.classList.add("hidden");
+            }
+            deferredPrompt = null;
+        });
+    }
+
+    if (!(window as any).__hasPwaPromptListener) {
+        (window as any).__hasPwaPromptListener = true;
+        window.addEventListener("beforeinstallprompt", (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const container = document.getElementById("pwa-install-container");
+            if (container) {
+                container.classList.remove("hidden");
+            }
+        });
+
+        window.addEventListener("appinstalled", () => {
+            deferredPrompt = null;
+            const container = document.getElementById("pwa-install-container");
+            if (container) {
+                container.classList.add("hidden");
+            }
+        });
+    }
+
+    document.addEventListener("astro:page-load", initPwaInstall);
+</script>
