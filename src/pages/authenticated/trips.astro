@@ -15,6 +15,8 @@ if (!uid) return Astro.redirect("/signin");
     <TitleSimple title="Journey" />
     <TripListHeader />
     <TripListForm uid={uid} />
-    <TripList uid={uid} />
+    <div class="pb-24">
+        <TripList uid={uid} />
+    </div>
     <AppFooter iconStateHome={toggled} />
 </BaseLayout>

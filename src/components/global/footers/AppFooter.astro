@@ -1,13 +1,27 @@
 ---
 import { Icon } from "astro-icon/components";
-const { iconStateUser, iconStateHome } = Astro.props;
+interface Props {
+    iconStateMap?: string;
+    iconStateHome?: string;
+    iconStateUser?: string;
+}
+
+const { iconStateMap = "", iconStateHome = "", iconStateUser = "" } = Astro.props;
 ---
 
-<div class="absolute w-full flex justify-evenly bottom-4 pt-2 border-t-1 border-gray-300">
-    <a aria-label="Home" href="/authenticated/trips" class=`p-1 ${iconStateHome} rounded-lg`>
-        <Icon name="home" class="w-7.5 h-7.5" />
+<nav aria-label="Navegación principal" class="fixed bottom-0 left-0 right-0 z-40 bg-[#f2f0eb]/95 dark:bg-[#121712]/95 backdrop-blur-md border-t border-neutral-200/70 dark:border-neutral-800 py-2.5 px-6 flex justify-around items-center max-w-lg mx-auto md:max-w-2xl rounded-t-2xl shadow-lg">
+    <!-- 1. Mapa -->
+    <a aria-label="Mapa del Mundo" href="/authenticated/map" class={`p-1.5 ${iconStateMap} rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 flex flex-col items-center gap-0.5`}>
+        <Icon name="map" class="w-6.5 h-6.5" />
     </a>
-    <a aria-label="Settings" href="/authenticated/" class=`p-1 ${iconStateUser} rounded-lg`>
-        <Icon name="user" class="w-7.5 h-7.5" />
+
+    <!-- 2. Trips (Viajes) -->
+    <a aria-label="Viajes" href="/authenticated/trips" class={`p-1.5 ${iconStateHome} rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 flex flex-col items-center gap-0.5`}>
+        <Icon name="home" class="w-6.5 h-6.5" />
     </a>
-</div>
+
+    <!-- 3. Perfil / Ajustes -->
+    <a aria-label="Perfil" href="/authenticated/" class={`p-1.5 ${iconStateUser} rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 flex flex-col items-center gap-0.5`}>
+        <Icon name="user" class="w-6.5 h-6.5" />
+    </a>
+</nav>
