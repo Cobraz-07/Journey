@@ -45,7 +45,7 @@ Built with Astro in SSR mode, Tailwind CSS, and Google Firebase for authenticati
 
 - Framework: Astro 5 (SSR with `@astrojs/vercel`)
 - Language: TypeScript
-- Styling: Tailwind CSS v4 with Tailwind Variants
+- UI and Styling: Tailwind CSS v4, Starwind UI, and Tailwind Variants
 - Backend and Auth: Firebase 12 (Client SDK) and Firebase Admin 13
 - Database: Cloud Firestore
 - Storage: Firebase Cloud Storage
