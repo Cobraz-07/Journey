@@ -20,7 +20,7 @@ describe("imageCompressor utilities", () => {
             const fakeFile = new File(["dummy"], "test.pdf", { type: "application/pdf" });
             const result = validateImageFile(fakeFile);
             expect(result.valid).toBe(false);
-            expect(result.error).toContain("no es una imagen válida");
+            expect(result.error).toContain("not a valid image");
         });
 
         it("should accept valid image files within size limits", () => {
@@ -39,7 +39,7 @@ describe("imageCompressor utilities", () => {
             } as File;
             const result = validateImageFile(largeFile, 1);
             expect(result.valid).toBe(false);
-            expect(result.error).toContain("supera el límite");
+            expect(result.error).toContain("exceeds the allowed limit");
         });
     });
 

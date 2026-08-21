@@ -18,14 +18,14 @@ export interface CompressedImageResult {
  */
 export function validateImageFile(file: File, maxMB = 15): { valid: boolean; error?: string } {
     if (!file.type.startsWith("image/")) {
-        return { valid: false, error: "El archivo seleccionado no es una imagen válida." };
+        return { valid: false, error: "The selected file is not a valid image." };
     }
 
     const maxBytes = maxMB * 1024 * 1024;
     if (file.size > maxBytes) {
         return {
             valid: false,
-            error: `La imagen original supera el límite permitido de ${maxMB}MB (${formatFileSize(file.size)}).`,
+            error: `The original image exceeds the allowed limit of ${maxMB}MB (${formatFileSize(file.size)}).`,
         };
     }
 
@@ -66,7 +66,7 @@ export async function compressImageToWebP(
         
         img.onerror = () => {
             URL.revokeObjectURL(objectUrl);
-            reject(new Error("No se pudo cargar la imagen para procesar."));
+            reject(new Error("Failed to load the image for processing."));
         };
 
         img.onload = () => {
@@ -90,7 +90,7 @@ export async function compressImageToWebP(
 
             const ctx = canvas.getContext("2d");
             if (!ctx) {
-                reject(new Error("No se pudo inicializar el contexto 2D del canvas."));
+                reject(new Error("Failed to initialize the 2D canvas context."));
                 return;
             }
 
@@ -103,7 +103,7 @@ export async function compressImageToWebP(
             canvas.toBlob(
                 (blob) => {
                     if (!blob) {
-                        reject(new Error("Error al convertir la imagen a formato WebP."));
+                        reject(new Error("Failed to convert image to WebP format."));
                         return;
                     }
 
@@ -213,7 +213,7 @@ function canvasToFile(
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         if (!ctx) {
-            reject(new Error("No se pudo crear el contexto 2D de canvas."));
+            reject(new Error("Failed to create 2D canvas context."));
             return;
         }
 
@@ -224,7 +224,7 @@ function canvasToFile(
         canvas.toBlob(
             (blob) => {
                 if (!blob) {
-                    reject(new Error("Error al convertir la imagen a WebP."));
+                    reject(new Error("Failed to convert image to WebP."));
                     return;
                 }
                 const file = new File([blob], fileName, {
@@ -257,7 +257,7 @@ export async function processResponsiveTripPhoto(
         
         img.onerror = () => {
             URL.revokeObjectURL(objectUrl);
-            reject(new Error("No se pudo cargar la imagen para procesar."));
+            reject(new Error("Failed to load the image for processing."));
         };
 
         img.onload = async () => {

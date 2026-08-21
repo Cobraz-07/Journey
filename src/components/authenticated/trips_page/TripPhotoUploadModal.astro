@@ -221,7 +221,7 @@ const { uid, tripID } = Astro.props;
 
             const remainingSlots = MAX_PHOTOS_PER_TRIP - currentPhotoCount - selectedBatchFiles.length;
             if (remainingSlots <= 0) {
-                showToast(`Limit reached: This trip already has the maximum of ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
+                showToast(`Limit reached: This trip already has the maximum of ${MAX_PHOTOS_PER_TRIP} photos.`, "error");
                 return;
             }
 
@@ -314,19 +314,19 @@ const { uid, tripID } = Astro.props;
                 const availableSlots = MAX_PHOTOS_PER_TRIP - serverCount;
 
                 if (availableSlots <= 0) {
-                    showToast(`Este viaje ya tiene el máximo de ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
+                    showToast(`This trip already has the maximum of ${MAX_PHOTOS_PER_TRIP} photos.`, "error");
                     batchSubmitBtn.disabled = false;
                     return;
                 }
 
                 if (selectedBatchFiles.length > availableSlots) {
-                    showToast(`Solo quedan ${availableSlots} espacios disponibles. Se subirán las primeras ${availableSlots} fotos.`, "error");
+                    showToast(`Only ${availableSlots} slots available. Uploading the first ${availableSlots} photos.`, "error");
                     selectedBatchFiles = selectedBatchFiles.slice(0, availableSlots);
                     renderBatchPreviews();
                 }
             } catch (err) {
                 console.error("Error checking photo count:", err);
-                showToast("Error al verificar el espacio disponible.", "error");
+                showToast("Failed to check available space.", "error");
                 batchSubmitBtn.disabled = false;
                 return;
             }
@@ -334,7 +334,7 @@ const { uid, tripID } = Astro.props;
             // Reset progress bar elements immediately to 0%
             if (batchProgressBar) batchProgressBar.style.width = "0%";
             if (batchProgressPercent) batchProgressPercent.textContent = "0%";
-            if (batchProgressLabel) batchProgressLabel.textContent = `Preparando subida de ${selectedBatchFiles.length} fotos...`;
+            if (batchProgressLabel) batchProgressLabel.textContent = `Preparing upload of ${selectedBatchFiles.length} photos...`;
             batchProgressWrapper?.classList.remove("hidden");
             
             const total = selectedBatchFiles.length;
@@ -377,12 +377,12 @@ const { uid, tripID } = Astro.props;
                         await uploadWithRetry(rawFile);
                     } catch (err) {
                         failedCount++;
-                        console.error(`Error subiendo foto ${rawFile.name}:`, err);
+                        console.error(`Error uploading photo ${rawFile.name}:`, err);
                     } finally {
                         completed++;
                         const pct = Math.round((completed / total) * 100);
                         if (batchProgressLabel) {
-                            batchProgressLabel.textContent = `Subiendo ${completed} de ${total}...`;
+                            batchProgressLabel.textContent = `Uploading ${completed} of ${total}...`;
                         }
                         if (batchProgressBar) batchProgressBar.style.width = `${pct}%`;
                         if (batchProgressPercent) batchProgressPercent.textContent = `${pct}%`;
@@ -403,9 +403,9 @@ const { uid, tripID } = Astro.props;
                 closeUploadModal();
                 
                 if (failedCount > 0) {
-                    showToast(`Se subieron ${total - failedCount} fotos. ${failedCount} fotos fallaron.`, "error");
+                    showToast(`Uploaded ${total - failedCount} photos. ${failedCount} failed.`, "error");
                 } else {
-                    showToast(`¡${total} fotos subidas correctamente!`, "success");
+                    showToast(`Successfully uploaded ${total} photos!`, "success");
                 }
                 
                 window.dispatchEvent(new CustomEvent("trip-photos:updated"));
@@ -458,7 +458,7 @@ const { uid, tripID } = Astro.props;
 
         async function processSingleFile(file: File) {
             if (currentPhotoCount >= MAX_PHOTOS_PER_TRIP) {
-                showToast(`Limit reached: This trip already has the maximum of ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
+                showToast(`Limit reached: This trip already has the maximum of ${MAX_PHOTOS_PER_TRIP} photos.`, "error");
                 return;
             }
 
@@ -525,7 +525,7 @@ const { uid, tripID } = Astro.props;
                 showToast("Photo successfully uploaded.", "success");
                 window.dispatchEvent(new CustomEvent("trip-photos:updated"));
             } catch (err) {
-                console.error("Error al subir foto:", err);
+                console.error("Error uploading photo:", err);
                 showToast("Failed to upload image.", "error");
                 singleProgressWrapper?.classList.add("hidden");
                 singleSubmitBtn.disabled = false;

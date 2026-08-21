@@ -92,7 +92,7 @@ export async function uploadTripPhoto(
     if (!skipCountCheck) {
         const currentCount = await getTripPhotoCount(uid, tripId);
         if (currentCount >= MAX_PHOTOS_PER_TRIP) {
-            throw new Error(`Has alcanzado el límite máximo de ${MAX_PHOTOS_PER_TRIP} fotos para este viaje.`);
+            throw new Error(`You have reached the maximum limit of ${MAX_PHOTOS_PER_TRIP} photos for this trip.`);
         }
     }
 

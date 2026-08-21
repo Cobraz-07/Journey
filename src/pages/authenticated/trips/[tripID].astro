@@ -71,10 +71,10 @@ const tripData = tripSnap.data();
                     id="change-cover-btn" 
                     type="button" 
                     class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-black/60 hover:bg-black text-white backdrop-blur-md transition-all shadow cursor-pointer active:scale-95"
-                    title="Cambiar foto de portada"
+                    title="Change cover photo"
                 >
                     <Icon name="image" class="w-3.5 h-3.5" />
-                    <span id="change-cover-text">{tripData?.coverUrl ? "Cambiar portada" : "Añadir portada"}</span>
+                    <span id="change-cover-text">{tripData?.coverUrl ? "Change cover" : "Add cover"}</span>
                 </button>
             </div>
 
@@ -130,14 +130,14 @@ const tripData = tripSnap.data();
 
         deleteBtn.addEventListener("click", async () => {
             if (!uid || !tripID) return;
-            if (confirm("¿Estás seguro de que deseas eliminar este viaje por completo? Se borrarán todas sus fotos y entradas del diario.")) {
+            if (confirm("Are you sure you want to delete this trip entirely? All photos and journal entries will be removed.")) {
                 deleteBtn.setAttribute("disabled", "true");
                 try {
                     await deleteEntireTrip(uid, tripID);
                     window.location.href = "/authenticated/trips";
                 } catch (err) {
-                    console.error("Error al eliminar el viaje:", err);
-                    showToast("Error al eliminar el viaje.", "error");
+                    console.error("Error deleting trip:", err);
+                    showToast("Failed to delete the trip.", "error");
                     deleteBtn.removeAttribute("disabled");
                 }
             }
@@ -162,7 +162,7 @@ const tripData = tripSnap.data();
                 if (changeCoverText) changeCoverText.textContent = "Comprimiendo...";
                 const compressed = await compressImageToWebP(rawFile, { maxWidth: 2000, maxHeight: 1200, quality: 0.88 });
                 
-                if (changeCoverText) changeCoverText.textContent = "Subiendo...";
+                if (changeCoverText) changeCoverText.textContent = "Uploading...";
                 
                 const tripDocRef = doc(db, "users", uid, "trips", tripID);
                 const tripSnap = await getDoc(tripDocRef);
@@ -185,12 +185,12 @@ const tripData = tripSnap.data();
                 descHeader?.classList.remove("text-[var(--lt-text-color)]");
                 descHeader?.classList.add("text-white/90", "drop-shadow");
 
-                if (changeCoverText) changeCoverText.textContent = "Cambiar portada";
-                showToast("Portada actualizada con éxito.", "success");
+                if (changeCoverText) changeCoverText.textContent = "Change cover";
+                showToast("Cover photo updated successfully.", "success");
             } catch (err) {
-                console.error("Error al subir foto de portada:", err);
-                showToast("No se pudo actualizar la foto de portada.", "error");
-                if (changeCoverText) changeCoverText.textContent = "Cambiar portada";
+                console.error("Error uploading cover photo:", err);
+                showToast("Failed to update the cover photo.", "error");
+                if (changeCoverText) changeCoverText.textContent = "Change cover";
             }
         });
     }
