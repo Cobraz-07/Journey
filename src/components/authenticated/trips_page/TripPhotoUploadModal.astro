@@ -318,7 +318,7 @@ const { uid, tripID } = Astro.props;
             let completed = 0;
             let failedCount = 0;
 
-            const CONCURRENCY_LIMIT = 2;
+            const MAX_CONCURRENT_UPLOADS = 5;
             const queue = [...selectedBatchFiles];
 
             async function processWorker() {
@@ -342,7 +342,7 @@ const { uid, tripID } = Astro.props;
                         completed++;
                         const pct = Math.round((completed / total) * 100);
                         if (batchProgressLabel) {
-                            batchProgressLabel.textContent = `Processing and uploading ${completed} of ${total} (2 in parallel)...`;
+                            batchProgressLabel.textContent = `Processing and uploading ${completed} of ${total} (5 in parallel)...`;
                         }
                         if (batchProgressBar) batchProgressBar.style.width = `${pct}%`;
                         if (batchProgressPercent) batchProgressPercent.textContent = `${pct}%`;
@@ -350,7 +350,7 @@ const { uid, tripID } = Astro.props;
                 }
             }
 
-            const workers = Array.from({ length: Math.min(CONCURRENCY_LIMIT, total) }, () => processWorker());
+            const workers = Array.from({ length: Math.min(MAX_CONCURRENT_UPLOADS, total) }, () => processWorker());
             await Promise.all(workers);
 
             setTimeout(() => {
