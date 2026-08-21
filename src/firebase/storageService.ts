@@ -7,6 +7,12 @@ import {
     deleteDoc,
     getDocs,
     writeBatch,
+    query,
+    orderBy,
+    limit,
+    startAfter,
+    type QueryDocumentSnapshot,
+    type DocumentData,
 } from "firebase/firestore";
 
 export interface TripPhoto {
@@ -23,6 +29,15 @@ export interface TripPhoto {
     width?: number;
     height?: number;
 }
+
+export interface PaginatedTripPhotosResult {
+    photos: TripPhoto[];
+    lastDoc: QueryDocumentSnapshot<DocumentData> | null;
+    hasMore: boolean;
+    totalCount: number;
+}
+
+export const PHOTOS_PAGE_SIZE = 12;
 
 export interface ResponsiveUploadPayload {
     displayFile: File;
@@ -126,25 +141,50 @@ export async function uploadTripPhoto(
 }
 
 /**
- * Fetches all photos belonging to a trip ordered by creation date (newest first).
+ * Retrieves all photos of a trip sorted by createdAt descending.
  */
 export async function getTripPhotos(uid: string, tripId: string): Promise<TripPhoto[]> {
     const photosColRef = collection(db, "users", uid, "trips", tripId, "photos");
-    const snapshot = await getDocs(photosColRef);
+    const q = query(photosColRef, orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
 
+    return snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...(docSnap.data() as Omit<TripPhoto, "id">),
+    }));
+}
+
+/**
+ * Retrieves a page of photos using cursor-based pagination (startAfter).
+ */
+export async function getTripPhotosPaginated(
+    uid: string,
+    tripId: string,
+    pageSize = PHOTOS_PAGE_SIZE,
+    startAfterDoc: QueryDocumentSnapshot<DocumentData> | null = null
+): Promise<PaginatedTripPhotosResult> {
+    const photosColRef = collection(db, "users", uid, "trips", tripId, "photos");
+    const totalCount = await getTripPhotoCount(uid, tripId);
+
+    const q = startAfterDoc
+        ? query(photosColRef, orderBy("createdAt", "desc"), startAfter(startAfterDoc), limit(pageSize))
+        : query(photosColRef, orderBy("createdAt", "desc"), limit(pageSize));
+
+    const snapshot = await getDocs(q);
     const photos = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...(docSnap.data() as Omit<TripPhoto, "id">),
     }));
 
-    // Sort in memory to avoid Firestore requiring index
-    photos.sort((a, b) => {
-        const dateA = a.createdAt || "";
-        const dateB = b.createdAt || "";
-        return dateB.localeCompare(dateA);
-    });
+    const lastDoc = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+    const hasMore = snapshot.docs.length === pageSize;
 
-    return photos;
+    return {
+        photos,
+        lastDoc,
+        hasMore,
+        totalCount,
+    };
 }
 
 /**

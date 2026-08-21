@@ -14,7 +14,7 @@ const { tripID, uid } = Astro.props;
 
 <script>
     import { db, projectAuth } from "@/firebase/config";
-    import { collection, getDocs, doc } from "firebase/firestore";
+    import { collection, getDocs, doc, query, orderBy } from "firebase/firestore";
     import { deleteJournalEntry } from "@/firebase/storageService";
     import { escapeHtml } from "@/utils/escapeHtml";
     import { formatDate } from "@/utils/formatDate";
@@ -50,7 +50,8 @@ const { tripID, uid } = Astro.props;
     async function renderJournals() {
         try {
             await projectAuth.authStateReady();
-            const journalsSnapshot = await getDocs(journalCollectionRef);
+            const q = query(journalCollectionRef, orderBy("date", "desc"));
+            const journalsSnapshot = await getDocs(q);
             if (journalsSnapshot.empty) {
                 journalList.innerHTML = `
                     <div class="flex flex-col items-center justify-center w-full h-60">
@@ -61,18 +62,10 @@ const { tripID, uid } = Astro.props;
                 return;
             }
 
-            // Convert to array and sort by date (newest first)
             const journalsArray = journalsSnapshot.docs.map((doc) => ({
                 id: doc.id,
                 data: doc.data(),
             }));
-
-            journalsArray.sort((a, b) => {
-                const dateA = a.data?.date || "";
-                const dateB = b.data?.date || "";
-                // Sort in descending order (newest first)
-                return dateB.localeCompare(dateA);
-            });
 
             let html = "";
             journalsArray.forEach((journal) => {

@@ -44,6 +44,21 @@ const { uid, tripID } = Astro.props;
         <Skeleton class="h-36 w-full rounded-xl" />
     </div>
 
+    <!-- Load More Container -->
+    <div id="gallery-load-more-container" class="hidden flex justify-center items-center mt-5">
+        <button
+            id="gallery-load-more-btn"
+            type="button"
+            class="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-[#121712] dark:text-neutral-200 hover:bg-[#ebf0eb] dark:hover:bg-neutral-700 active:scale-95 transition-all shadow-xs cursor-pointer"
+        >
+            <span id="load-more-text">Cargar más fotos</span>
+            <svg id="load-more-spinner" class="animate-spin h-3.5 w-3.5 text-[#63875e] hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+        </button>
+    </div>
+
     <!-- Modals -->
     <TripPhotoUploadModal uid={uid} tripID={tripID} />
     <TripPhotoLightbox />
@@ -51,7 +66,13 @@ const { uid, tripID } = Astro.props;
 
 <script>
     import { projectAuth } from "@/firebase/config";
-    import { getTripPhotos, deleteTripPhoto, MAX_PHOTOS_PER_TRIP, type TripPhoto } from "@/firebase/storageService";
+    import {
+        getTripPhotosPaginated,
+        deleteTripPhoto,
+        MAX_PHOTOS_PER_TRIP,
+        PHOTOS_PAGE_SIZE,
+        type TripPhoto,
+    } from "@/firebase/storageService";
     import { escapeHtml } from "@/utils/escapeHtml";
     import { showToast } from "@/utils/toast";
 
@@ -59,23 +80,94 @@ const { uid, tripID } = Astro.props;
     const badgeCountEl = document.getElementById("gallery-badge-count") as HTMLElement;
     const addPhotosBtn = document.getElementById("gallery-add-photos-btn") as HTMLElement;
     const addBtnText = document.getElementById("gallery-add-btn-text") as HTMLElement;
+    const loadMoreContainer = document.getElementById("gallery-load-more-container") as HTMLDivElement;
+    const loadMoreBtn = document.getElementById("gallery-load-more-btn") as HTMLButtonElement;
+    const loadMoreText = document.getElementById("load-more-text") as HTMLElement;
+    const loadMoreSpinner = document.getElementById("load-more-spinner") as HTMLElement;
+
     const uid = galleryEl?.dataset.uid;
     const tripId = galleryEl?.dataset.tripId;
 
     let loadedPhotos: TripPhoto[] = [];
+    let lastVisibleDoc: any = null;
+    let hasMorePhotos = false;
+    let isLoadingMore = false;
+
+    function renderPhotoCards(photosToRender: TripPhoto[], startIndexOffset: number) {
+        photosToRender.forEach((photo, relativeIdx) => {
+            const globalIndex = startIndexOffset + relativeIdx;
+            const card = document.createElement("div");
+            card.className = "group relative rounded-xl overflow-hidden aspect-square bg-neutral-100 dark:bg-neutral-800 shadow-sm hover:shadow-md cursor-pointer border border-neutral-200/60 dark:border-neutral-800 transition-all hover:scale-[1.02]";
+
+            const safeThumbUrl = escapeHtml(photo.thumbnailUrl || photo.url);
+            const safeCaption = escapeHtml(photo.caption);
+            const safeStoragePath = escapeHtml(photo.storagePath);
+            const safeThumbStoragePath = escapeHtml(photo.thumbnailStoragePath || "");
+            const safeId = escapeHtml(photo.id);
+            const blurBg = photo.blurDataUrl ? `style="background-image: url('${photo.blurDataUrl}'); background-size: cover; background-position: center;"` : "";
+
+            card.innerHTML = `
+                <div class="w-full h-full relative overflow-hidden" ${blurBg}>
+                    <img 
+                        src="${safeThumbUrl}" 
+                        alt="${safeCaption || "Trip Photo"}" 
+                        loading="lazy" 
+                        onload="this.classList.remove('opacity-0')"
+                        class="w-full h-full object-cover opacity-0 transition-opacity duration-300 group-hover:scale-105"
+                    />
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2.5">
+                    <div class="flex justify-end">
+                        <button data-delete-id="${safeId}" data-storage-path="${safeStoragePath}" data-thumb-path="${safeThumbStoragePath}" class="p-1.5 rounded-full bg-black/60 hover:bg-red-600 text-white transition-colors cursor-pointer" title="Eliminar foto">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                    ${safeCaption ? `<p class="text-white text-xs font-medium truncate drop-shadow">${safeCaption}</p>` : ""}
+                </div>
+            `;
+
+            // Lightbox and delete event listeners
+            card.addEventListener("click", (e) => {
+                const target = e.target as HTMLElement;
+                const deleteBtn = target.closest("[data-delete-id]");
+                if (deleteBtn) {
+                    e.stopPropagation();
+                    handleDelete(photo);
+                    return;
+                }
+
+                window.dispatchEvent(
+                    new CustomEvent("open-trip-lightbox", {
+                        detail: {
+                            photos: loadedPhotos,
+                            startIndex: globalIndex,
+                            uid,
+                            tripId,
+                        },
+                    })
+                );
+            });
+
+            galleryEl.appendChild(card);
+        });
+    }
 
     async function loadGallery() {
         if (!uid || !tripId) return;
 
         try {
             await projectAuth.authStateReady();
-            loadedPhotos = await getTripPhotos(uid, tripId);
+            const result = await getTripPhotosPaginated(uid, tripId, PHOTOS_PAGE_SIZE, null);
+            loadedPhotos = result.photos;
+            lastVisibleDoc = result.lastDoc;
+            hasMorePhotos = result.hasMore;
 
-            // Update photo count and limit state
-            const count = loadedPhotos.length;
+            const count = result.totalCount;
             const isFull = count >= MAX_PHOTOS_PER_TRIP;
 
-            // Notify upload modal about current photo count
+            // Notify upload modal about count
             window.dispatchEvent(
                 new CustomEvent("trip-photos:count-updated", {
                     detail: { count, max: MAX_PHOTOS_PER_TRIP },
@@ -84,6 +176,7 @@ const { uid, tripID } = Astro.props;
 
             if (count === 0) {
                 badgeCountEl.classList.add("hidden");
+                loadMoreContainer.classList.add("hidden");
                 galleryEl.className = "flex flex-col items-center justify-center p-8 border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl bg-[#fafcfa] dark:bg-[#121712]/40 text-center gap-2";
                 galleryEl.innerHTML = `
                     <div class="w-12 h-12 rounded-full bg-[#ebf0eb] dark:bg-neutral-800 flex items-center justify-center text-[#63875e] mb-1">
@@ -124,68 +217,53 @@ const { uid, tripID } = Astro.props;
 
             galleryEl.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3";
             galleryEl.innerHTML = "";
+            renderPhotoCards(loadedPhotos, 0);
 
-            loadedPhotos.forEach((photo, idx) => {
-                const card = document.createElement("div");
-                card.className = "group relative rounded-xl overflow-hidden aspect-square bg-neutral-100 dark:bg-neutral-800 shadow-sm hover:shadow-md cursor-pointer border border-neutral-200/60 dark:border-neutral-800 transition-all hover:scale-[1.02]";
-
-                const safeThumbUrl = escapeHtml(photo.thumbnailUrl || photo.url);
-                const safeCaption = escapeHtml(photo.caption);
-                const safeStoragePath = escapeHtml(photo.storagePath);
-                const safeThumbStoragePath = escapeHtml(photo.thumbnailStoragePath || "");
-                const safeId = escapeHtml(photo.id);
-                const blurBg = photo.blurDataUrl ? `style="background-image: url('${photo.blurDataUrl}'); background-size: cover; background-position: center;"` : "";
-
-                card.innerHTML = `
-                    <div class="w-full h-full relative overflow-hidden" ${blurBg}>
-                        <img 
-                            src="${safeThumbUrl}" 
-                            alt="${safeCaption || "Trip Photo"}" 
-                            loading="lazy" 
-                            onload="this.classList.remove('opacity-0')"
-                            class="w-full h-full object-cover opacity-0 transition-opacity duration-300 group-hover:scale-105"
-                        />
-                    </div>
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2.5">
-                        <div class="flex justify-end">
-                            <button data-delete-id="${safeId}" data-storage-path="${safeStoragePath}" data-thumb-path="${safeThumbStoragePath}" class="p-1.5 rounded-full bg-black/60 hover:bg-red-600 text-white transition-colors cursor-pointer" title="Eliminar foto">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        </div>
-                        ${safeCaption ? `<p class="text-white text-xs font-medium truncate drop-shadow">${safeCaption}</p>` : ""}
-                    </div>
-                `;
-
-                // Click opens lightbox
-                card.addEventListener("click", (e) => {
-                    const target = e.target as HTMLElement;
-                    const deleteBtn = target.closest("[data-delete-id]");
-                    if (deleteBtn) {
-                        e.stopPropagation();
-                        handleDelete(photo);
-                        return;
-                    }
-
-                    window.dispatchEvent(
-                        new CustomEvent("open-trip-lightbox", {
-                            detail: {
-                                photos: loadedPhotos,
-                                startIndex: idx,
-                                uid,
-                                tripId,
-                            },
-                        })
-                    );
-                });
-
-                galleryEl.appendChild(card);
-            });
+            // Toggle load more container
+            if (hasMorePhotos) {
+                loadMoreContainer.classList.remove("hidden");
+            } else {
+                loadMoreContainer.classList.add("hidden");
+            }
         } catch (err) {
             console.error("Error loading trip photos:", err);
         }
     }
+
+    async function loadMore() {
+        if (!uid || !tripId || !lastVisibleDoc || isLoadingMore) return;
+
+        isLoadingMore = true;
+        loadMoreBtn.disabled = true;
+        loadMoreSpinner.classList.remove("hidden");
+        loadMoreText.textContent = "Cargando...";
+
+        try {
+            const result = await getTripPhotosPaginated(uid, tripId, PHOTOS_PAGE_SIZE, lastVisibleDoc);
+            const startIndex = loadedPhotos.length;
+            loadedPhotos = [...loadedPhotos, ...result.photos];
+            lastVisibleDoc = result.lastDoc;
+            hasMorePhotos = result.hasMore;
+
+            renderPhotoCards(result.photos, startIndex);
+
+            if (hasMorePhotos) {
+                loadMoreContainer.classList.remove("hidden");
+            } else {
+                loadMoreContainer.classList.add("hidden");
+            }
+        } catch (err) {
+            console.error("Error loading more photos:", err);
+            showToast("Error al cargar más fotos.", "error");
+        } finally {
+            isLoadingMore = false;
+            loadMoreBtn.disabled = false;
+            loadMoreSpinner.classList.add("hidden");
+            loadMoreText.textContent = "Cargar más fotos";
+        }
+    }
+
+    loadMoreBtn?.addEventListener("click", loadMore);
 
     async function handleDelete(photo: TripPhoto) {
         if (!uid || !tripId) return;

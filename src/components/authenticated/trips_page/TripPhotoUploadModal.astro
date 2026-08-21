@@ -298,7 +298,13 @@ const { uid, tripID } = Astro.props;
 
         await projectAuth.authStateReady();
         batchSubmitBtn.disabled = true;
+        
+        // Reset progress bar elements immediately to 0%
+        batchProgressBar.style.width = "0%";
+        batchProgressPercent.textContent = "0%";
+        batchProgressLabel.textContent = `Preparando subida de ${selectedBatchFiles.length} fotos...`;
         batchProgressWrapper.classList.remove("hidden");
+        
         const total = selectedBatchFiles.length;
         let completed = 0;
 
@@ -341,6 +347,8 @@ const { uid, tripID } = Astro.props;
             selectedBatchFiles = [];
             renderBatchPreviews();
             batchProgressWrapper.classList.add("hidden");
+            batchProgressBar.style.width = "0%";
+            batchProgressPercent.textContent = "0%";
             batchSubmitBtn.disabled = false;
             closeUploadModal();
             window.dispatchEvent(new CustomEvent("trip-photos:updated"));
