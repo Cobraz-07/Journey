@@ -14,12 +14,12 @@
             </div>
             
             <div class="flex items-center gap-2">
-                <button id="lightbox-delete-btn" class="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors" title="Eliminar foto">
+                <button id="lightbox-delete-btn" class="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors" title="Delete photo">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                 </button>
-                <button id="lightbox-close-btn" class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Cerrar">
+                <button id="lightbox-close-btn" class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Close">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -30,7 +30,7 @@
         <!-- Main Image Stage -->
         <div class="relative flex-1 flex items-center justify-center p-4 min-h-[300px] max-h-[calc(88vh-120px)] overflow-hidden select-none">
             <!-- Prev Button -->
-            <button id="lightbox-prev-btn" class="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/80 hover:scale-105 active:scale-95 transition-all border border-white/10 shadow-lg" title="Foto anterior (Flecha izquierda)">
+            <button id="lightbox-prev-btn" class="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/80 hover:scale-105 active:scale-95 transition-all border border-white/10 shadow-lg" title="Previous photo (Left arrow)">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -42,7 +42,7 @@
             </div>
 
             <!-- Next Button -->
-            <button id="lightbox-next-btn" class="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/80 hover:scale-105 active:scale-95 transition-all border border-white/10 shadow-lg" title="Siguiente foto (Flecha derecha)">
+            <button id="lightbox-next-btn" class="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/80 hover:scale-105 active:scale-95 transition-all border border-white/10 shadow-lg" title="Next photo (Right arrow)">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
                 </svg>
@@ -52,7 +52,7 @@
         <!-- Footer Info -->
         <div class="flex items-center justify-between px-5 py-2.5 border-t border-white/10 bg-black/20 text-xs text-white/60">
             <span id="lightbox-date"></span>
-            <span class="hidden sm:inline text-white/40">Usa las flechas ← → para navegar o Esc para salir</span>
+            <span class="hidden sm:inline text-white/40">Use ← → arrows to navigate or Esc to exit</span>
         </div>
     </div>
 </dialog>
@@ -112,7 +112,7 @@
             }
 
             if (counterEl) counterEl.textContent = `${state.currentIndex + 1} / ${state.photos.length}`;
-            if (captionEl) captionEl.textContent = photo.caption || "Sin descripción";
+            if (captionEl) captionEl.textContent = photo.caption || "No caption";
 
             if (photo.createdAt && dateEl) {
                 const date = new Date(photo.createdAt);
@@ -205,7 +205,7 @@
             if (!state.photos.length) return;
             const currentPhoto = state.photos[state.currentIndex];
             
-            if (confirm("¿Estás seguro de que quieres eliminar esta foto?")) {
+            if (confirm("Are you sure you want to delete this photo?")) {
                 try {
                     await deleteTripPhoto(
                         state.uid,
@@ -230,8 +230,8 @@
                         renderCurrentPhoto();
                     }
                 } catch (err) {
-                    console.error("Error al eliminar la foto:", err);
-                    showToast("Ocurrió un error al intentar eliminar la foto.", "error");
+                    console.error("Error deleting photo:", err);
+                    showToast("An error occurred while trying to delete the photo.", "error");
                 }
             }
         });

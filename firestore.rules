@@ -27,7 +27,7 @@ service cloud.firestore {
                     && request.resource.data.title.size() <= 100
                     && (!('description' in request.resource.data) || request.resource.data.description == null || request.resource.data.description.size() <= 1000);
       allow update: if isOwner(uid)
-                    && request.resource.data.keys().hasOnly([
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
                          'title', 'description', 'startDate', 'endDate',
                          'country', 'countryCode', 'coverUrl', 'coverStoragePath', 'createdAt'
                        ])

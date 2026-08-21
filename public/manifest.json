@@ -1,8 +1,8 @@
 {
     "id": "/",
-    "name": "Journey - Diario y Fotos de Viajes",
+    "name": "Journey - Travel Journal & Photos",
     "short_name": "Journey",
-    "description": "Tu diario de viajes personal y álbum de fotos en la nube.",
+    "description": "Your personal travel journal and cloud photo album.",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
@@ -42,14 +42,14 @@
             "sizes": "430x932",
             "type": "image/png",
             "form_factor": "narrow",
-            "label": "Diario y fotos de tus viajes en Journey"
+            "label": "Your travel journal and photos on Journey"
         },
         {
             "src": "/screenshots/desktop-screenshot.png",
             "sizes": "1280x720",
             "type": "image/png",
             "form_factor": "wide",
-            "label": "Vista de escritorio de Journey"
+            "label": "Journey desktop view"
         }
     ]
 }

@@ -17,17 +17,17 @@ const { uid, tripID } = Astro.props;
         <DialogHeader class="mb-4">
             <DialogTitle class="text-xl font-bold text-[#121712] dark:text-neutral-100 flex items-center gap-2">
                 <Icon name="image" class="w-6 h-6 text-[#63875e]" />
-                Subir Fotos al Viaje
+                Upload Trip Photos
             </DialogTitle>
         </DialogHeader>
 
         <!-- Mode Selector Tabs -->
         <div class="flex p-1 mb-5 bg-[#ebf0eb] dark:bg-neutral-800 rounded-xl">
             <button id="tab-batch-mode" type="button" class="flex-1 py-2 px-3 text-sm font-semibold rounded-lg transition-all bg-white dark:bg-neutral-700 text-[#121712] dark:text-white shadow-sm flex items-center justify-center gap-1.5">
-                <span>⚡ Subida Múltiple</span>
+                <span>⚡ Batch Upload</span>
             </button>
             <button id="tab-single-mode" type="button" class="flex-1 py-2 px-3 text-sm font-semibold rounded-lg transition-all text-[#6e826b] dark:text-neutral-400 hover:text-black dark:hover:text-white flex items-center justify-center gap-1.5">
-                <span>📝 Foto con Detalle</span>
+                <span>📝 Single Photo (Caption)</span>
             </button>
         </div>
 
@@ -40,10 +40,10 @@ const { uid, tripID } = Astro.props;
                     <Icon name="image" class="w-6 h-6" />
                 </div>
                 <p class="font-semibold text-sm text-[#121712] dark:text-neutral-200">
-                    Arrastra varias fotos aquí o <span class="text-[#63875e] underline">explora tus archivos</span>
+                    Drag and drop multiple photos here or <span class="text-[#63875e] underline">browse files</span>
                 </p>
                 <p class="text-xs text-[#6e826b] dark:text-neutral-400">
-                    JPG, PNG, WebP (Se comprimirán automáticamente a WebP)
+                    JPG, PNG, WebP (Automatically compressed to WebP)
                 </p>
             </div>
 
@@ -51,7 +51,7 @@ const { uid, tripID } = Astro.props;
             <div id="batch-files-preview-container" class="hidden flex-col gap-3">
                 <div class="flex items-center justify-between">
                     <span id="batch-files-count" class="text-xs font-bold text-[#6e826b] dark:text-neutral-400 uppercase tracking-wider"></span>
-                    <button id="batch-clear-btn" type="button" class="text-xs text-red-500 hover:underline">Limpiar selección</button>
+                    <button id="batch-clear-btn" type="button" class="text-xs text-red-500 hover:underline">Clear selection</button>
                 </div>
                 <div id="batch-files-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1"></div>
             </div>
@@ -59,7 +59,7 @@ const { uid, tripID } = Astro.props;
             <!-- Upload Progress -->
             <div id="batch-progress-wrapper" class="hidden flex-col gap-2">
                 <div class="flex justify-between text-xs font-semibold text-[#6e826b] dark:text-neutral-300">
-                    <span id="batch-progress-label">Comprimiendo y subiendo...</span>
+                    <span id="batch-progress-label">Compressing and uploading...</span>
                     <span id="batch-progress-percent">0%</span>
                 </div>
                 <div class="w-full bg-[#ebf0eb] dark:bg-neutral-800 h-2.5 rounded-full overflow-hidden">
@@ -68,9 +68,9 @@ const { uid, tripID } = Astro.props;
             </div>
 
             <div class="flex justify-end gap-3 mt-2">
-                <Button id="batch-cancel-btn" type="button" variant="outline" class="rounded-xl">Cancelar</Button>
+                <Button id="batch-cancel-btn" type="button" variant="outline" class="rounded-xl">Cancel</Button>
                 <Button id="batch-submit-btn" type="button" variant="Form" class="rounded-xl flex items-center gap-2" disabled>
-                    <span>Subir Fotos</span>
+                    <span>Upload Photos</span>
                 </Button>
             </div>
         </div>
@@ -86,10 +86,10 @@ const { uid, tripID } = Astro.props;
                         <Icon name="image" class="w-6 h-6" />
                     </div>
                     <p class="font-semibold text-sm text-[#121712] dark:text-neutral-200">
-                        Selecciona una foto
+                        Select a photo
                     </p>
                     <p class="text-xs text-[#6e826b] dark:text-neutral-400">
-                        Podrás añadirle una descripción o pie de foto
+                        You can add a caption or description
                     </p>
                 </div>
 
@@ -102,14 +102,14 @@ const { uid, tripID } = Astro.props;
 
             <!-- Caption Input -->
             <div class="flex flex-col gap-1.5">
-                <label for="single-caption-input" class="text-xs font-semibold text-[#6e826b] dark:text-neutral-400">Descripción o pie de foto (opcional)</label>
-                <Input id="single-caption-input" placeholder="Ej: Atardecer en el mirador, día 3..." class="rounded-xl h-11 p-3 text-sm text-[#63875E] bg-[#EBF0EB] border-0" />
+                <label for="single-caption-input" class="text-xs font-semibold text-[#6e826b] dark:text-neutral-400">Caption or description (optional)</label>
+                <Input id="single-caption-input" placeholder="e.g. Sunset at the viewpoint, day 3..." class="rounded-xl h-11 p-3 text-sm text-[#63875E] bg-[#EBF0EB] border-0" />
             </div>
 
             <!-- Single Progress -->
             <div id="single-progress-wrapper" class="hidden flex-col gap-1.5">
                 <div class="flex justify-between text-xs font-semibold text-[#6e826b]">
-                    <span id="single-progress-label">Subiendo...</span>
+                    <span id="single-progress-label">Uploading...</span>
                 </div>
                 <div class="w-full bg-[#ebf0eb] h-2 rounded-full overflow-hidden">
                     <div id="single-progress-bar" class="bg-[#63875e] h-full w-1/2 animate-pulse rounded-full"></div>
@@ -117,9 +117,9 @@ const { uid, tripID } = Astro.props;
             </div>
 
             <div class="flex justify-end gap-3 mt-2">
-                <Button id="single-cancel-btn" type="button" variant="outline" class="rounded-xl">Cancelar</Button>
+                <Button id="single-cancel-btn" type="button" variant="outline" class="rounded-xl">Cancel</Button>
                 <Button id="single-submit-btn" type="button" variant="Form" class="rounded-xl" disabled>
-                    <span>Subir Foto</span>
+                    <span>Upload Photo</span>
                 </Button>
             </div>
         </div>
@@ -221,18 +221,18 @@ const { uid, tripID } = Astro.props;
 
             const remainingSlots = MAX_PHOTOS_PER_TRIP - currentPhotoCount - selectedBatchFiles.length;
             if (remainingSlots <= 0) {
-                showToast(`Límite alcanzado: Este viaje ya tiene el máximo de ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
+                showToast(`Limit reached: This trip already has the maximum of ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
                 return;
             }
 
             const maxCanAdd = Math.min(remainingSlots, MAX_BATCH_UPLOAD_SIZE - selectedBatchFiles.length);
             if (maxCanAdd <= 0) {
-                showToast(`Máximo de ${MAX_BATCH_UPLOAD_SIZE} fotos por tanda de subida.`, "error");
+                showToast(`Maximum of ${MAX_BATCH_UPLOAD_SIZE} photos per batch upload.`, "error");
                 return;
             }
 
             if (imageFiles.length > maxCanAdd) {
-                showToast(`Se añadieron las primeras ${maxCanAdd} fotos (límite de cuota disponible).`, "error");
+                showToast(`Added the first ${maxCanAdd} photos (available quota limit).`, "error");
             }
 
             const toAdd = imageFiles.slice(0, maxCanAdd);
@@ -253,7 +253,7 @@ const { uid, tripID } = Astro.props;
             batchPreviewContainer?.classList.remove("hidden");
             if (batchSubmitBtn) batchSubmitBtn.disabled = false;
             if (batchFilesCount) {
-                batchFilesCount.textContent = `${selectedBatchFiles.length} ${selectedBatchFiles.length === 1 ? "foto seleccionada" : "fotos seleccionadas"}`;
+                batchFilesCount.textContent = `${selectedBatchFiles.length} ${selectedBatchFiles.length === 1 ? "photo selected" : "photos selected"}`;
             }
 
             if (batchFilesGrid) {
@@ -311,14 +311,14 @@ const { uid, tripID } = Astro.props;
             // Reset progress bar elements immediately to 0%
             if (batchProgressBar) batchProgressBar.style.width = "0%";
             if (batchProgressPercent) batchProgressPercent.textContent = "0%";
-            if (batchProgressLabel) batchProgressLabel.textContent = `Preparando subida de ${selectedBatchFiles.length} fotos...`;
+            if (batchProgressLabel) batchProgressLabel.textContent = `Preparing upload of ${selectedBatchFiles.length} photos...`;
             batchProgressWrapper?.classList.remove("hidden");
             
             const total = selectedBatchFiles.length;
             let completed = 0;
             let failedCount = 0;
 
-            const CONCURRENCY_LIMIT = 5;
+            const CONCURRENCY_LIMIT = 2;
             const queue = [...selectedBatchFiles];
 
             async function processWorker() {
@@ -342,7 +342,7 @@ const { uid, tripID } = Astro.props;
                         completed++;
                         const pct = Math.round((completed / total) * 100);
                         if (batchProgressLabel) {
-                            batchProgressLabel.textContent = `Procesando y subiendo ${completed} de ${total} (5 en paralelo)...`;
+                            batchProgressLabel.textContent = `Processing and uploading ${completed} of ${total} (2 in parallel)...`;
                         }
                         if (batchProgressBar) batchProgressBar.style.width = `${pct}%`;
                         if (batchProgressPercent) batchProgressPercent.textContent = `${pct}%`;
@@ -363,9 +363,9 @@ const { uid, tripID } = Astro.props;
                 closeUploadModal();
                 
                 if (failedCount > 0) {
-                    showToast(`Se subieron ${total - failedCount} fotos. ${failedCount} fotos fallaron.`, "error");
+                    showToast(`Uploaded ${total - failedCount} photos. ${failedCount} photos failed.`, "error");
                 } else {
-                    showToast(`¡${total} fotos subidas con éxito!`, "success");
+                    showToast(`Successfully uploaded ${total} photos!`, "success");
                 }
                 
                 window.dispatchEvent(new CustomEvent("trip-photos:updated"));
@@ -418,7 +418,7 @@ const { uid, tripID } = Astro.props;
 
         async function processSingleFile(file: File) {
             if (currentPhotoCount >= MAX_PHOTOS_PER_TRIP) {
-                showToast(`Límite alcanzado: Este viaje ya tiene el máximo de ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
+                showToast(`Limit reached: This trip already has the maximum of ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
                 return;
             }
 
@@ -426,20 +426,23 @@ const { uid, tripID } = Astro.props;
                 singleResponsiveResult = await processResponsiveTripPhoto(file);
                 if (singlePreviewImg) singlePreviewImg.src = singleResponsiveResult.previewUrl;
                 if (singleSavingsBadge) {
-                    singleSavingsBadge.textContent = `Optimizado: Display ${(singleResponsiveResult.displaySize / 1024).toFixed(0)} KB | Miniatura ${(singleResponsiveResult.thumbnailSize / 1024).toFixed(0)} KB`;
+                    singleSavingsBadge.textContent = `Optimized: Display ${(singleResponsiveResult.displaySize / 1024).toFixed(0)} KB | Thumbnail ${(singleResponsiveResult.thumbnailSize / 1024).toFixed(0)} KB`;
                 }
                 
                 singleDropzonePlaceholder?.classList.add("hidden");
                 singlePreviewContainer?.classList.remove("hidden");
                 if (singleSubmitBtn) singleSubmitBtn.disabled = false;
             } catch (err: unknown) {
-                const message = err instanceof Error ? err.message : "Error al procesar la imagen.";
+                const message = err instanceof Error ? err.message : "Error processing image.";
                 showToast(message, "error");
             }
         }
 
         singleRemoveFileBtn?.addEventListener("click", (e) => {
             e.stopPropagation();
+            if (singleResponsiveResult && singleResponsiveResult.previewUrl) {
+                URL.revokeObjectURL(singleResponsiveResult.previewUrl);
+            }
             singleResponsiveResult = null;
             if (singleFileInput) singleFileInput.value = "";
             singleDropzonePlaceholder?.classList.remove("hidden");
@@ -451,7 +454,7 @@ const { uid, tripID } = Astro.props;
             if (!singleResponsiveResult || !uid || !tripId) return;
 
             singleSubmitBtn.disabled = true;
-            singleSubmitBtn.textContent = "Subiendo...";
+            singleSubmitBtn.textContent = "Uploading...";
             singleProgressWrapper?.classList.remove("hidden");
 
             try {
@@ -466,6 +469,9 @@ const { uid, tripID } = Astro.props;
                 }, caption);
                 
                 // Clean
+                if (singleResponsiveResult && singleResponsiveResult.previewUrl) {
+                    URL.revokeObjectURL(singleResponsiveResult.previewUrl);
+                }
                 singleResponsiveResult = null;
                 if (singleFileInput) singleFileInput.value = "";
                 if (singleCaptionInput) singleCaptionInput.value = "";
@@ -473,17 +479,17 @@ const { uid, tripID } = Astro.props;
                 singlePreviewContainer?.classList.add("hidden");
                 singleProgressWrapper?.classList.add("hidden");
                 singleSubmitBtn.disabled = false;
-                singleSubmitBtn.textContent = "Subir foto";
+                singleSubmitBtn.textContent = "Upload Photo";
 
                 closeUploadModal();
-                showToast("Foto subida con éxito.", "success");
+                showToast("Photo successfully uploaded.", "success");
                 window.dispatchEvent(new CustomEvent("trip-photos:updated"));
             } catch (err) {
                 console.error("Error al subir foto:", err);
-                showToast("No se pudo subir la imagen.", "error");
+                showToast("Failed to upload image.", "error");
                 singleProgressWrapper?.classList.add("hidden");
                 singleSubmitBtn.disabled = false;
-                singleSubmitBtn.textContent = "Subir foto";
+                singleSubmitBtn.textContent = "Upload Photo";
             }
         });
                 

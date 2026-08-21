@@ -12,6 +12,7 @@ import {
     orderBy,
     limit,
     startAfter,
+    getCountFromServer,
     type QueryDocumentSnapshot,
     type DocumentData,
 } from "firebase/firestore";
@@ -74,8 +75,8 @@ export function getStoragePathFromUrl(url?: string | null): string | undefined {
  */
 export async function getTripPhotoCount(uid: string, tripId: string): Promise<number> {
     const photosColRef = collection(db, "users", uid, "trips", tripId, "photos");
-    const snapshot = await getDocs(photosColRef);
-    return snapshot.size;
+    const snapshot = await getCountFromServer(photosColRef);
+    return snapshot.data().count;
 }
 
 /**
@@ -277,46 +278,21 @@ export async function deleteStorageFolder(folderPath: string): Promise<void> {
 }
 
 /**
- * Deletes a trip and all its photos, journals and files from Firestore and Storage using atomic batch writes.
+ * Deletes a trip and all its photos, journals and files from Firestore and Storage.
+ * Uses the API endpoint to securely delete Firestore documents (including public index)
+ * and then deletes Storage files from the client.
  */
 export async function deleteEntireTrip(uid: string, tripId: string): Promise<void> {
-    const batch = writeBatch(db);
+    // 1. Call API endpoint to delete Firestore documents securely
+    const response = await fetch(`/api/trips/${tripId}`, {
+        method: "DELETE",
+    });
 
-    // 1. Queue all photo documents in Firestore for batch deletion
-    try {
-        const photosColRef = collection(db, "users", uid, "trips", tripId, "photos");
-        const photosSnap = await getDocs(photosColRef);
-        photosSnap.docs.forEach((docSnap) => batch.delete(docSnap.ref));
-    } catch (err) {
-        console.warn("Error queuing trip photos docs for batch delete:", err);
+    if (!response.ok) {
+        throw new Error("Failed to delete trip data from database.");
     }
 
-    // 2. Queue all journal documents in Firestore for batch deletion
-    try {
-        const journalColRef = collection(db, "users", uid, "trips", tripId, "journal");
-        const journalSnap = await getDocs(journalColRef);
-        journalSnap.docs.forEach((docSnap) => batch.delete(docSnap.ref));
-    } catch (err) {
-        console.warn("Error queuing trip journal docs for batch delete:", err);
-    }
-
-    // 3. Queue the trip document and its public share index if present
-    const tripDocRef = doc(db, "users", uid, "trips", tripId);
-    try {
-        const tripSnap = await getDoc(tripDocRef);
-        const shareToken = tripSnap.data()?.shareToken;
-        if (shareToken) {
-            batch.delete(doc(db, "publicTrips", shareToken));
-        }
-    } catch (err) {
-        console.warn("Could not check public share index on trip deletion:", err);
-    }
-    batch.delete(tripDocRef);
-
-    // 4. Commit all Firestore document deletions atomically in a single request
-    await batch.commit();
-
-    // 5. Delete the trip folder from Firebase Storage (covers photos, covers, journal images)
+    // 2. Delete the trip folder from Firebase Storage (covers photos, covers, journal images)
     await deleteStorageFolder(`users/${uid}/trips/${tripId}`);
 }
 

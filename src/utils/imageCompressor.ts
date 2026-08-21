@@ -61,83 +61,82 @@ export async function compressImageToWebP(
     }
 
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = () => reject(new Error("No se pudo leer el archivo de imagen."));
-
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onerror = () => reject(new Error("No se pudo cargar la imagen para procesar."));
-
-            img.onload = () => {
-                let { width, height } = img;
-
-                // Calculate aspect-ratio preserving dimensions
-                if (width > maxWidth || height > maxHeight) {
-                    if (width / height > maxWidth / maxHeight) {
-                        height = Math.round((height * maxWidth) / width);
-                        width = maxWidth;
-                    } else {
-                        width = Math.round((width * maxHeight) / height);
-                        height = maxHeight;
-                    }
-                }
-
-                const canvas = document.createElement("canvas");
-                canvas.width = width;
-                canvas.height = height;
-
-                const ctx = canvas.getContext("2d");
-                if (!ctx) {
-                    reject(new Error("No se pudo inicializar el contexto 2D del canvas."));
-                    return;
-                }
-
-                // Smooth resizing
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = "high";
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Convert to webp
-                canvas.toBlob(
-                    (blob) => {
-                        if (!blob) {
-                            reject(new Error("Error al convertir la imagen a formato WebP."));
-                            return;
-                        }
-
-                        // Generate clean filename with .webp extension
-                        const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
-                        const compressedFileName = `${baseName}_${Date.now()}.webp`;
-                        const compressedFile = new File([blob], compressedFileName, {
-                            type: "image/webp",
-                            lastModified: Date.now(),
-                        });
-
-                        const previewUrl = URL.createObjectURL(blob);
-                        const originalSize = file.size;
-                        const compressedSize = blob.size;
-                        const savingsPercentage = Math.max(
-                            0,
-                            Math.round(((originalSize - compressedSize) / originalSize) * 100)
-                        );
-
-                        resolve({
-                            file: compressedFile,
-                            originalSize,
-                            compressedSize,
-                            savingsPercentage,
-                            previewUrl,
-                        });
-                    },
-                    "image/webp",
-                    quality
-                );
-            };
-
-            img.src = e.target?.result as string;
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error("No se pudo cargar la imagen para procesar."));
         };
 
-        reader.readAsDataURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            let { width, height } = img;
+
+            // Calculate aspect-ratio preserving dimensions
+            if (width > maxWidth || height > maxHeight) {
+                if (width / height > maxWidth / maxHeight) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                } else {
+                    width = Math.round((width * maxHeight) / height);
+                    height = maxHeight;
+                }
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                reject(new Error("No se pudo inicializar el contexto 2D del canvas."));
+                return;
+            }
+
+            // Smooth resizing
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Convert to webp
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        reject(new Error("Error al convertir la imagen a formato WebP."));
+                        return;
+                    }
+
+                    // Generate clean filename with .webp extension
+                    const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+                    const compressedFileName = `${baseName}_${Date.now()}.webp`;
+                    const compressedFile = new File([blob], compressedFileName, {
+                        type: "image/webp",
+                        lastModified: Date.now(),
+                    });
+
+                    const previewUrl = URL.createObjectURL(blob);
+                    const originalSize = file.size;
+                    const compressedSize = blob.size;
+                    const savingsPercentage = Math.max(
+                        0,
+                        Math.round(((originalSize - compressedSize) / originalSize) * 100)
+                    );
+
+                    resolve({
+                        file: compressedFile,
+                        originalSize,
+                        compressedSize,
+                        savingsPercentage,
+                        previewUrl,
+                    });
+                },
+                "image/webp",
+                quality
+            );
+        };
+
+        img.src = objectUrl;
     });
 }
 
@@ -253,71 +252,70 @@ export async function processResponsiveTripPhoto(
     }
 
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = () => reject(new Error("No se pudo leer el archivo de imagen."));
-
-        reader.onload = async (e) => {
-            const img = new Image();
-            img.onerror = () => reject(new Error("No se pudo cargar la imagen para procesar."));
-
-            img.onload = async () => {
-                try {
-                    const originalWidth = img.width;
-                    const originalHeight = img.height;
-
-                    // 1. Display dimensions (max 1920x1920, quality 0.86)
-                    const displayDims = calculateAspectRatioFit(originalWidth, originalHeight, 1920, 1920);
-
-                    // 2. Thumbnail dimensions (max 360x360, quality 0.80)
-                    const thumbDims = calculateAspectRatioFit(originalWidth, originalHeight, 360, 360);
-
-                    // 3. Blur placeholder (24x24)
-                    const blurDataUrl = generateBlurPlaceholder(img, 24, 24);
-
-                    const baseName = file.name
-                        .replace(/\.[^/.]+$/, "")
-                        .replace(/[^a-zA-Z0-9_-]/g, "_");
-                    const timestamp = Date.now();
-
-                    // Generate both files in parallel
-                    const [displayFile, thumbnailFile] = await Promise.all([
-                        canvasToFile(
-                            img,
-                            displayDims.width,
-                            displayDims.height,
-                            0.86,
-                            `${baseName}_${timestamp}_display.webp`
-                        ),
-                        canvasToFile(
-                            img,
-                            thumbDims.width,
-                            thumbDims.height,
-                            0.80,
-                            `${baseName}_${timestamp}_thumb.webp`
-                        ),
-                    ]);
-
-                    const previewUrl = URL.createObjectURL(displayFile);
-
-                    resolve({
-                        displayFile,
-                        thumbnailFile,
-                        blurDataUrl,
-                        displayWidth: displayDims.width,
-                        displayHeight: displayDims.height,
-                        originalSize: file.size,
-                        displaySize: displayFile.size,
-                        thumbnailSize: thumbnailFile.size,
-                        previewUrl,
-                    });
-                } catch (err) {
-                    reject(err);
-                }
-            };
-
-            img.src = e.target?.result as string;
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error("No se pudo cargar la imagen para procesar."));
         };
 
-        reader.readAsDataURL(file);
+        img.onload = async () => {
+            URL.revokeObjectURL(objectUrl);
+            try {
+                const originalWidth = img.width;
+                const originalHeight = img.height;
+
+                // 1. Display dimensions (max 1920x1920, quality 0.86)
+                const displayDims = calculateAspectRatioFit(originalWidth, originalHeight, 1920, 1920);
+
+                // 2. Thumbnail dimensions (max 360x360, quality 0.80)
+                const thumbDims = calculateAspectRatioFit(originalWidth, originalHeight, 360, 360);
+
+                // 3. Blur placeholder (24x24)
+                const blurDataUrl = generateBlurPlaceholder(img, 24, 24);
+
+                const baseName = file.name
+                    .replace(/\.[^/.]+$/, "")
+                    .replace(/[^a-zA-Z0-9_-]/g, "_");
+                const timestamp = Date.now();
+
+                // Generate both files in parallel
+                const [displayFile, thumbnailFile] = await Promise.all([
+                    canvasToFile(
+                        img,
+                        displayDims.width,
+                        displayDims.height,
+                        0.86,
+                        `${baseName}_${timestamp}_display.webp`
+                    ),
+                    canvasToFile(
+                        img,
+                        thumbDims.width,
+                        thumbDims.height,
+                        0.80,
+                        `${baseName}_${timestamp}_thumb.webp`
+                    ),
+                ]);
+
+                const previewUrl = URL.createObjectURL(displayFile);
+
+                resolve({
+                    displayFile,
+                    thumbnailFile,
+                    blurDataUrl,
+                    displayWidth: displayDims.width,
+                    displayHeight: displayDims.height,
+                    originalSize: file.size,
+                    displaySize: displayFile.size,
+                    thumbnailSize: thumbnailFile.size,
+                    previewUrl,
+                });
+            } catch (err) {
+                reject(err);
+            }
+        };
+
+        img.src = objectUrl;
     });
 }
