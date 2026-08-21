@@ -1,0 +1,240 @@
+---
+import { worldMapCountries, WORLD_MAP_VIEWBOX } from "@/utils/worldMapData";
+
+interface Props {
+    uid?: string | null;
+}
+
+const { uid } = Astro.props;
+---
+
+<section class="w-full max-w-4xl mx-auto px-4 mb-8" id="visited-map-section" data-uid={uid}>
+    <!-- Section Header & Stats Bar -->
+    <div class="bg-white/70 dark:bg-neutral-900/60 backdrop-blur-md rounded-3xl p-5 md:p-6 border border-neutral-200/70 dark:border-neutral-800 shadow-xs mb-4">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+            <div>
+                <h3 class="text-lg font-bold text-[var(--text-color)] flex items-center gap-2">
+                    <span>🗺️</span> Tu Mapa del Mundo
+                </h3>
+                <p class="text-xs text-[var(--lt-text-color)]">Países coloreados automáticamente según tus viajes</p>
+            </div>
+            
+            <!-- Quick Stats Badges -->
+            <div class="flex items-center gap-2.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                <div class="flex-1 md:flex-initial bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl px-3.5 py-2 text-center min-w-[90px]">
+                    <span class="block text-[11px] text-[#6e826b] dark:text-neutral-400 font-semibold uppercase tracking-wider">Países</span>
+                    <span id="stat-visited-count" class="text-base font-extrabold text-[#63875e] dark:text-[#8ac282]">—</span>
+                </div>
+                <div class="flex-1 md:flex-initial bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl px-3.5 py-2 text-center min-w-[90px]">
+                    <span class="block text-[11px] text-[#6e826b] dark:text-neutral-400 font-semibold uppercase tracking-wider">Mundo</span>
+                    <span id="stat-world-percent" class="text-base font-extrabold text-[#63875e] dark:text-[#8ac282]">—%</span>
+                </div>
+                <div class="flex-1 md:flex-initial bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl px-3.5 py-2 text-center min-w-[90px]">
+                    <span class="block text-[11px] text-[#6e826b] dark:text-neutral-400 font-semibold uppercase tracking-wider">Viajes</span>
+                    <span id="stat-total-trips" class="text-base font-extrabold text-[#63875e] dark:text-[#8ac282]">—</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SVG Map Container -->
+        <div class="relative w-full aspect-[1010/580] bg-[#f4f7f3] dark:bg-[#1a2119] rounded-2xl overflow-hidden border border-[#e0e7df] dark:border-neutral-800 flex items-center justify-center">
+            <!-- Loading Skeleton Overlay -->
+            <div id="map-loading-overlay" class="absolute inset-0 bg-[#f4f7f3]/80 dark:bg-[#1a2119]/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-10 transition-opacity duration-300">
+                <div class="w-6 h-6 border-2 border-[#63875e] border-t-transparent rounded-full animate-spin"></div>
+                <span class="text-xs text-[#6e826b] font-medium">Cargando mapa y aventuras...</span>
+            </div>
+
+            <!-- World SVG -->
+            <svg
+                id="world-map-svg"
+                viewBox={WORLD_MAP_VIEWBOX}
+                class="w-full h-full object-contain select-none transition-all"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                {worldMapCountries.map((country) => (
+                    <path
+                        id={`country-${country.id}`}
+                        d={country.d}
+                        data-code={country.id}
+                        data-name={country.name}
+                        class="country-path fill-[#dce4db] dark:fill-[#2d372c] stroke-[#c8d4c6] dark:stroke-[#20281f] stroke-[0.4] transition-colors duration-200 hover:fill-[#b8ceb5] dark:hover:fill-[#3f503c] cursor-pointer"
+                    />
+                ))}
+            </svg>
+
+            <!-- Floating Interactive Tooltip -->
+            <div
+                id="map-tooltip"
+                class="pointer-events-none fixed hidden z-50 bg-[#121712]/95 text-white backdrop-blur-md px-3 py-2 rounded-xl shadow-xl border border-white/10 text-xs transition-opacity duration-150 transform -translate-x-1/2 -translate-y-full -mt-2"
+            >
+                <div class="flex items-center gap-2">
+                    <img id="tooltip-flag" src="" alt="flag" class="w-5 h-3.5 rounded-xs object-cover shadow-xs hidden" />
+                    <span id="tooltip-name" class="font-bold"></span>
+                </div>
+                <div id="tooltip-status" class="text-[11px] text-[#aadba3] font-medium mt-0.5"></div>
+            </div>
+        </div>
+
+        <!-- Visited Countries Chips Section -->
+        <div id="visited-chips-container" class="mt-4 pt-3 border-t border-neutral-200/60 dark:border-neutral-800">
+            <h4 class="text-xs font-bold text-[#6e826b] dark:text-neutral-400 mb-2 uppercase tracking-wider">Países Descubiertos</h4>
+            <div id="visited-chips-list" class="flex flex-wrap gap-2">
+                <span class="text-xs text-neutral-400 italic">Cargando destinos...</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    import { db, projectAuth } from "@/firebase/config";
+    import { collection, getDocs } from "firebase/firestore";
+    import { aggregateVisitedCountries, calculateWorldExploredPercentage, type VisitedCountryStats } from "@/utils/travelerStats";
+    import { escapeHtml } from "@/utils/escapeHtml";
+
+    function initVisitedCountriesMap() {
+        const section = document.getElementById("visited-map-section");
+        if (!section || section.dataset.bound === "true") return;
+        section.dataset.bound = "true";
+
+        const rawUid = section.dataset.uid;
+        if (!rawUid) return;
+        const validUid: string = rawUid;
+
+        const statVisitedCount = document.getElementById("stat-visited-count");
+        const statWorldPercent = document.getElementById("stat-world-percent");
+        const statTotalTrips = document.getElementById("stat-total-trips");
+        const loadingOverlay = document.getElementById("map-loading-overlay");
+        const svgMap = document.getElementById("world-map-svg") as SVGSVGElement | null;
+        const tooltip = document.getElementById("map-tooltip");
+        const tooltipFlag = document.getElementById("tooltip-flag") as HTMLImageElement | null;
+        const tooltipName = document.getElementById("tooltip-name");
+        const tooltipStatus = document.getElementById("tooltip-status");
+        const chipsList = document.getElementById("visited-chips-list");
+
+        async function loadMapData() {
+            try {
+                await projectAuth.authStateReady();
+                const userTripsRef = collection(db, "users", validUid, "trips");
+                const tripsSnap = await getDocs(userTripsRef);
+
+                const trips: any[] = [];
+                tripsSnap.forEach((docSnap) => {
+                    trips.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                const visitedStats = aggregateVisitedCountries(trips);
+                const visitedCodesMap = new Map<string, VisitedCountryStats>();
+                visitedStats.forEach((stat) => visitedCodesMap.set(stat.code.toLowerCase(), stat));
+
+                const uniqueCountriesCount = visitedStats.length;
+                const totalTripsCount = trips.length;
+                const percentage = calculateWorldExploredPercentage(uniqueCountriesCount);
+
+                // Update Stats text
+                if (statVisitedCount) statVisitedCount.textContent = `${uniqueCountriesCount}`;
+                if (statWorldPercent) statWorldPercent.textContent = `${percentage}%`;
+                if (statTotalTrips) statTotalTrips.textContent = `${totalTripsCount}`;
+
+                // Color visited paths on SVG
+                document.querySelectorAll(".country-path").forEach((el) => {
+                    const pathEl = el as SVGPathElement;
+                    const code = (pathEl.dataset.code || "").toLowerCase();
+                    const isVisited = visitedCodesMap.has(code);
+
+                    if (isVisited) {
+                        pathEl.classList.remove("fill-[#dce4db]", "dark:fill-[#2d372c]", "stroke-[#c8d4c6]", "dark:stroke-[#20281f]");
+                        pathEl.classList.add("fill-[#63875e]", "dark:fill-[#7fb577]", "stroke-[#4a6b46]", "dark:stroke-[#91c788]", "stroke-[0.8]", "drop-shadow-xs");
+                    }
+                });
+
+                // Render Chips
+                if (chipsList) {
+                    if (visitedStats.length === 0) {
+                        chipsList.innerHTML = `
+                            <p class="text-xs text-neutral-400 italic">Aún no has registrado viajes. Crea tu primer viaje y se coloreará en el mapa.</p>
+                        `;
+                    } else {
+                        chipsList.innerHTML = visitedStats.map((stat) => {
+                            const safeCode = escapeHtml(stat.code);
+                            const safeName = escapeHtml(stat.name);
+                            const tripsLabel = stat.tripCount === 1 ? "1 viaje" : `${stat.tripCount} viajes`;
+                            return `
+                                <button
+                                    type="button"
+                                    data-country-code="${safeCode}"
+                                    class="country-chip group flex items-center gap-2 bg-[#ebf0eb] hover:bg-[#63875e] dark:bg-neutral-800 hover:text-white dark:hover:bg-[#63875e] text-[#121712] dark:text-neutral-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
+                                >
+                                    <img src="https://flagcdn.com/${safeCode}.svg" width="18" height="13" class="rounded-xs object-cover shadow-2xs" alt="${safeCode}" />
+                                    <span>${safeName}</span>
+                                    <span class="text-[10px] bg-black/10 dark:bg-white/10 group-hover:bg-white/20 px-1.5 py-0.5 rounded-full">${tripsLabel}</span>
+                                </button>
+                            `;
+                        }).join("");
+
+                        // Add chip hover interactions
+                        chipsList.querySelectorAll(".country-chip").forEach((chip) => {
+                            const btn = chip as HTMLButtonElement;
+                            const code = btn.dataset.countryCode;
+                            if (!code) return;
+
+                            btn.addEventListener("mouseenter", () => {
+                                const targetPath = document.getElementById(`country-${code}`);
+                                targetPath?.classList.add("fill-[#3f5c3a]", "dark:fill-[#9ee095]", "brightness-125");
+                            });
+
+                            btn.addEventListener("mouseleave", () => {
+                                const targetPath = document.getElementById(`country-${code}`);
+                                targetPath?.classList.remove("fill-[#3f5c3a]", "dark:fill-[#9ee095]", "brightness-125");
+                            });
+                        });
+                    }
+                }
+
+                // Hide loading overlay
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add("opacity-0", "pointer-events-none");
+                    setTimeout(() => loadingOverlay.classList.add("hidden"), 300);
+                }
+            } catch (err) {
+                console.error("Error loading visited countries map:", err);
+                if (loadingOverlay) loadingOverlay.classList.add("hidden");
+            }
+        }
+
+        // Setup Tooltip Mouse Tracking
+        if (svgMap && tooltip) {
+            svgMap.addEventListener("mousemove", (e: MouseEvent) => {
+                const target = e.target as HTMLElement;
+                if (target && target.classList.contains("country-path")) {
+                    const code = (target.dataset.code || "").toLowerCase();
+                    const name = target.dataset.name || code.toUpperCase();
+                    const isVisited = target.classList.contains("fill-[#63875e]") || target.classList.contains("dark:fill-[#7fb577]");
+
+                    if (tooltipFlag) {
+                        tooltipFlag.src = `https://flagcdn.com/${code}.svg`;
+                        tooltipFlag.classList.remove("hidden");
+                    }
+                    if (tooltipName) tooltipName.textContent = name;
+                    if (tooltipStatus) {
+                        tooltipStatus.textContent = isVisited ? "✅ País visitado" : "📍 No visitado";
+                        tooltipStatus.className = isVisited ? "text-[11px] text-[#aadba3] font-medium mt-0.5" : "text-[11px] text-neutral-400 font-medium mt-0.5";
+                    }
+
+                    tooltip.style.left = `${e.clientX}px`;
+                    tooltip.style.top = `${e.clientY}px`;
+                    tooltip.classList.remove("hidden");
+                } else {
+                    tooltip.classList.add("hidden");
+                }
+            });
+
+            svgMap.addEventListener("mouseleave", () => {
+                tooltip.classList.add("hidden");
+            });
+        }
+
+        loadMapData();
+    }
+
+    document.addEventListener("astro:page-load", initVisitedCountriesMap);
+</script>
