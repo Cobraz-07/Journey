@@ -122,7 +122,8 @@ const { uid } = Astro.props;
 
     function initTripListForm() {
         const tripForm = document.querySelector("#trip-form") as HTMLFormElement;
-        if (!tripForm) return;
+        if (!tripForm || tripForm.dataset.bound === "true") return;
+        tripForm.dataset.bound = "true";
 
         const formTitle = document.getElementById("trip-title") as HTMLInputElement;
         const formDescription = document.getElementById("trip-description") as HTMLTextAreaElement;
@@ -326,6 +327,5 @@ const { uid } = Astro.props;
         });
     }
 
-    initTripListForm();
     document.addEventListener("astro:page-load", initTripListForm);
 </script>

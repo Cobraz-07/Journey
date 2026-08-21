@@ -38,7 +38,8 @@ import { Button } from "@/components/starwind/button";
 
     function initRegisterForm() {
         const createForm = document.querySelector("#create-account") as HTMLFormElement;
-        if (!createForm) return;
+        if (!createForm || createForm.dataset.bound === "true") return;
+        createForm.dataset.bound = "true";
 
         const formEmail = document.getElementById("register-email") as HTMLInputElement;
         const formPassword = document.getElementById("register-password") as HTMLInputElement;
@@ -84,6 +85,5 @@ import { Button } from "@/components/starwind/button";
         });
     }
 
-    initRegisterForm();
     document.addEventListener("astro:page-load", initRegisterForm);
 </script>

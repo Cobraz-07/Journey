@@ -26,7 +26,8 @@ const { uid } = Astro.props;
 
     function initTripsList() {
         const tripList = document.getElementById("trip-list") as HTMLDivElement;
-        if (!tripList) return;
+        if (!tripList || tripList.dataset.bound === "true") return;
+        tripList.dataset.bound = "true";
 
         const uid = tripList.dataset.uid;
         if (!uid) return;
@@ -100,6 +101,5 @@ const { uid } = Astro.props;
         renderTrips();
     }
 
-    initTripsList();
     document.addEventListener("astro:page-load", initTripsList);
 </script>

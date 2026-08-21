@@ -75,9 +75,20 @@ const { uid, tripID } = Astro.props;
     import { escapeHtml } from "@/utils/escapeHtml";
     import { showToast } from "@/utils/toast";
 
+    if (!(window as any).__hasTripPhotosUpdatedListener) {
+        (window as any).__hasTripPhotosUpdatedListener = true;
+        window.addEventListener("trip-photos:updated", () => {
+            const gallery = document.getElementById("trip-photo-gallery");
+            if (gallery && typeof (gallery as any).__refreshGallery === "function") {
+                (gallery as any).__refreshGallery();
+            }
+        });
+    }
+
     function initPhotoGallery() {
         const galleryEl = document.getElementById("trip-photo-gallery") as HTMLDivElement;
-        if (!galleryEl) return;
+        if (!galleryEl || galleryEl.dataset.bound === "true") return;
+        galleryEl.dataset.bound = "true";
 
         const badgeCountEl = document.getElementById("gallery-badge-count") as HTMLElement;
         const addPhotosBtn = document.getElementById("gallery-add-photos-btn") as HTMLElement;
@@ -286,11 +297,9 @@ const { uid, tripID } = Astro.props;
             }
         }
 
+        (galleryEl as any).__refreshGallery = loadGallery;
         loadGallery();
-
-        window.addEventListener("trip-photos:updated", loadGallery);
     }
 
-    initPhotoGallery();
     document.addEventListener("astro:page-load", initPhotoGallery);
 </script>

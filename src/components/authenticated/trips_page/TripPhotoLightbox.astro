@@ -77,7 +77,8 @@
 
     function initPhotoLightbox() {
         const dialog = document.getElementById("photo-lightbox-dialog") as HTMLDialogElement;
-        if (!dialog) return;
+        if (!dialog || dialog.dataset.bound === "true") return;
+        dialog.dataset.bound = "true";
 
         const imgEl = document.getElementById("lightbox-image") as HTMLImageElement;
         const counterEl = document.getElementById("lightbox-counter") as HTMLElement;
@@ -247,13 +248,15 @@
         (window as any).__openTripLightbox = openLightbox;
     }
 
-    window.addEventListener("open-trip-lightbox", ((e: CustomEvent) => {
-        const { photos, startIndex, uid, tripId } = e.detail;
-        if (typeof (window as any).__openTripLightbox === "function") {
-            (window as any).__openTripLightbox(photos, startIndex, uid, tripId);
-        }
-    }) as EventListener);
+    if (!(window as any).__hasLightboxListener) {
+        (window as any).__hasLightboxListener = true;
+        window.addEventListener("open-trip-lightbox", ((e: CustomEvent) => {
+            const { photos, startIndex, uid, tripId } = e.detail;
+            if (typeof (window as any).__openTripLightbox === "function") {
+                (window as any).__openTripLightbox(photos, startIndex, uid, tripId);
+            }
+        }) as EventListener);
+    }
 
-    initPhotoLightbox();
     document.addEventListener("astro:page-load", initPhotoLightbox);
 </script>

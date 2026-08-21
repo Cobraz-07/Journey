@@ -133,13 +133,17 @@ const { uid, tripID } = Astro.props;
     import { showToast } from "@/utils/toast";
 
     let currentPhotoCount = 0;
-    window.addEventListener("trip-photos:count-updated", ((e: CustomEvent) => {
-        currentPhotoCount = e.detail?.count ?? 0;
-    }) as EventListener);
+    if (!(window as any).__hasCountListener) {
+        (window as any).__hasCountListener = true;
+        window.addEventListener("trip-photos:count-updated", ((e: CustomEvent) => {
+            currentPhotoCount = e.detail?.count ?? 0;
+        }) as EventListener);
+    }
 
     function initTripPhotoUploadModal() {
         const modalDialog = document.getElementById("trip-photo-upload-dialog") as any;
-        if (!modalDialog) return;
+        if (!modalDialog || modalDialog.dataset.bound === "true") return;
+        modalDialog.dataset.bound = "true";
 
         const uid = modalDialog.dataset.uid;
         const tripId = modalDialog.dataset.tripId;
@@ -486,6 +490,5 @@ const { uid, tripID } = Astro.props;
         singleCancelBtn?.addEventListener("click", closeUploadModal);
     }
 
-    initTripPhotoUploadModal();
     document.addEventListener("astro:page-load", initTripPhotoUploadModal);
 </script>

@@ -249,8 +249,6 @@ const { class: className, ...rest } = Astro.props;
     });
   };
 
-  setupDialogs();
-  document.addEventListener("astro:after-swap", setupDialogs);
   document.addEventListener("astro:page-load", setupDialogs);
 </script>
 

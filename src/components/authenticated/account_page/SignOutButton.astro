@@ -11,7 +11,10 @@ import Button from "@/components/starwind/button";
 
     function initSignOutButton() {
         const logoutButton = document.querySelector("#logout-button") as HTMLButtonElement;
-        logoutButton?.addEventListener("click", async (e) => {
+        if (!logoutButton || logoutButton.dataset.bound === "true") return;
+        logoutButton.dataset.bound = "true";
+
+        logoutButton.addEventListener("click", async (e) => {
             e.preventDefault();
             // Clear client-side Firebase Auth state
             await projectAuth.signOut();
@@ -21,6 +24,5 @@ import Button from "@/components/starwind/button";
         });
     }
 
-    initSignOutButton();
     document.addEventListener("astro:page-load", initSignOutButton);
 </script>

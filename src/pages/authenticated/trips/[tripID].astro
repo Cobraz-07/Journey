@@ -114,10 +114,13 @@ const tripData = tripSnap.data();
 
     function initTripDetails() {
         const deleteBtn = document.getElementById("delete-trip-btn");
-        const uid = deleteBtn?.dataset.uid;
-        const tripID = deleteBtn?.dataset.id;
+        if (!deleteBtn || deleteBtn.dataset.bound === "true") return;
+        deleteBtn.dataset.bound = "true";
 
-        deleteBtn?.addEventListener("click", async () => {
+        const uid = deleteBtn.dataset.uid;
+        const tripID = deleteBtn.dataset.id;
+
+        deleteBtn.addEventListener("click", async () => {
             if (!uid || !tripID) return;
             if (confirm("¿Estás seguro de que deseas eliminar este viaje por completo? Se borrarán todas sus fotos y entradas del diario.")) {
                 deleteBtn.setAttribute("disabled", "true");
@@ -184,7 +187,6 @@ const tripData = tripSnap.data();
         });
     }
 
-    initTripDetails();
     document.addEventListener("astro:page-load", initTripDetails);
 </script>
 

@@ -31,7 +31,8 @@ const { tripID, uid } = Astro.props;
 
     function initJournalList() {
         const journalList = document.getElementById("journal-list") as HTMLDivElement;
-        if (!journalList) return;
+        if (!journalList || journalList.dataset.bound === "true") return;
+        journalList.dataset.bound = "true";
 
         const uid = journalList.dataset.uid;
         const tripId = journalList.dataset.tripId;
@@ -148,6 +149,5 @@ const { tripID, uid } = Astro.props;
         renderJournals();
     }
 
-    initJournalList();
     document.addEventListener("astro:page-load", initJournalList);
 </script>

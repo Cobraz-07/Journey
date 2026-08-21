@@ -38,7 +38,8 @@ import { Button } from "@/components/starwind/button";
 
     function initSignInForm() {
         const loginForm = document.querySelector("#login-account") as HTMLFormElement;
-        if (!loginForm) return;
+        if (!loginForm || loginForm.dataset.bound === "true") return;
+        loginForm.dataset.bound = "true";
 
         const formEmail = document.getElementById("signin-email") as HTMLInputElement;
         const formPassword = document.getElementById("signin-password") as HTMLInputElement;
@@ -84,6 +85,5 @@ import { Button } from "@/components/starwind/button";
         });
     }
 
-    initSignInForm();
     document.addEventListener("astro:page-load", initSignInForm);
 </script>

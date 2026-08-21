@@ -62,7 +62,8 @@ const { uid, tripID } = Astro.props;
     function initTripJournalForm() {
         const journalFormDialog = document.getElementById("journal-form-dialog") as HTMLDivElement;
         const journalForm = document.querySelector("#journal-form") as HTMLFormElement;
-        if (!journalForm || !journalFormDialog) return;
+        if (!journalForm || !journalFormDialog || journalForm.dataset.bound === "true") return;
+        journalForm.dataset.bound = "true";
 
         const formTitle = document.getElementById("journal-title") as HTMLInputElement;
         const formDescription = document.getElementById("journal-description") as HTMLTextAreaElement;
@@ -187,6 +188,5 @@ const { uid, tripID } = Astro.props;
         });
     }
 
-    initTripJournalForm();
     document.addEventListener("astro:page-load", initTripJournalForm);
 </script>
