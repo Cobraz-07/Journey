@@ -132,350 +132,360 @@ const { uid, tripID } = Astro.props;
     import { uploadTripPhoto, MAX_PHOTOS_PER_TRIP, MAX_BATCH_UPLOAD_SIZE } from "@/firebase/storageService";
     import { showToast } from "@/utils/toast";
 
-    const modalDialog = document.getElementById("trip-photo-upload-dialog") as any;
-    const uid = modalDialog?.dataset.uid;
-    const tripId = modalDialog?.dataset.tripId;
-
     let currentPhotoCount = 0;
-
     window.addEventListener("trip-photos:count-updated", ((e: CustomEvent) => {
         currentPhotoCount = e.detail?.count ?? 0;
     }) as EventListener);
 
-    // Tabs
-    const tabBatch = document.getElementById("tab-batch-mode") as HTMLButtonElement;
-    const tabSingle = document.getElementById("tab-single-mode") as HTMLButtonElement;
-    const batchSection = document.getElementById("batch-section") as HTMLDivElement;
-    const singleSection = document.getElementById("single-section") as HTMLDivElement;
+    function initTripPhotoUploadModal() {
+        const modalDialog = document.getElementById("trip-photo-upload-dialog") as any;
+        if (!modalDialog) return;
 
-    function setTab(mode: "batch" | "single") {
-        if (mode === "batch") {
-            tabBatch.classList.add("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
-            tabBatch.classList.remove("text-[#6e826b]", "dark:text-neutral-400");
-            tabSingle.classList.remove("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
-            tabSingle.classList.add("text-[#6e826b]", "dark:text-neutral-400");
-            batchSection.classList.remove("hidden");
-            singleSection.classList.add("hidden");
-        } else {
-            tabSingle.classList.add("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
-            tabSingle.classList.remove("text-[#6e826b]", "dark:text-neutral-400");
-            tabBatch.classList.remove("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
-            tabBatch.classList.add("text-[#6e826b]", "dark:text-neutral-400");
-            singleSection.classList.remove("hidden");
-            batchSection.classList.add("hidden");
-        }
-    }
+        const uid = modalDialog.dataset.uid;
+        const tripId = modalDialog.dataset.tripId;
+        if (!uid || !tripId) return;
 
-    tabBatch?.addEventListener("click", () => setTab("batch"));
-    tabSingle?.addEventListener("click", () => setTab("single"));
+        // Tabs
+        const tabBatch = document.getElementById("tab-batch-mode") as HTMLButtonElement;
+        const tabSingle = document.getElementById("tab-single-mode") as HTMLButtonElement;
+        const batchSection = document.getElementById("batch-section") as HTMLDivElement;
+        const singleSection = document.getElementById("single-section") as HTMLDivElement;
 
-    // --- BATCH STATE & LOGIC ---
-    let selectedBatchFiles: File[] = [];
-    let batchPreviewUrls: string[] = [];
-    const batchDropzone = document.getElementById("batch-dropzone") as HTMLDivElement;
-    const batchFileInput = document.getElementById("batch-file-input") as HTMLInputElement;
-    const batchPreviewContainer = document.getElementById("batch-files-preview-container") as HTMLDivElement;
-    const batchFilesGrid = document.getElementById("batch-files-grid") as HTMLDivElement;
-    const batchFilesCount = document.getElementById("batch-files-count") as HTMLElement;
-    const batchClearBtn = document.getElementById("batch-clear-btn") as HTMLButtonElement;
-    const batchSubmitBtn = document.getElementById("batch-submit-btn") as HTMLButtonElement;
-    const batchCancelBtn = document.getElementById("batch-cancel-btn") as HTMLButtonElement;
-    const batchProgressWrapper = document.getElementById("batch-progress-wrapper") as HTMLDivElement;
-    const batchProgressBar = document.getElementById("batch-progress-bar") as HTMLDivElement;
-    const batchProgressPercent = document.getElementById("batch-progress-percent") as HTMLElement;
-    const batchProgressLabel = document.getElementById("batch-progress-label") as HTMLElement;
-
-    batchDropzone?.addEventListener("click", () => batchFileInput?.click());
-
-    batchDropzone?.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        batchDropzone.classList.add("bg-[#aadba3]/20");
-    });
-    batchDropzone?.addEventListener("dragleave", () => {
-        batchDropzone.classList.remove("bg-[#aadba3]/20");
-    });
-    batchDropzone?.addEventListener("drop", (e) => {
-        e.preventDefault();
-        batchDropzone.classList.remove("bg-[#aadba3]/20");
-        if (e.dataTransfer?.files?.length) {
-            handleBatchFiles(Array.from(e.dataTransfer.files));
-        }
-    });
-
-    batchFileInput?.addEventListener("change", () => {
-        if (batchFileInput.files?.length) {
-            handleBatchFiles(Array.from(batchFileInput.files));
-        }
-    });
-
-    function handleBatchFiles(files: File[]) {
-        const imageFiles = files.filter((f) => f.type.startsWith("image/"));
-        if (!imageFiles.length) return;
-
-        const remainingSlots = MAX_PHOTOS_PER_TRIP - currentPhotoCount - selectedBatchFiles.length;
-        if (remainingSlots <= 0) {
-            showToast(`Límite alcanzado: Este viaje ya tiene el máximo de ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
-            return;
-        }
-
-        const maxCanAdd = Math.min(remainingSlots, MAX_BATCH_UPLOAD_SIZE - selectedBatchFiles.length);
-        if (maxCanAdd <= 0) {
-            showToast(`Máximo de ${MAX_BATCH_UPLOAD_SIZE} fotos por tanda de subida.`, "error");
-            return;
-        }
-
-        if (imageFiles.length > maxCanAdd) {
-            showToast(`Se añadieron las primeras ${maxCanAdd} fotos (límite de cuota disponible).`, "error");
-        }
-
-        const toAdd = imageFiles.slice(0, maxCanAdd);
-        selectedBatchFiles = [...selectedBatchFiles, ...toAdd];
-        renderBatchPreviews();
-    }
-
-    function renderBatchPreviews() {
-        if (!selectedBatchFiles.length) {
-            batchPreviewContainer.classList.add("hidden");
-            batchSubmitBtn.disabled = true;
-            batchFilesGrid.innerHTML = "";
-            // Revoke all preview URLs to free memory
-            batchPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-            batchPreviewUrls = [];
-            return;
-        }
-
-        batchPreviewContainer.classList.remove("hidden");
-        batchSubmitBtn.disabled = false;
-        batchFilesCount.textContent = `${selectedBatchFiles.length} ${selectedBatchFiles.length === 1 ? "foto seleccionada" : "fotos seleccionadas"}`;
-
-        batchFilesGrid.innerHTML = "";
-        // Revoke old preview URLs before creating new ones
-        batchPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-        batchPreviewUrls = [];
-        selectedBatchFiles.forEach((file, index) => {
-            const card = document.createElement("div");
-            card.className = "relative rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-white aspect-square group";
-            
-            const img = document.createElement("img");
-            img.className = "w-full h-full object-cover";
-            const previewUrl = URL.createObjectURL(file);
-            batchPreviewUrls.push(previewUrl);
-            img.src = previewUrl;
-            card.appendChild(img);
-
-            const removeBtn = document.createElement("button");
-            removeBtn.type = "button";
-            removeBtn.className = "absolute top-1 right-1 bg-black/70 hover:bg-black text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]";
-            removeBtn.textContent = "✕";
-            removeBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                selectedBatchFiles.splice(index, 1);
-                renderBatchPreviews();
-            });
-            card.appendChild(removeBtn);
-
-            batchFilesGrid.appendChild(card);
-        });
-    }
-
-    batchClearBtn?.addEventListener("click", () => {
-        selectedBatchFiles = [];
-        renderBatchPreviews();
-    });
-
-    function closeUploadModal() {
-        const closeBtn = document.querySelector("#trip-photo-upload-dialog .starwind-dialog-close, #trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
-        if (closeBtn) {
-            closeBtn.click();
-        } else {
-            const d = document.querySelector("#trip-photo-upload-dialog dialog") as HTMLDialogElement;
-            d?.close();
-        }
-    }
-
-    batchSubmitBtn?.addEventListener("click", async () => {
-        if (!selectedBatchFiles.length || !uid || !tripId) return;
-
-        await projectAuth.authStateReady();
-        batchSubmitBtn.disabled = true;
-        
-        // Reset progress bar elements immediately to 0%
-        batchProgressBar.style.width = "0%";
-        batchProgressPercent.textContent = "0%";
-        batchProgressLabel.textContent = `Preparando subida de ${selectedBatchFiles.length} fotos...`;
-        batchProgressWrapper.classList.remove("hidden");
-        
-        const total = selectedBatchFiles.length;
-        let completed = 0;
-        let failedCount = 0;
-
-        // Controlled concurrency: 5 uploads in parallel
-        const CONCURRENCY_LIMIT = 5;
-        const queue = [...selectedBatchFiles];
-
-        async function processWorker() {
-            while (queue.length > 0) {
-                const rawFile = queue.shift();
-                if (!rawFile) break;
-
-                try {
-                    // Process multi-resolution responsive assets
-                    const responsive = await processResponsiveTripPhoto(rawFile);
-                    await uploadTripPhoto(uid, tripId, {
-                        displayFile: responsive.displayFile,
-                        thumbnailFile: responsive.thumbnailFile,
-                        blurDataUrl: responsive.blurDataUrl,
-                        displayWidth: responsive.displayWidth,
-                        displayHeight: responsive.displayHeight,
-                    });
-                } catch (err) {
-                    failedCount++;
-                    console.error(`Error subiendo foto ${rawFile.name}:`, err);
-                } finally {
-                    completed++;
-                    const pct = Math.round((completed / total) * 100);
-                    batchProgressLabel.textContent = `Procesando y subiendo ${completed} de ${total} (5 en paralelo)...`;
-                    batchProgressBar.style.width = `${pct}%`;
-                    batchProgressPercent.textContent = `${pct}%`;
-                }
+        function setTab(mode: "batch" | "single") {
+            if (mode === "batch") {
+                tabBatch?.classList.add("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
+                tabBatch?.classList.remove("text-[#6e826b]", "dark:text-neutral-400");
+                tabSingle?.classList.remove("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
+                tabSingle?.classList.add("text-[#6e826b]", "dark:text-neutral-400");
+                batchSection?.classList.remove("hidden");
+                singleSection?.classList.add("hidden");
+            } else {
+                tabSingle?.classList.add("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
+                tabSingle?.classList.remove("text-[#6e826b]", "dark:text-neutral-400");
+                tabBatch?.classList.remove("bg-white", "dark:bg-neutral-700", "text-[#121712]", "dark:text-white", "shadow-sm");
+                tabBatch?.classList.add("text-[#6e826b]", "dark:text-neutral-400");
+                singleSection?.classList.remove("hidden");
+                batchSection?.classList.add("hidden");
             }
         }
 
-        const workers = Array.from({ length: Math.min(CONCURRENCY_LIMIT, total) }, () => processWorker());
-        await Promise.all(workers);
+        tabBatch?.addEventListener("click", () => setTab("batch"));
+        tabSingle?.addEventListener("click", () => setTab("single"));
 
-        // Finish
-        setTimeout(() => {
+        // --- BATCH STATE & LOGIC ---
+        let selectedBatchFiles: File[] = [];
+        let batchPreviewUrls: string[] = [];
+        const batchDropzone = document.getElementById("batch-dropzone") as HTMLDivElement;
+        const batchFileInput = document.getElementById("batch-file-input") as HTMLInputElement;
+        const batchPreviewContainer = document.getElementById("batch-files-preview-container") as HTMLDivElement;
+        const batchFilesGrid = document.getElementById("batch-files-grid") as HTMLDivElement;
+        const batchFilesCount = document.getElementById("batch-files-count") as HTMLElement;
+        const batchClearBtn = document.getElementById("batch-clear-btn") as HTMLButtonElement;
+        const batchSubmitBtn = document.getElementById("batch-submit-btn") as HTMLButtonElement;
+        const batchCancelBtn = document.getElementById("batch-cancel-btn") as HTMLButtonElement;
+        const batchProgressWrapper = document.getElementById("batch-progress-wrapper") as HTMLDivElement;
+        const batchProgressBar = document.getElementById("batch-progress-bar") as HTMLDivElement;
+        const batchProgressPercent = document.getElementById("batch-progress-percent") as HTMLElement;
+        const batchProgressLabel = document.getElementById("batch-progress-label") as HTMLElement;
+
+        batchDropzone?.addEventListener("click", () => batchFileInput?.click());
+
+        batchDropzone?.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            batchDropzone.classList.add("bg-[#aadba3]/20");
+        });
+        batchDropzone?.addEventListener("dragleave", () => {
+            batchDropzone.classList.remove("bg-[#aadba3]/20");
+        });
+        batchDropzone?.addEventListener("drop", (e) => {
+            e.preventDefault();
+            batchDropzone.classList.remove("bg-[#aadba3]/20");
+            if (e.dataTransfer?.files?.length) {
+                handleBatchFiles(Array.from(e.dataTransfer.files));
+            }
+        });
+
+        batchFileInput?.addEventListener("change", () => {
+            if (batchFileInput.files?.length) {
+                handleBatchFiles(Array.from(batchFileInput.files));
+            }
+        });
+
+        function handleBatchFiles(files: File[]) {
+            const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+            if (!imageFiles.length) return;
+
+            const remainingSlots = MAX_PHOTOS_PER_TRIP - currentPhotoCount - selectedBatchFiles.length;
+            if (remainingSlots <= 0) {
+                showToast(`Límite alcanzado: Este viaje ya tiene el máximo de ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
+                return;
+            }
+
+            const maxCanAdd = Math.min(remainingSlots, MAX_BATCH_UPLOAD_SIZE - selectedBatchFiles.length);
+            if (maxCanAdd <= 0) {
+                showToast(`Máximo de ${MAX_BATCH_UPLOAD_SIZE} fotos por tanda de subida.`, "error");
+                return;
+            }
+
+            if (imageFiles.length > maxCanAdd) {
+                showToast(`Se añadieron las primeras ${maxCanAdd} fotos (límite de cuota disponible).`, "error");
+            }
+
+            const toAdd = imageFiles.slice(0, maxCanAdd);
+            selectedBatchFiles = [...selectedBatchFiles, ...toAdd];
+            renderBatchPreviews();
+        }
+
+        function renderBatchPreviews() {
+            if (!selectedBatchFiles.length) {
+                batchPreviewContainer?.classList.add("hidden");
+                if (batchSubmitBtn) batchSubmitBtn.disabled = true;
+                if (batchFilesGrid) batchFilesGrid.innerHTML = "";
+                batchPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+                batchPreviewUrls = [];
+                return;
+            }
+
+            batchPreviewContainer?.classList.remove("hidden");
+            if (batchSubmitBtn) batchSubmitBtn.disabled = false;
+            if (batchFilesCount) {
+                batchFilesCount.textContent = `${selectedBatchFiles.length} ${selectedBatchFiles.length === 1 ? "foto seleccionada" : "fotos seleccionadas"}`;
+            }
+
+            if (batchFilesGrid) {
+                batchFilesGrid.innerHTML = "";
+                batchPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+                batchPreviewUrls = [];
+                selectedBatchFiles.forEach((file, index) => {
+                    const card = document.createElement("div");
+                    card.className = "relative rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-white aspect-square group";
+                    
+                    const img = document.createElement("img");
+                    img.className = "w-full h-full object-cover";
+                    const previewUrl = URL.createObjectURL(file);
+                    batchPreviewUrls.push(previewUrl);
+                    img.src = previewUrl;
+                    card.appendChild(img);
+
+                    const removeBtn = document.createElement("button");
+                    removeBtn.type = "button";
+                    removeBtn.className = "absolute top-1 right-1 bg-black/70 hover:bg-black text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]";
+                    removeBtn.textContent = "✕";
+                    removeBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        selectedBatchFiles.splice(index, 1);
+                        renderBatchPreviews();
+                    });
+                    card.appendChild(removeBtn);
+
+                    batchFilesGrid.appendChild(card);
+                });
+            }
+        }
+
+        batchClearBtn?.addEventListener("click", () => {
             selectedBatchFiles = [];
             renderBatchPreviews();
-            batchProgressWrapper.classList.add("hidden");
-            batchProgressBar.style.width = "0%";
-            batchProgressPercent.textContent = "0%";
-            batchSubmitBtn.disabled = false;
-            closeUploadModal();
-            
-            if (failedCount > 0) {
-                showToast(`Se subieron ${total - failedCount} fotos. ${failedCount} fotos fallaron.`, "error");
+        });
+
+        function closeUploadModal() {
+            const closeBtn = document.querySelector("#trip-photo-upload-dialog .starwind-dialog-close, #trip-photo-upload-dialog [data-dialog-close]") as HTMLButtonElement;
+            if (closeBtn) {
+                closeBtn.click();
             } else {
-                showToast(`¡${total} fotos subidas con éxito!`, "success");
-            }
-            
-            window.dispatchEvent(new CustomEvent("trip-photos:updated"));
-        }, 400);
-    });
-
-    batchCancelBtn?.addEventListener("click", closeUploadModal);
-
-    // --- SINGLE PHOTO STATE & LOGIC ---
-    let singleResponsiveResult: ResponsiveTripPhotoResult | null = null;
-    const singleDropzone = document.getElementById("single-dropzone") as HTMLDivElement;
-    const singleFileInput = document.getElementById("single-file-input") as HTMLInputElement;
-    const singleDropzonePlaceholder = document.getElementById("single-dropzone-placeholder") as HTMLDivElement;
-    const singlePreviewContainer = document.getElementById("single-preview-container") as HTMLDivElement;
-    const singlePreviewImg = document.getElementById("single-preview-img") as HTMLImageElement;
-    const singleSavingsBadge = document.getElementById("single-savings-badge") as HTMLElement;
-    const singleRemoveFileBtn = document.getElementById("single-remove-file-btn") as HTMLButtonElement;
-    const singleCaptionInput = document.getElementById("single-caption-input") as HTMLInputElement;
-    const singleSubmitBtn = document.getElementById("single-submit-btn") as HTMLButtonElement;
-    const singleCancelBtn = document.getElementById("single-cancel-btn") as HTMLButtonElement;
-    const singleProgressWrapper = document.getElementById("single-progress-wrapper") as HTMLDivElement;
-
-    singleDropzone?.addEventListener("click", (e) => {
-        if (e.target === singleRemoveFileBtn) return;
-        singleFileInput?.click();
-    });
-
-    singleDropzone?.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        singleDropzone.classList.add("bg-[#aadba3]/20");
-    });
-    singleDropzone?.addEventListener("dragleave", () => {
-        singleDropzone.classList.remove("bg-[#aadba3]/20");
-    });
-    singleDropzone?.addEventListener("drop", async (e) => {
-        e.preventDefault();
-        singleDropzone.classList.remove("bg-[#aadba3]/20");
-        if (e.dataTransfer?.files?.[0]) {
-            const file = e.dataTransfer.files[0];
-            if (file.type.startsWith("image/")) {
-                await processSingleFile(file);
+                const d = document.querySelector("#trip-photo-upload-dialog dialog") as HTMLDialogElement;
+                d?.close();
             }
         }
-    });
 
-    singleFileInput?.addEventListener("change", async () => {
-        if (!singleFileInput.files?.[0]) return;
-        await processSingleFile(singleFileInput.files[0]);
-    });
+        batchSubmitBtn?.addEventListener("click", async () => {
+            if (!selectedBatchFiles.length || !uid || !tripId) return;
 
-    async function processSingleFile(file: File) {
-        if (currentPhotoCount >= MAX_PHOTOS_PER_TRIP) {
-            showToast(`Límite alcanzado: Este viaje ya tiene el máximo de ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
-            return;
-        }
-
-        try {
-            singleResponsiveResult = await processResponsiveTripPhoto(file);
-            singlePreviewImg.src = singleResponsiveResult.previewUrl;
-            singleSavingsBadge.textContent = `Optimizado: Display ${(singleResponsiveResult.displaySize / 1024).toFixed(0)} KB | Miniatura ${(singleResponsiveResult.thumbnailSize / 1024).toFixed(0)} KB`;
+            await projectAuth.authStateReady();
+            batchSubmitBtn.disabled = true;
             
-            singleDropzonePlaceholder.classList.add("hidden");
-            singlePreviewContainer.classList.remove("hidden");
-            singleSubmitBtn.disabled = false;
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : "Error al procesar la imagen.";
-            showToast(message, "error");
+            // Reset progress bar elements immediately to 0%
+            if (batchProgressBar) batchProgressBar.style.width = "0%";
+            if (batchProgressPercent) batchProgressPercent.textContent = "0%";
+            if (batchProgressLabel) batchProgressLabel.textContent = `Preparando subida de ${selectedBatchFiles.length} fotos...`;
+            batchProgressWrapper?.classList.remove("hidden");
+            
+            const total = selectedBatchFiles.length;
+            let completed = 0;
+            let failedCount = 0;
+
+            const CONCURRENCY_LIMIT = 5;
+            const queue = [...selectedBatchFiles];
+
+            async function processWorker() {
+                while (queue.length > 0) {
+                    const rawFile = queue.shift();
+                    if (!rawFile) break;
+
+                    try {
+                        const responsive = await processResponsiveTripPhoto(rawFile);
+                        await uploadTripPhoto(uid, tripId, {
+                            displayFile: responsive.displayFile,
+                            thumbnailFile: responsive.thumbnailFile,
+                            blurDataUrl: responsive.blurDataUrl,
+                            displayWidth: responsive.displayWidth,
+                            displayHeight: responsive.displayHeight,
+                        });
+                    } catch (err) {
+                        failedCount++;
+                        console.error(`Error subiendo foto ${rawFile.name}:`, err);
+                    } finally {
+                        completed++;
+                        const pct = Math.round((completed / total) * 100);
+                        if (batchProgressLabel) {
+                            batchProgressLabel.textContent = `Procesando y subiendo ${completed} de ${total} (5 en paralelo)...`;
+                        }
+                        if (batchProgressBar) batchProgressBar.style.width = `${pct}%`;
+                        if (batchProgressPercent) batchProgressPercent.textContent = `${pct}%`;
+                    }
+                }
+            }
+
+            const workers = Array.from({ length: Math.min(CONCURRENCY_LIMIT, total) }, () => processWorker());
+            await Promise.all(workers);
+
+            setTimeout(() => {
+                selectedBatchFiles = [];
+                renderBatchPreviews();
+                batchProgressWrapper?.classList.add("hidden");
+                if (batchProgressBar) batchProgressBar.style.width = "0%";
+                if (batchProgressPercent) batchProgressPercent.textContent = "0%";
+                batchSubmitBtn.disabled = false;
+                closeUploadModal();
+                
+                if (failedCount > 0) {
+                    showToast(`Se subieron ${total - failedCount} fotos. ${failedCount} fotos fallaron.`, "error");
+                } else {
+                    showToast(`¡${total} fotos subidas con éxito!`, "success");
+                }
+                
+                window.dispatchEvent(new CustomEvent("trip-photos:updated"));
+            }, 400);
+        });
+
+        batchCancelBtn?.addEventListener("click", closeUploadModal);
+
+        // --- SINGLE PHOTO STATE & LOGIC ---
+        let singleResponsiveResult: ResponsiveTripPhotoResult | null = null;
+        const singleDropzone = document.getElementById("single-dropzone") as HTMLDivElement;
+        const singleFileInput = document.getElementById("single-file-input") as HTMLInputElement;
+        const singleDropzonePlaceholder = document.getElementById("single-dropzone-placeholder") as HTMLDivElement;
+        const singlePreviewContainer = document.getElementById("single-preview-container") as HTMLDivElement;
+        const singlePreviewImg = document.getElementById("single-preview-img") as HTMLImageElement;
+        const singleSavingsBadge = document.getElementById("single-savings-badge") as HTMLElement;
+        const singleRemoveFileBtn = document.getElementById("single-remove-file-btn") as HTMLButtonElement;
+        const singleCaptionInput = document.getElementById("single-caption-input") as HTMLInputElement;
+        const singleSubmitBtn = document.getElementById("single-submit-btn") as HTMLButtonElement;
+        const singleCancelBtn = document.getElementById("single-cancel-btn") as HTMLButtonElement;
+        const singleProgressWrapper = document.getElementById("single-progress-wrapper") as HTMLDivElement;
+
+        singleDropzone?.addEventListener("click", (e) => {
+            if (e.target === singleRemoveFileBtn) return;
+            singleFileInput?.click();
+        });
+
+        singleDropzone?.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            singleDropzone.classList.add("bg-[#aadba3]/20");
+        });
+        singleDropzone?.addEventListener("dragleave", () => {
+            singleDropzone.classList.remove("bg-[#aadba3]/20");
+        });
+        singleDropzone?.addEventListener("drop", async (e) => {
+            e.preventDefault();
+            singleDropzone.classList.remove("bg-[#aadba3]/20");
+            if (e.dataTransfer?.files?.[0]) {
+                const file = e.dataTransfer.files[0];
+                if (file.type.startsWith("image/")) {
+                    await processSingleFile(file);
+                }
+            }
+        });
+
+        singleFileInput?.addEventListener("change", async () => {
+            if (!singleFileInput.files?.[0]) return;
+            await processSingleFile(singleFileInput.files[0]);
+        });
+
+        async function processSingleFile(file: File) {
+            if (currentPhotoCount >= MAX_PHOTOS_PER_TRIP) {
+                showToast(`Límite alcanzado: Este viaje ya tiene el máximo de ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
+                return;
+            }
+
+            try {
+                singleResponsiveResult = await processResponsiveTripPhoto(file);
+                if (singlePreviewImg) singlePreviewImg.src = singleResponsiveResult.previewUrl;
+                if (singleSavingsBadge) {
+                    singleSavingsBadge.textContent = `Optimizado: Display ${(singleResponsiveResult.displaySize / 1024).toFixed(0)} KB | Miniatura ${(singleResponsiveResult.thumbnailSize / 1024).toFixed(0)} KB`;
+                }
+                
+                singleDropzonePlaceholder?.classList.add("hidden");
+                singlePreviewContainer?.classList.remove("hidden");
+                if (singleSubmitBtn) singleSubmitBtn.disabled = false;
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : "Error al procesar la imagen.";
+                showToast(message, "error");
+            }
         }
+
+        singleRemoveFileBtn?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            singleResponsiveResult = null;
+            if (singleFileInput) singleFileInput.value = "";
+            singleDropzonePlaceholder?.classList.remove("hidden");
+            singlePreviewContainer?.classList.add("hidden");
+            if (singleSubmitBtn) singleSubmitBtn.disabled = true;
+        });
+
+        singleSubmitBtn?.addEventListener("click", async () => {
+            if (!singleResponsiveResult || !uid || !tripId) return;
+
+            singleSubmitBtn.disabled = true;
+            singleSubmitBtn.textContent = "Subiendo...";
+            singleProgressWrapper?.classList.remove("hidden");
+
+            try {
+                await projectAuth.authStateReady();
+                const caption = singleCaptionInput?.value || "";
+                await uploadTripPhoto(uid, tripId, {
+                    displayFile: singleResponsiveResult.displayFile,
+                    thumbnailFile: singleResponsiveResult.thumbnailFile,
+                    blurDataUrl: singleResponsiveResult.blurDataUrl,
+                    displayWidth: singleResponsiveResult.displayWidth,
+                    displayHeight: singleResponsiveResult.displayHeight,
+                }, caption);
+                
+                // Clean
+                singleResponsiveResult = null;
+                if (singleFileInput) singleFileInput.value = "";
+                if (singleCaptionInput) singleCaptionInput.value = "";
+                singleDropzonePlaceholder?.classList.remove("hidden");
+                singlePreviewContainer?.classList.add("hidden");
+                singleProgressWrapper?.classList.add("hidden");
+                singleSubmitBtn.disabled = false;
+                singleSubmitBtn.textContent = "Subir foto";
+
+                closeUploadModal();
+                showToast("Foto subida con éxito.", "success");
+                window.dispatchEvent(new CustomEvent("trip-photos:updated"));
+            } catch (err) {
+                console.error("Error al subir foto:", err);
+                showToast("No se pudo subir la imagen.", "error");
+                singleProgressWrapper?.classList.add("hidden");
+                singleSubmitBtn.disabled = false;
+                singleSubmitBtn.textContent = "Subir foto";
+            }
+        });
+                
+        singleCancelBtn?.addEventListener("click", closeUploadModal);
     }
 
-    singleRemoveFileBtn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        singleResponsiveResult = null;
-        singleFileInput.value = "";
-        singleDropzonePlaceholder.classList.remove("hidden");
-        singlePreviewContainer.classList.add("hidden");
-        singleSubmitBtn.disabled = true;
-    });
-
-    singleSubmitBtn?.addEventListener("click", async () => {
-        if (!singleResponsiveResult || !uid || !tripId) return;
-
-        singleSubmitBtn.disabled = true;
-        singleSubmitBtn.textContent = "Subiendo...";
-        singleProgressWrapper.classList.remove("hidden");
-
-        try {
-            await projectAuth.authStateReady();
-            const caption = singleCaptionInput?.value || "";
-            await uploadTripPhoto(uid, tripId, {
-                displayFile: singleResponsiveResult.displayFile,
-                thumbnailFile: singleResponsiveResult.thumbnailFile,
-                blurDataUrl: singleResponsiveResult.blurDataUrl,
-                displayWidth: singleResponsiveResult.displayWidth,
-                displayHeight: singleResponsiveResult.displayHeight,
-            }, caption);
-            
-            // Clean
-            singleResponsiveResult = null;
-            singleFileInput.value = "";
-            singleCaptionInput.value = "";
-            singleDropzonePlaceholder.classList.remove("hidden");
-            singlePreviewContainer.classList.add("hidden");
-            singleProgressWrapper.classList.add("hidden");
-            singleSubmitBtn.disabled = false;
-            singleSubmitBtn.textContent = "Subir foto";
-
-            closeUploadModal();
-            showToast("Foto subida con éxito.", "success");
-            window.dispatchEvent(new CustomEvent("trip-photos:updated"));
-        } catch (err) {
-            console.error("Error al subir foto:", err);
-            showToast("No se pudo subir la imagen.", "error");
-            singleProgressWrapper.classList.add("hidden");
-            singleSubmitBtn.disabled = false;
-            singleSubmitBtn.textContent = "Subir foto";
-        }
-    });
-            
-    singleCancelBtn?.addEventListener("click", closeUploadModal);
+    initTripPhotoUploadModal();
+    document.addEventListener("astro:page-load", initTripPhotoUploadModal);
 </script>

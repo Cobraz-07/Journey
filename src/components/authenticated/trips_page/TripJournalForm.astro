@@ -59,105 +59,134 @@ const { uid, tripID } = Astro.props;
     import { uploadJournalImage, MAX_JOURNALS_PER_TRIP } from "@/firebase/storageService";
     import { showToast } from "@/utils/toast";
 
-    const journalFormDialog = document.getElementById("journal-form-dialog") as HTMLDivElement;
-    const journalForm = document.querySelector("#journal-form") as HTMLFormElement;
-    const formTitle = document.getElementById("journal-title") as HTMLInputElement;
-    const formDescription = document.getElementById("journal-description") as HTMLTextAreaElement;
-    const formDate = document.getElementById("journal-date") as HTMLInputElement;
-    const uid = journalForm?.dataset.uid;
-    const tripID = journalFormDialog?.dataset.tripId;
-    const userDocRef = doc(db, "users", uid ?? "unknown_user");
+    function initTripJournalForm() {
+        const journalFormDialog = document.getElementById("journal-form-dialog") as HTMLDivElement;
+        const journalForm = document.querySelector("#journal-form") as HTMLFormElement;
+        if (!journalForm || !journalFormDialog) return;
 
-    // Journal Image handling
-    const imageDropzone = document.getElementById("journal-image-dropzone") as HTMLDivElement;
-    const imageInput = document.getElementById("journal-image-input") as HTMLInputElement;
-    const imagePlaceholder = document.getElementById("journal-image-placeholder") as HTMLDivElement;
-    const previewWrapper = document.getElementById("journal-image-preview-wrapper") as HTMLDivElement;
-    const previewImg = document.getElementById("journal-image-preview") as HTMLImageElement;
-    const savingsEl = document.getElementById("journal-image-savings") as HTMLElement;
-    const removeImageBtn = document.getElementById("journal-image-remove-btn") as HTMLButtonElement;
-    const submitBtn = document.getElementById("journal-submit-btn") as HTMLButtonElement;
-    const progressWrapper = document.getElementById("journal-upload-progress") as HTMLDivElement;
-
-    let journalCompressedResult: CompressedImageResult | null = null;
-
-    imageInput?.addEventListener("click", (e) => e.stopPropagation());
-
-    imageDropzone?.addEventListener("click", (e) => {
-        if (e.target === removeImageBtn) return;
-        e.stopPropagation();
-        imageInput?.click();
-    });
-
-    imageInput?.addEventListener("change", async () => {
-        if (!imageInput.files?.[0]) return;
-        try {
-            journalCompressedResult = await compressImageToWebP(imageInput.files[0]);
-            previewImg.src = journalCompressedResult.previewUrl;
-            savingsEl.textContent = `Optimizado WebP: ${(journalCompressedResult.compressedSize / 1024).toFixed(0)} KB (-${journalCompressedResult.savingsPercentage}%)`;
-            imagePlaceholder.classList.add("hidden");
-            previewWrapper.classList.remove("hidden");
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : "Error al procesar la imagen.";
-            showToast(message, "error");
-        }
-    });
-
-    removeImageBtn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        journalCompressedResult = null;
-        imageInput.value = "";
-        previewWrapper.classList.add("hidden");
-        imagePlaceholder.classList.remove("hidden");
-    });
-
-    journalForm?.addEventListener("submit", async (e) => {
-        e.preventDefault();
+        const formTitle = document.getElementById("journal-title") as HTMLInputElement;
+        const formDescription = document.getElementById("journal-description") as HTMLTextAreaElement;
+        const formDate = document.getElementById("journal-date") as HTMLInputElement;
+        const uid = journalForm.dataset.uid;
+        const tripID = journalFormDialog.dataset.tripId;
         if (!uid || !tripID) return;
 
-        submitBtn.disabled = true;
-        progressWrapper.classList.remove("hidden");
+        const userDocRef = doc(db, "users", uid);
 
-        try {
-            await projectAuth.authStateReady();
-            const tripDocRef = doc(collection(userDocRef, "trips"), `${tripID}`);
-            const journalCollectionRef = collection(tripDocRef, "journal");
+        // Journal Image handling
+        const imageDropzone = document.getElementById("journal-image-dropzone") as HTMLDivElement;
+        const imageInput = document.getElementById("journal-image-input") as HTMLInputElement;
+        const imagePlaceholder = document.getElementById("journal-image-placeholder") as HTMLDivElement;
+        const previewWrapper = document.getElementById("journal-image-preview-wrapper") as HTMLDivElement;
+        const previewImg = document.getElementById("journal-image-preview") as HTMLImageElement;
+        const savingsEl = document.getElementById("journal-image-savings") as HTMLElement;
+        const removeImageBtn = document.getElementById("journal-image-remove-btn") as HTMLButtonElement;
+        const submitBtn = document.getElementById("journal-submit-btn") as HTMLButtonElement;
+        const progressWrapper = document.getElementById("journal-upload-progress") as HTMLDivElement;
 
-            // Check max journals limit
-            const existingJournalsSnap = await getDocs(journalCollectionRef);
-            if (existingJournalsSnap.size >= MAX_JOURNALS_PER_TRIP) {
-                showToast(`Has alcanzado el límite máximo de ${MAX_JOURNALS_PER_TRIP} entradas de diario para este viaje.`, "error");
-                submitBtn.disabled = false;
-                progressWrapper.classList.add("hidden");
-                return;
+        let journalCompressedResult: CompressedImageResult | null = null;
+
+        imageInput?.addEventListener("click", (e) => e.stopPropagation());
+
+        imageDropzone?.addEventListener("click", (e) => {
+            if (e.target === removeImageBtn) return;
+            e.stopPropagation();
+            imageInput?.click();
+        });
+
+        imageInput?.addEventListener("change", async () => {
+            if (!imageInput.files?.[0]) return;
+            try {
+                journalCompressedResult = await compressImageToWebP(imageInput.files[0]);
+                if (previewImg) previewImg.src = journalCompressedResult.previewUrl;
+                if (savingsEl) {
+                    savingsEl.textContent = `Optimizado WebP: ${(journalCompressedResult.compressedSize / 1024).toFixed(0)} KB (-${journalCompressedResult.savingsPercentage}%)`;
+                }
+                imagePlaceholder?.classList.add("hidden");
+                previewWrapper?.classList.remove("hidden");
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : "Error al procesar la imagen.";
+                showToast(message, "error");
             }
+        });
 
-            const newJournalDocRef = doc(journalCollectionRef);
-            const journalId = newJournalDocRef.id;
+        removeImageBtn?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            journalCompressedResult = null;
+            if (imageInput) imageInput.value = "";
+            previewWrapper?.classList.add("hidden");
+            imagePlaceholder?.classList.remove("hidden");
+        });
 
-            let imageUrl = "";
-            let imageStoragePath = "";
-            if (journalCompressedResult) {
-                const result = await uploadJournalImage(uid, tripID, journalId, journalCompressedResult.file);
-                imageUrl = result.url;
-                imageStoragePath = result.storagePath;
+        journalForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            if (submitBtn) submitBtn.disabled = true;
+            progressWrapper?.classList.remove("hidden");
+
+            try {
+                await projectAuth.authStateReady();
+                const tripDocRef = doc(collection(userDocRef, "trips"), `${tripID}`);
+                const journalCollectionRef = collection(tripDocRef, "journal");
+
+                // Check max journals limit
+                const existingJournalsSnap = await getDocs(journalCollectionRef);
+                if (existingJournalsSnap.size >= MAX_JOURNALS_PER_TRIP) {
+                    showToast(`Has alcanzado el límite máximo de ${MAX_JOURNALS_PER_TRIP} entradas de diario para este viaje.`, "error");
+                    if (submitBtn) submitBtn.disabled = false;
+                    progressWrapper?.classList.add("hidden");
+                    return;
+                }
+
+                const newJournalDocRef = doc(journalCollectionRef);
+                const journalId = newJournalDocRef.id;
+
+                let imageUrl = "";
+                let imageStoragePath = "";
+                if (journalCompressedResult) {
+                    const result = await uploadJournalImage(uid, tripID, journalId, journalCompressedResult.file);
+                    imageUrl = result.url;
+                    imageStoragePath = result.storagePath;
+                }
+
+                await setDoc(newJournalDocRef, {
+                    title: formTitle?.value || "Sin título",
+                    description: formDescription?.value || "",
+                    date: formDate?.value || "",
+                    imageUrl: imageUrl || null,
+                    imageStoragePath: imageStoragePath || null,
+                    createdAt: new Date().toISOString(),
+                });
+
+                // Reset and close dialog
+                journalCompressedResult = null;
+                if (imageInput) imageInput.value = "";
+                if (formTitle) formTitle.value = "";
+                if (formDescription) formDescription.value = "";
+                previewWrapper?.classList.add("hidden");
+                imagePlaceholder?.classList.remove("hidden");
+                progressWrapper?.classList.add("hidden");
+                if (submitBtn) submitBtn.disabled = false;
+
+                const closeBtn = document.querySelector("#journal-form-dialog .starwind-dialog-close, #journal-form-dialog [data-dialog-close]") as HTMLButtonElement;
+                if (closeBtn) {
+                    closeBtn.click();
+                } else {
+                    const d = document.querySelector("#journal-form-dialog dialog") as HTMLDialogElement;
+                    d?.close();
+                }
+
+                showToast("Entrada de diario guardada con éxito.", "success");
+                window.location.reload();
+            } catch (err) {
+                console.error("Error creating journal:", err);
+                showToast("No se pudo crear la entrada del diario.", "error");
+                if (submitBtn) submitBtn.disabled = false;
+                progressWrapper?.classList.add("hidden");
             }
+        });
+    }
 
-            await setDoc(newJournalDocRef, {
-                title: formTitle.value,
-                description: formDescription.value,
-                date: formDate.value,
-                imageUrl: imageUrl || null,
-                imageStoragePath: imageStoragePath || null,
-                createdAt: new Date().toISOString(),
-            });
-
-            window.location.href = `/authenticated/trips/${tripID}`;
-        } catch (err) {
-            console.error("Error creating journal:", err);
-            showToast("No se pudo crear la entrada del diario.", "error");
-            submitBtn.disabled = false;
-            progressWrapper.classList.add("hidden");
-        }
-    });
+    initTripJournalForm();
+    document.addEventListener("astro:page-load", initTripJournalForm);
 </script>

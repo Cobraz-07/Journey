@@ -75,185 +75,185 @@
         tripId: "",
     };
 
-    const dialog = document.getElementById("photo-lightbox-dialog") as HTMLDialogElement;
-    const imgEl = document.getElementById("lightbox-image") as HTMLImageElement;
-    const counterEl = document.getElementById("lightbox-counter") as HTMLElement;
-    const captionEl = document.getElementById("lightbox-caption") as HTMLElement;
-    const dateEl = document.getElementById("lightbox-date") as HTMLElement;
-    const prevBtn = document.getElementById("lightbox-prev-btn") as HTMLButtonElement;
-    const nextBtn = document.getElementById("lightbox-next-btn") as HTMLButtonElement;
-    const closeBtn = document.getElementById("lightbox-close-btn") as HTMLButtonElement;
-    const deleteBtn = document.getElementById("lightbox-delete-btn") as HTMLButtonElement;
+    function initPhotoLightbox() {
+        const dialog = document.getElementById("photo-lightbox-dialog") as HTMLDialogElement;
+        if (!dialog) return;
 
-    function renderCurrentPhoto() {
-        if (!state.photos.length || state.currentIndex < 0 || state.currentIndex >= state.photos.length) {
-            closeLightbox();
-            return;
-        }
+        const imgEl = document.getElementById("lightbox-image") as HTMLImageElement;
+        const counterEl = document.getElementById("lightbox-counter") as HTMLElement;
+        const captionEl = document.getElementById("lightbox-caption") as HTMLElement;
+        const dateEl = document.getElementById("lightbox-date") as HTMLElement;
+        const prevBtn = document.getElementById("lightbox-prev-btn") as HTMLButtonElement;
+        const nextBtn = document.getElementById("lightbox-next-btn") as HTMLButtonElement;
+        const closeBtn = document.getElementById("lightbox-close-btn") as HTMLButtonElement;
+        const deleteBtn = document.getElementById("lightbox-delete-btn") as HTMLButtonElement;
 
-        const photo = state.photos[state.currentIndex];
-        
-        // Progressive image loading: display fast thumbnail first, then high-res
-        if (photo.thumbnailUrl && photo.thumbnailUrl !== photo.url) {
-            imgEl.src = photo.thumbnailUrl;
-            const highRes = new Image();
-            highRes.src = photo.url;
-            highRes.onload = () => {
-                if (state.photos[state.currentIndex]?.id === photo.id) {
-                    imgEl.src = photo.url;
-                }
-            };
-        } else {
-            imgEl.src = photo.url;
-        }
+        function renderCurrentPhoto() {
+            if (!state.photos.length || state.currentIndex < 0 || state.currentIndex >= state.photos.length) {
+                closeLightbox();
+                return;
+            }
 
-        counterEl.textContent = `${state.currentIndex + 1} / ${state.photos.length}`;
-        captionEl.textContent = photo.caption || "Sin descripción";
-
-        if (photo.createdAt) {
-            const date = new Date(photo.createdAt);
-            dateEl.textContent = date.toLocaleDateString("es-ES", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            });
-        } else {
-            dateEl.textContent = "";
-        }
-
-        // Hide navigation if only 1 photo
-        if (state.photos.length <= 1) {
-            prevBtn.style.display = "none";
-            nextBtn.style.display = "none";
-        } else {
-            prevBtn.style.display = "flex";
-            nextBtn.style.display = "flex";
-        }
-    }
-
-    function showNext() {
-        if (state.photos.length <= 1) return;
-        state.currentIndex = (state.currentIndex + 1) % state.photos.length;
-        renderCurrentPhoto();
-    }
-
-    function showPrev() {
-        if (state.photos.length <= 1) return;
-        state.currentIndex = (state.currentIndex - 1 + state.photos.length) % state.photos.length;
-        renderCurrentPhoto();
-    }
-
-    function openLightbox(photos: TripPhoto[], startIndex: number, uid: string, tripId: string) {
-        state.photos = photos;
-        state.currentIndex = startIndex;
-        state.uid = uid;
-        state.tripId = tripId;
-
-        renderCurrentPhoto();
-        dialog?.showModal();
-    }
-
-    function closeLightbox() {
-        dialog?.close();
-    }
-
-    // Event listeners
-    prevBtn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        showPrev();
-    });
-
-    nextBtn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        showNext();
-    });
-
-    closeBtn?.addEventListener("click", closeLightbox);
-
-    // Close on backdrop click
-    dialog?.addEventListener("click", (e) => {
-        const rect = dialog.getBoundingClientRect();
-        const isInDialog = (
-            rect.top <= e.clientY &&
-            e.clientY <= rect.top + rect.height &&
-            rect.left <= e.clientX &&
-            e.clientX <= rect.left + rect.width
-        );
-        if (!isInDialog) {
-            closeLightbox();
-        }
-    });
-
-    // Keyboard navigation
-    window.addEventListener("keydown", (e) => {
-        if (!dialog?.open) return;
-        if (e.key === "ArrowRight") {
-            showNext();
-        } else if (e.key === "ArrowLeft") {
-            showPrev();
-        } else if (e.key === "Escape") {
-            closeLightbox();
-        }
-    });
-
-    // Delete photo action
-    deleteBtn?.addEventListener("click", async () => {
-        if (!state.photos.length) return;
-        const currentPhoto = state.photos[state.currentIndex];
-        
-        if (confirm("¿Estás seguro de que quieres eliminar esta foto?")) {
-            try {
-                await deleteTripPhoto(
-                    state.uid,
-                    state.tripId,
-                    currentPhoto.id,
-                    currentPhoto.storagePath,
-                    currentPhoto.url,
-                    currentPhoto.thumbnailStoragePath,
-                    currentPhoto.thumbnailUrl
-                );
-                state.photos.splice(state.currentIndex, 1);
-                
-                // Notify gallery to re-render
-                window.dispatchEvent(new CustomEvent("trip-photos:updated"));
-
-                if (state.photos.length === 0) {
-                    closeLightbox();
-                } else {
-                    if (state.currentIndex >= state.photos.length) {
-                        state.currentIndex = state.photos.length - 1;
+            const photo = state.photos[state.currentIndex];
+            
+            // Progressive image loading: display fast thumbnail first, then high-res
+            if (photo.thumbnailUrl && photo.thumbnailUrl !== photo.url) {
+                if (imgEl) imgEl.src = photo.thumbnailUrl;
+                const highRes = new Image();
+                highRes.src = photo.url;
+                highRes.onload = () => {
+                    if (state.photos[state.currentIndex]?.id === photo.id && imgEl) {
+                        imgEl.src = photo.url;
                     }
-                    renderCurrentPhoto();
-                }
-            } catch (err) {
-                console.error("Error al eliminar la foto:", err);
-                showToast("Ocurrió un error al intentar eliminar la foto.", "error");
+                };
+            } else if (imgEl) {
+                imgEl.src = photo.url;
+            }
+
+            if (counterEl) counterEl.textContent = `${state.currentIndex + 1} / ${state.photos.length}`;
+            if (captionEl) captionEl.textContent = photo.caption || "Sin descripción";
+
+            if (photo.createdAt && dateEl) {
+                const date = new Date(photo.createdAt);
+                dateEl.textContent = date.toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                });
+            } else if (dateEl) {
+                dateEl.textContent = "";
+            }
+
+            // Hide navigation if only 1 photo
+            if (state.photos.length <= 1) {
+                if (prevBtn) prevBtn.style.display = "none";
+                if (nextBtn) nextBtn.style.display = "none";
+            } else {
+                if (prevBtn) prevBtn.style.display = "flex";
+                if (nextBtn) nextBtn.style.display = "flex";
             }
         }
-    });
 
-    // Touch swipe support for mobile
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    dialog?.addEventListener("touchstart", (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    dialog?.addEventListener("touchend", (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        const diff = touchEndX - touchStartX;
-        if (Math.abs(diff) > 50) {
-            if (diff < 0) showNext();
-            else showPrev();
+        function showNext() {
+            if (state.photos.length <= 1) return;
+            state.currentIndex = (state.currentIndex + 1) % state.photos.length;
+            renderCurrentPhoto();
         }
-    }, { passive: true });
 
-    // Expose global opener event
+        function showPrev() {
+            if (state.photos.length <= 1) return;
+            state.currentIndex = (state.currentIndex - 1 + state.photos.length) % state.photos.length;
+            renderCurrentPhoto();
+        }
+
+        function openLightbox(photos: TripPhoto[], startIndex = 0, uid = "", tripId = "") {
+            state.photos = photos;
+            state.currentIndex = startIndex;
+            state.uid = uid;
+            state.tripId = tripId;
+            renderCurrentPhoto();
+            dialog.showModal();
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeLightbox() {
+            dialog.close();
+            document.body.style.overflow = "";
+        }
+
+        prevBtn?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            showPrev();
+        });
+
+        nextBtn?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            showNext();
+        });
+
+        closeBtn?.addEventListener("click", closeLightbox);
+
+        // Click on backdrop to close
+        dialog.addEventListener("click", (e) => {
+            if (e.target === dialog) {
+                closeLightbox();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener("keydown", (e) => {
+            if (!dialog.open) return;
+            if (e.key === "ArrowRight") showNext();
+            else if (e.key === "ArrowLeft") showPrev();
+            else if (e.key === "Escape") closeLightbox();
+        });
+
+        // Delete photo action
+        deleteBtn?.addEventListener("click", async () => {
+            if (!state.photos.length) return;
+            const currentPhoto = state.photos[state.currentIndex];
+            
+            if (confirm("¿Estás seguro de que quieres eliminar esta foto?")) {
+                try {
+                    await deleteTripPhoto(
+                        state.uid,
+                        state.tripId,
+                        currentPhoto.id,
+                        currentPhoto.storagePath,
+                        currentPhoto.url,
+                        currentPhoto.thumbnailStoragePath,
+                        currentPhoto.thumbnailUrl
+                    );
+                    state.photos.splice(state.currentIndex, 1);
+                    
+                    // Notify gallery to re-render
+                    window.dispatchEvent(new CustomEvent("trip-photos:updated"));
+
+                    if (state.photos.length === 0) {
+                        closeLightbox();
+                    } else {
+                        if (state.currentIndex >= state.photos.length) {
+                            state.currentIndex = state.photos.length - 1;
+                        }
+                        renderCurrentPhoto();
+                    }
+                } catch (err) {
+                    console.error("Error al eliminar la foto:", err);
+                    showToast("Ocurrió un error al intentar eliminar la foto.", "error");
+                }
+            }
+        });
+
+        // Touch swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        dialog.addEventListener("touchstart", (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        dialog.addEventListener("touchend", (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            const diff = touchEndX - touchStartX;
+            if (Math.abs(diff) > 50) {
+                if (diff < 0) showNext();
+                else showPrev();
+            }
+        }, { passive: true });
+
+        // Expose open helper globally or via custom event
+        (window as any).__openTripLightbox = openLightbox;
+    }
+
     window.addEventListener("open-trip-lightbox", ((e: CustomEvent) => {
         const { photos, startIndex, uid, tripId } = e.detail;
-        openLightbox(photos, startIndex, uid, tripId);
+        if (typeof (window as any).__openTripLightbox === "function") {
+            (window as any).__openTripLightbox(photos, startIndex, uid, tripId);
+        }
     }) as EventListener);
+
+    initPhotoLightbox();
+    document.addEventListener("astro:page-load", initPhotoLightbox);
 </script>

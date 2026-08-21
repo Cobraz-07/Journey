@@ -9,14 +9,18 @@ import Button from "@/components/starwind/button";
 <script>
     import { projectAuth } from "@/firebase/config";
 
-    const logoutButton = document.querySelector("#logout-button") as HTMLButtonElement;
+    function initSignOutButton() {
+        const logoutButton = document.querySelector("#logout-button") as HTMLButtonElement;
+        logoutButton?.addEventListener("click", async (e) => {
+            e.preventDefault();
+            // Clear client-side Firebase Auth state
+            await projectAuth.signOut();
+            // Clear server-side session cookie
+            await fetch("/api/session", { method: "DELETE" });
+            window.location.href = "/";
+        });
+    }
 
-    logoutButton.addEventListener("click", async (e) => {
-        e.preventDefault();
-        // Clear client-side Firebase Auth state
-        await projectAuth.signOut();
-        // Clear server-side session cookie
-        await fetch("/api/session", { method: "DELETE" });
-        window.location.href = "/";
-    });
+    initSignOutButton();
+    document.addEventListener("astro:page-load", initSignOutButton);
 </script>

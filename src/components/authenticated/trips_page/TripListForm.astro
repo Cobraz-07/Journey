@@ -120,200 +120,212 @@ const { uid } = Astro.props;
     import { uploadTripCover, MAX_TRIPS_PER_USER } from "@/firebase/storageService";
     import { showToast } from "@/utils/toast";
 
-    const tripForm = document.querySelector("#trip-form") as HTMLFormElement;
-    const formTitle = document.getElementById("trip-title") as HTMLInputElement;
-    const formDescription = document.getElementById("trip-description") as HTMLTextAreaElement;
-    const formStartDate = document.getElementById("trip-start-date") as HTMLInputElement;
-    const formEndDate = document.getElementById("trip-end-date") as HTMLInputElement;
-    const uid = tripForm?.dataset.uid;
-    const userDocRef = doc(db, "users", uid ?? "unknown_user");
+    function initTripListForm() {
+        const tripForm = document.querySelector("#trip-form") as HTMLFormElement;
+        if (!tripForm) return;
 
-    // Country Combobox with Search
-    const comboboxTrigger = document.getElementById("country-combobox-trigger") as HTMLButtonElement;
-    const comboboxDropdown = document.getElementById("country-combobox-dropdown") as HTMLDivElement;
-    const comboboxArrow = document.getElementById("country-combobox-arrow") as HTMLElement;
-    const searchInput = document.getElementById("country-search-input") as HTMLInputElement;
-    const selectedFlag = document.getElementById("country-selected-flag") as HTMLImageElement;
-    const selectedName = document.getElementById("country-selected-name") as HTMLElement;
-    const countryNameInput = document.getElementById("trip-country-name") as HTMLInputElement;
-    const countryCodeInput = document.getElementById("trip-country-code") as HTMLInputElement;
-    const optionsList = document.getElementById("country-options-list") as HTMLDivElement;
-    const emptyState = document.getElementById("country-empty-state") as HTMLDivElement;
-    const optionItems = optionsList.querySelectorAll(".country-option-item") as NodeListOf<HTMLButtonElement>;
-
-    let isComboboxOpen = false;
-
-    function openCombobox() {
-        isComboboxOpen = true;
-        comboboxDropdown.classList.remove("hidden");
-        comboboxArrow.classList.add("rotate-180");
-        searchInput.value = "";
-        filterCountryOptions("");
-        setTimeout(() => searchInput.focus(), 60);
-    }
-
-    function closeCombobox() {
-        isComboboxOpen = false;
-        comboboxDropdown.classList.add("hidden");
-        comboboxArrow.classList.remove("rotate-180");
-    }
-
-    function filterCountryOptions(query: string) {
-        const normalized = query.toLowerCase().trim();
-        let visibleCount = 0;
-
-        optionItems.forEach((item) => {
-            const name = (item.dataset.countryName || "").toLowerCase();
-            const code = (item.dataset.countryCode || "").toLowerCase();
-            const matches = name.includes(normalized) || code.includes(normalized);
-
-            item.classList.toggle("hidden", !matches);
-            if (matches) visibleCount++;
-        });
-
-        emptyState.classList.toggle("hidden", visibleCount > 0);
-    }
-
-    comboboxTrigger?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (isComboboxOpen) closeCombobox();
-        else openCombobox();
-    });
-
-    searchInput?.addEventListener("input", (e) => {
-        filterCountryOptions((e.target as HTMLInputElement).value);
-    });
-
-    searchInput?.addEventListener("click", (e) => e.stopPropagation());
-
-    optionsList?.addEventListener("click", (e) => {
-        const target = e.target as HTMLElement;
-        const option = target.closest(".country-option-item") as HTMLButtonElement;
-        if (option) {
-            const code = option.dataset.countryCode || "";
-            const name = option.dataset.countryName || "";
-
-            countryCodeInput.value = code;
-            countryNameInput.value = name;
-
-            selectedName.textContent = name;
-            selectedFlag.src = `https://flagcdn.com/${code}.svg`;
-            selectedFlag.classList.remove("hidden");
-
-            closeCombobox();
-        }
-    });
-
-    document.addEventListener("click", (e) => {
-        if (!document.getElementById("country-combobox")?.contains(e.target as Node)) {
-            closeCombobox();
-        }
-    });
-
-    // Cover Photo Elements
-    const coverDropzone = document.getElementById("trip-cover-dropzone") as HTMLDivElement;
-    const coverInput = document.getElementById("trip-cover-input") as HTMLInputElement;
-    const coverPlaceholder = document.getElementById("trip-cover-placeholder") as HTMLDivElement;
-    const previewWrapper = document.getElementById("trip-cover-preview-wrapper") as HTMLDivElement;
-    const previewImg = document.getElementById("trip-cover-preview") as HTMLImageElement;
-    const savingsEl = document.getElementById("trip-cover-savings") as HTMLElement;
-    const removeCoverBtn = document.getElementById("trip-cover-remove-btn") as HTMLButtonElement;
-
-    let tripCoverCompressed: CompressedImageResult | null = null;
-
-    coverInput?.addEventListener("click", (e) => e.stopPropagation());
-
-    coverDropzone?.addEventListener("click", (e) => {
-        if (e.target === removeCoverBtn) return;
-        e.stopPropagation();
-        coverInput?.click();
-    });
-
-    coverInput?.addEventListener("change", async () => {
-        if (!coverInput.files?.[0]) return;
-        try {
-            tripCoverCompressed = await compressImageToWebP(coverInput.files[0], { maxWidth: 2000, maxHeight: 1200, quality: 0.88 });
-            previewImg.src = tripCoverCompressed.previewUrl;
-            savingsEl.textContent = `Optimizado WebP: ${(tripCoverCompressed.compressedSize / 1024).toFixed(0)} KB (-${tripCoverCompressed.savingsPercentage}%)`;
-            coverPlaceholder.classList.add("hidden");
-            previewWrapper.classList.remove("hidden");
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : "Error al procesar la imagen.";
-            showToast(message, "error");
-        }
-    });
-
-    removeCoverBtn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        tripCoverCompressed = null;
-        coverInput.value = "";
-        previewWrapper.classList.add("hidden");
-        coverPlaceholder.classList.remove("hidden");
-    });
-
-    tripForm?.addEventListener("submit", async (e) => {
-        e.preventDefault();
+        const formTitle = document.getElementById("trip-title") as HTMLInputElement;
+        const formDescription = document.getElementById("trip-description") as HTMLTextAreaElement;
+        const formStartDate = document.getElementById("trip-start-date") as HTMLInputElement;
+        const formEndDate = document.getElementById("trip-end-date") as HTMLInputElement;
+        const uid = tripForm.dataset.uid;
         if (!uid) return;
 
-        if (!countryCodeInput.value || !countryNameInput.value) {
-            showToast("Por favor, selecciona un país.", "error");
-            return;
+        const userDocRef = doc(db, "users", uid);
+
+        // Country Combobox with Search
+        const comboboxTrigger = document.getElementById("country-combobox-trigger") as HTMLButtonElement;
+        const comboboxDropdown = document.getElementById("country-combobox-dropdown") as HTMLDivElement;
+        const comboboxArrow = document.getElementById("country-combobox-arrow") as HTMLElement;
+        const searchInput = document.getElementById("country-search-input") as HTMLInputElement;
+        const selectedFlag = document.getElementById("country-selected-flag") as HTMLImageElement;
+        const selectedName = document.getElementById("country-selected-name") as HTMLElement;
+        const countryNameInput = document.getElementById("trip-country-name") as HTMLInputElement;
+        const countryCodeInput = document.getElementById("trip-country-code") as HTMLInputElement;
+        const optionsList = document.getElementById("country-options-list") as HTMLDivElement;
+        const emptyState = document.getElementById("country-empty-state") as HTMLDivElement;
+        const optionItems = optionsList?.querySelectorAll(".country-option-item") as NodeListOf<HTMLButtonElement>;
+
+        let isComboboxOpen = false;
+
+        function openCombobox() {
+            isComboboxOpen = true;
+            comboboxDropdown?.classList.remove("hidden");
+            comboboxArrow?.classList.add("rotate-180");
+            if (searchInput) searchInput.value = "";
+            filterCountryOptions("");
+            setTimeout(() => searchInput?.focus(), 60);
         }
 
-        const submitBtn = tripForm.querySelector("button[type=submit]") as HTMLButtonElement;
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Creando viaje...";
+        function closeCombobox() {
+            isComboboxOpen = false;
+            comboboxDropdown?.classList.add("hidden");
+            comboboxArrow?.classList.remove("rotate-180");
         }
 
-        try {
-            await projectAuth.authStateReady();
+        function filterCountryOptions(query: string) {
+            const normalized = query.toLowerCase().trim();
+            let visibleCount = 0;
 
-            // Check max trips limit
-            const existingTripsSnap = await getDocs(collection(userDocRef, "trips"));
-            if (existingTripsSnap.size >= MAX_TRIPS_PER_USER) {
-                showToast(`Has alcanzado el límite máximo de ${MAX_TRIPS_PER_USER} viajes por cuenta.`, "error");
+            optionItems?.forEach((item) => {
+                const name = (item.dataset.countryName || "").toLowerCase();
+                const code = (item.dataset.countryCode || "").toLowerCase();
+                const matches = name.includes(normalized) || code.includes(normalized);
+
+                item.classList.toggle("hidden", !matches);
+                if (matches) visibleCount++;
+            });
+
+            emptyState?.classList.toggle("hidden", visibleCount > 0);
+        }
+
+        comboboxTrigger?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (isComboboxOpen) closeCombobox();
+            else openCombobox();
+        });
+
+        searchInput?.addEventListener("input", (e) => {
+            filterCountryOptions((e.target as HTMLInputElement).value);
+        });
+
+        searchInput?.addEventListener("click", (e) => e.stopPropagation());
+
+        optionsList?.addEventListener("click", (e) => {
+            const target = e.target as HTMLElement;
+            const option = target.closest(".country-option-item") as HTMLButtonElement;
+            if (option) {
+                const code = option.dataset.countryCode || "";
+                const name = option.dataset.countryName || "";
+
+                if (countryCodeInput) countryCodeInput.value = code;
+                if (countryNameInput) countryNameInput.value = name;
+
+                if (selectedName) selectedName.textContent = name;
+                if (selectedFlag) {
+                    selectedFlag.src = `https://flagcdn.com/${code}.svg`;
+                    selectedFlag.classList.remove("hidden");
+                }
+
+                closeCombobox();
+            }
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!document.getElementById("country-combobox")?.contains(e.target as Node)) {
+                closeCombobox();
+            }
+        });
+
+        // Cover Photo Elements
+        const coverDropzone = document.getElementById("trip-cover-dropzone") as HTMLDivElement;
+        const coverInput = document.getElementById("trip-cover-input") as HTMLInputElement;
+        const coverPlaceholder = document.getElementById("trip-cover-placeholder") as HTMLDivElement;
+        const previewWrapper = document.getElementById("trip-cover-preview-wrapper") as HTMLDivElement;
+        const previewImg = document.getElementById("trip-cover-preview") as HTMLImageElement;
+        const savingsEl = document.getElementById("trip-cover-savings") as HTMLElement;
+        const removeCoverBtn = document.getElementById("trip-cover-remove-btn") as HTMLButtonElement;
+
+        let tripCoverCompressed: CompressedImageResult | null = null;
+
+        coverInput?.addEventListener("click", (e) => e.stopPropagation());
+
+        coverDropzone?.addEventListener("click", (e) => {
+            if (e.target === removeCoverBtn) return;
+            e.stopPropagation();
+            coverInput?.click();
+        });
+
+        coverInput?.addEventListener("change", async () => {
+            if (!coverInput.files?.[0]) return;
+            try {
+                tripCoverCompressed = await compressImageToWebP(coverInput.files[0], { maxWidth: 2000, maxHeight: 1200, quality: 0.88 });
+                if (previewImg) previewImg.src = tripCoverCompressed.previewUrl;
+                if (savingsEl) {
+                    savingsEl.textContent = `Optimizado WebP: ${(tripCoverCompressed.compressedSize / 1024).toFixed(0)} KB (-${tripCoverCompressed.savingsPercentage}%)`;
+                }
+                coverPlaceholder?.classList.add("hidden");
+                previewWrapper?.classList.remove("hidden");
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : "Error al procesar la imagen.";
+                showToast(message, "error");
+            }
+        });
+
+        removeCoverBtn?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            tripCoverCompressed = null;
+            if (coverInput) coverInput.value = "";
+            previewWrapper?.classList.add("hidden");
+            coverPlaceholder?.classList.remove("hidden");
+        });
+
+        tripForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            if (!countryCodeInput?.value || !countryNameInput?.value) {
+                showToast("Por favor, selecciona un país.", "error");
+                return;
+            }
+
+            const submitBtn = tripForm.querySelector("button[type=submit]") as HTMLButtonElement;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Creando viaje...";
+            }
+
+            try {
+                await projectAuth.authStateReady();
+
+                // Check max trips limit
+                const existingTripsSnap = await getDocs(collection(userDocRef, "trips"));
+                if (existingTripsSnap.size >= MAX_TRIPS_PER_USER) {
+                    showToast(`Has alcanzado el límite máximo de ${MAX_TRIPS_PER_USER} viajes por cuenta.`, "error");
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = "Create Trip";
+                    }
+                    return;
+                }
+
+                // Generate robust auto-ID for new trip document
+                const newTripDocRef = doc(collection(userDocRef, "trips"));
+                const tripId = newTripDocRef.id;
+
+                let coverUrl = "";
+                let coverStoragePath = "";
+
+                if (tripCoverCompressed) {
+                    if (submitBtn) submitBtn.textContent = "Subiendo portada...";
+                    const coverResult = await uploadTripCover(uid, tripId, tripCoverCompressed.file);
+                    coverUrl = coverResult.url;
+                    coverStoragePath = coverResult.storagePath;
+                }
+
+                await setDoc(newTripDocRef, {
+                    title: formTitle?.value || "Sin título",
+                    description: formDescription?.value || "",
+                    startDate: formStartDate?.value || "",
+                    endDate: formEndDate?.value || "",
+                    country: countryNameInput.value,
+                    countryCode: countryCodeInput.value,
+                    coverUrl: coverUrl || null,
+                    coverStoragePath: coverStoragePath || null,
+                    createdAt: new Date().toISOString(),
+                });
+
+                window.location.href = "/authenticated/trips";
+            } catch (err) {
+                console.error("Error creating trip:", err);
+                showToast("No se pudo crear el viaje.", "error");
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.textContent = "Create Trip";
                 }
-                return;
             }
+        });
+    }
 
-            // Generate robust auto-ID for new trip document
-            const newTripDocRef = doc(collection(userDocRef, "trips"));
-            const tripId = newTripDocRef.id;
-
-            let coverUrl = "";
-            let coverStoragePath = "";
-
-            if (tripCoverCompressed) {
-                submitBtn.textContent = "Subiendo portada...";
-                const coverResult = await uploadTripCover(uid, tripId, tripCoverCompressed.file);
-                coverUrl = coverResult.url;
-                coverStoragePath = coverResult.storagePath;
-            }
-
-            await setDoc(newTripDocRef, {
-                title: formTitle.value,
-                description: formDescription.value,
-                startDate: formStartDate.value,
-                endDate: formEndDate.value,
-                country: countryNameInput.value,
-                countryCode: countryCodeInput.value,
-                coverUrl: coverUrl || null,
-                coverStoragePath: coverStoragePath || null,
-                createdAt: new Date().toISOString(),
-            });
-
-            window.location.href = "/authenticated/trips";
-        } catch (err) {
-            console.error("Error creating trip:", err);
-            showToast("No se pudo crear el viaje.", "error");
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Create Trip";
-            }
-        }
-    });
+    initTripListForm();
+    document.addEventListener("astro:page-load", initTripListForm);
 </script>
