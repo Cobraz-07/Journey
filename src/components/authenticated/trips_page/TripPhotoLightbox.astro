@@ -243,41 +243,27 @@
         });
 
         // Download photo action
-        downloadBtn?.addEventListener("click", async () => {
+        downloadBtn?.addEventListener("click", () => {
             if (!state.photos.length) return;
             const currentPhoto = state.photos[state.currentIndex];
             if (!currentPhoto?.url) return;
 
-            try {
-                showToast("Downloading photo...", "info");
-                const response = await fetch(currentPhoto.url);
-                if (!response.ok) throw new Error("Network response was not ok");
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
+            showToast("Downloading photo...", "info");
+            const safeName = (currentPhoto.caption || "journey_photo")
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9_-]/g, "_")
+                .replace(/_+/g, "_") || "journey_photo";
+            const filename = safeName.endsWith(".webp") ? safeName : `${safeName}.webp`;
 
-                const link = document.createElement("a");
-                link.href = blobUrl;
-                const safeName = (currentPhoto.caption || "journey_photo")
-                    .trim()
-                    .toLowerCase()
-                    .replace(/[^a-z0-9_-]/g, "_")
-                    .replace(/_+/g, "_");
-                link.download = `${safeName || "journey_photo"}.webp`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
-            } catch (err) {
-                console.error("Direct fetch download failed, falling back to window.open:", err);
-                const link = document.createElement("a");
-                link.href = currentPhoto.url;
-                link.target = "_blank";
-                link.rel = "noopener noreferrer";
-                link.download = "journey_photo.webp";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
+            const downloadUrl = `/api/download-photo?url=${encodeURIComponent(currentPhoto.url)}&filename=${encodeURIComponent(filename)}`;
+            
+            const link = document.createElement("a");
+            link.href = downloadUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         });
 
         // Touch swipe support for mobile
