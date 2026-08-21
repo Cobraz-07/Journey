@@ -86,11 +86,14 @@ export async function uploadTripPhoto(
     uid: string,
     tripId: string,
     fileOrPayload: File | ResponsiveUploadPayload,
-    caption = ""
+    caption = "",
+    skipCountCheck = false
 ): Promise<TripPhoto> {
-    const currentCount = await getTripPhotoCount(uid, tripId);
-    if (currentCount >= MAX_PHOTOS_PER_TRIP) {
-        throw new Error(`Has alcanzado el límite máximo de ${MAX_PHOTOS_PER_TRIP} fotos para este viaje.`);
+    if (!skipCountCheck) {
+        const currentCount = await getTripPhotoCount(uid, tripId);
+        if (currentCount >= MAX_PHOTOS_PER_TRIP) {
+            throw new Error(`Has alcanzado el límite máximo de ${MAX_PHOTOS_PER_TRIP} fotos para este viaje.`);
+        }
     }
 
     const photoId = `photo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
