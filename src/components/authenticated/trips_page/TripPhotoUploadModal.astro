@@ -307,9 +307,10 @@ const { uid, tripID } = Astro.props;
         
         const total = selectedBatchFiles.length;
         let completed = 0;
+        let failedCount = 0;
 
-        // Controlled concurrency: 3 uploads in parallel
-        const CONCURRENCY_LIMIT = 3;
+        // Controlled concurrency: 5 uploads in parallel
+        const CONCURRENCY_LIMIT = 5;
         const queue = [...selectedBatchFiles];
 
         async function processWorker() {
@@ -328,11 +329,12 @@ const { uid, tripID } = Astro.props;
                         displayHeight: responsive.displayHeight,
                     });
                 } catch (err) {
+                    failedCount++;
                     console.error(`Error subiendo foto ${rawFile.name}:`, err);
                 } finally {
                     completed++;
                     const pct = Math.round((completed / total) * 100);
-                    batchProgressLabel.textContent = `Procesando y subiendo ${completed} de ${total}...`;
+                    batchProgressLabel.textContent = `Procesando y subiendo ${completed} de ${total} (5 en paralelo)...`;
                     batchProgressBar.style.width = `${pct}%`;
                     batchProgressPercent.textContent = `${pct}%`;
                 }
@@ -351,6 +353,13 @@ const { uid, tripID } = Astro.props;
             batchProgressPercent.textContent = "0%";
             batchSubmitBtn.disabled = false;
             closeUploadModal();
+            
+            if (failedCount > 0) {
+                showToast(`Se subieron ${total - failedCount} fotos. ${failedCount} fotos fallaron.`, "error");
+            } else {
+                showToast(`¡${total} fotos subidas con éxito!`, "success");
+            }
+            
             window.dispatchEvent(new CustomEvent("trip-photos:updated"));
         }, 400);
     });
