@@ -494,6 +494,24 @@ const { uid, tripID } = Astro.props;
         });
                 
         singleCancelBtn?.addEventListener("click", closeUploadModal);
+
+        const d = document.querySelector("#trip-photo-upload-dialog dialog") as HTMLDialogElement;
+        d?.addEventListener("close", () => {
+            if (batchPreviewUrls.length > 0) {
+                batchPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+                batchPreviewUrls = [];
+                selectedBatchFiles = [];
+                renderBatchPreviews();
+            }
+            if (singleResponsiveResult && singleResponsiveResult.previewUrl) {
+                URL.revokeObjectURL(singleResponsiveResult.previewUrl);
+                singleResponsiveResult = null;
+                if (singleFileInput) singleFileInput.value = "";
+                singleDropzonePlaceholder?.classList.remove("hidden");
+                singlePreviewContainer?.classList.add("hidden");
+                if (singleSubmitBtn) singleSubmitBtn.disabled = true;
+            }
+        });
     }
 
     document.addEventListener("astro:page-load", initTripPhotoUploadModal);

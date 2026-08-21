@@ -113,6 +113,9 @@ const { uid, tripID } = Astro.props;
 
         removeImageBtn?.addEventListener("click", (e) => {
             e.stopPropagation();
+            if (journalCompressedResult?.previewUrl) {
+                URL.revokeObjectURL(journalCompressedResult.previewUrl);
+            }
             journalCompressedResult = null;
             if (imageInput) imageInput.value = "";
             previewWrapper?.classList.add("hidden");
@@ -160,6 +163,9 @@ const { uid, tripID } = Astro.props;
                 });
 
                 // Reset and close dialog
+                if (journalCompressedResult?.previewUrl) {
+                    URL.revokeObjectURL(journalCompressedResult.previewUrl);
+                }
                 journalCompressedResult = null;
                 if (imageInput) imageInput.value = "";
                 if (formTitle) formTitle.value = "";
@@ -184,6 +190,14 @@ const { uid, tripID } = Astro.props;
                 showToast("No se pudo crear la entrada del diario.", "error");
                 if (submitBtn) submitBtn.disabled = false;
                 progressWrapper?.classList.add("hidden");
+            }
+        });
+
+        const d = document.querySelector("#journal-form-dialog dialog") as HTMLDialogElement;
+        d?.addEventListener("close", () => {
+            if (journalCompressedResult?.previewUrl) {
+                URL.revokeObjectURL(journalCompressedResult.previewUrl);
+                journalCompressedResult = null;
             }
         });
     }
