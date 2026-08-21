@@ -32,6 +32,11 @@ export interface ResponsiveUploadPayload {
     displayHeight?: number;
 }
 
+export const MAX_PHOTOS_PER_TRIP = 50;
+export const MAX_TRIPS_PER_USER = 30;
+export const MAX_JOURNALS_PER_TRIP = 100;
+export const MAX_BATCH_UPLOAD_SIZE = 20;
+
 /**
  * Extracts the storage path from a standard Firebase Storage download URL.
  */
@@ -49,6 +54,15 @@ export function getStoragePathFromUrl(url?: string | null): string | undefined {
 }
 
 /**
+ * Gets the current count of photos in a trip.
+ */
+export async function getTripPhotoCount(uid: string, tripId: string): Promise<number> {
+    const photosColRef = collection(db, "users", uid, "trips", tripId, "photos");
+    const snapshot = await getDocs(photosColRef);
+    return snapshot.size;
+}
+
+/**
  * Uploads a photo to a trip's gallery with responsive display and thumbnail assets.
  */
 export async function uploadTripPhoto(
@@ -57,6 +71,11 @@ export async function uploadTripPhoto(
     fileOrPayload: File | ResponsiveUploadPayload,
     caption = ""
 ): Promise<TripPhoto> {
+    const currentCount = await getTripPhotoCount(uid, tripId);
+    if (currentCount >= MAX_PHOTOS_PER_TRIP) {
+        throw new Error(`Has alcanzado el límite máximo de ${MAX_PHOTOS_PER_TRIP} fotos para este viaje.`);
+    }
+
     const photoId = `photo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const isPayload = "displayFile" in fileOrPayload;
     const displayFile = isPayload ? fileOrPayload.displayFile : fileOrPayload;

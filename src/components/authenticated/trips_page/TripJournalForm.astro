@@ -14,8 +14,8 @@ const { uid, tripID } = Astro.props;
             <DialogHeader class="mb-2">
                 <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white">Nuevo Registro en el Diario</DialogTitle>
             </DialogHeader>
-            <Input name="journal title" id="journal-title" type="text" placeholder="Título del diario" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
-            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="journal-description" placeholder="¿Qué aventuras viviste hoy?" />
+            <Input name="journal title" id="journal-title" type="text" placeholder="Título del diario" maxlength={150} class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="journal-description" maxlength={5000} placeholder="¿Qué aventuras viviste hoy? (máx. 5000 caracteres)" />
             
             <p class="text-xs font-semibold text-[#6e826b]">Fecha del diario</p>
             <Input name="journal date" id="journal-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
@@ -54,9 +54,9 @@ const { uid, tripID } = Astro.props;
 
 <script>
     import { db, projectAuth } from "@/firebase/config";
-    import { collection, doc, setDoc } from "firebase/firestore";
+    import { collection, doc, setDoc, getDocs } from "firebase/firestore";
     import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
-    import { uploadJournalImage } from "@/firebase/storageService";
+    import { uploadJournalImage, MAX_JOURNALS_PER_TRIP } from "@/firebase/storageService";
     import { showToast } from "@/utils/toast";
 
     const journalFormDialog = document.getElementById("journal-form-dialog") as HTMLDivElement;
@@ -122,6 +122,16 @@ const { uid, tripID } = Astro.props;
             await projectAuth.authStateReady();
             const tripDocRef = doc(collection(userDocRef, "trips"), `${tripID}`);
             const journalCollectionRef = collection(tripDocRef, "journal");
+
+            // Check max journals limit
+            const existingJournalsSnap = await getDocs(journalCollectionRef);
+            if (existingJournalsSnap.size >= MAX_JOURNALS_PER_TRIP) {
+                showToast(`Has alcanzado el límite máximo de ${MAX_JOURNALS_PER_TRIP} entradas de diario para este viaje.`, "error");
+                submitBtn.disabled = false;
+                progressWrapper.classList.add("hidden");
+                return;
+            }
+
             const newJournalDocRef = doc(journalCollectionRef);
             const journalId = newJournalDocRef.id;
 

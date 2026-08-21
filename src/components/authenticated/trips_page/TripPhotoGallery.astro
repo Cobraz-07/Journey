@@ -18,14 +18,15 @@ const { uid, tripID } = Astro.props;
     <div class="flex justify-between items-center mb-4">
         <div class="flex items-center gap-2">
             <h3 class="text-xl font-bold text-[var(--text-color)]">Fotos del Viaje</h3>
-            <span id="gallery-badge-count" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#ebf0eb] text-[#63875e] hidden">0</span>
+            <span id="gallery-badge-count" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#ebf0eb] text-[#63875e] hidden">0 / 50</span>
         </div>
         <DialogTrigger
+            id="gallery-add-photos-btn"
             for="trip-photo-upload-dialog"
             class="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-[#63875e] text-white hover:bg-[#52704e] active:scale-95 transition-all shadow-sm cursor-pointer"
         >
             <Icon name="image" class="w-4 h-4" />
-            <span>Añadir Fotos</span>
+            <span id="gallery-add-btn-text">Añadir Fotos</span>
         </DialogTrigger>
     </div>
 
@@ -50,12 +51,14 @@ const { uid, tripID } = Astro.props;
 
 <script>
     import { projectAuth } from "@/firebase/config";
-    import { getTripPhotos, deleteTripPhoto, type TripPhoto } from "@/firebase/storageService";
+    import { getTripPhotos, deleteTripPhoto, MAX_PHOTOS_PER_TRIP, type TripPhoto } from "@/firebase/storageService";
     import { escapeHtml } from "@/utils/escapeHtml";
     import { showToast } from "@/utils/toast";
 
     const galleryEl = document.getElementById("trip-photo-gallery") as HTMLDivElement;
     const badgeCountEl = document.getElementById("gallery-badge-count") as HTMLElement;
+    const addPhotosBtn = document.getElementById("gallery-add-photos-btn") as HTMLElement;
+    const addBtnText = document.getElementById("gallery-add-btn-text") as HTMLElement;
     const uid = galleryEl?.dataset.uid;
     const tripId = galleryEl?.dataset.tripId;
 
@@ -68,7 +71,18 @@ const { uid, tripID } = Astro.props;
             await projectAuth.authStateReady();
             loadedPhotos = await getTripPhotos(uid, tripId);
 
-            if (loadedPhotos.length === 0) {
+            // Update photo count and limit state
+            const count = loadedPhotos.length;
+            const isFull = count >= MAX_PHOTOS_PER_TRIP;
+
+            // Notify upload modal about current photo count
+            window.dispatchEvent(
+                new CustomEvent("trip-photos:count-updated", {
+                    detail: { count, max: MAX_PHOTOS_PER_TRIP },
+                })
+            );
+
+            if (count === 0) {
                 badgeCountEl.classList.add("hidden");
                 galleryEl.className = "flex flex-col items-center justify-center p-8 border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl bg-[#fafcfa] dark:bg-[#121712]/40 text-center gap-2";
                 galleryEl.innerHTML = `
@@ -78,7 +92,7 @@ const { uid, tripID } = Astro.props;
                         </svg>
                     </div>
                     <p class="font-semibold text-sm text-[var(--text-color)]">Aún no hay fotos en este viaje</p>
-                    <p class="text-xs text-[var(--lt-text-color)] mb-2">Guarda tus mejores momentos subiendo fotos individuales o en lote.</p>
+                    <p class="text-xs text-[var(--lt-text-color)] mb-2">Guarda hasta ${MAX_PHOTOS_PER_TRIP} recuerdos en alta calidad.</p>
                     <button id="empty-state-upload-btn" type="button" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#63875e] text-white hover:bg-[#52704e] transition-all shadow-xs cursor-pointer">
                         Subir primera foto
                     </button>
@@ -91,8 +105,23 @@ const { uid, tripID } = Astro.props;
                 return;
             }
 
-            badgeCountEl.textContent = `${loadedPhotos.length}`;
+            badgeCountEl.textContent = `${count} / ${MAX_PHOTOS_PER_TRIP}`;
             badgeCountEl.classList.remove("hidden");
+
+            if (isFull) {
+                badgeCountEl.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300";
+                if (addPhotosBtn && addBtnText) {
+                    addBtnText.textContent = "Límite (50/50)";
+                    addPhotosBtn.classList.add("opacity-60", "cursor-not-allowed");
+                }
+            } else {
+                badgeCountEl.className = "text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#ebf0eb] dark:bg-neutral-800 text-[#63875e]";
+                if (addPhotosBtn && addBtnText) {
+                    addBtnText.textContent = "Añadir Fotos";
+                    addPhotosBtn.classList.remove("opacity-60", "cursor-not-allowed");
+                }
+            }
+
             galleryEl.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3";
             galleryEl.innerHTML = "";
 

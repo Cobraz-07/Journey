@@ -24,12 +24,16 @@ service cloud.firestore {
                          'country', 'countryCode', 'coverUrl', 'coverStoragePath', 'createdAt'
                        ])
                     && request.resource.data.title is string
-                    && request.resource.data.title.size() <= 200;
+                    && request.resource.data.title.size() <= 100
+                    && (!('description' in request.resource.data) || request.resource.data.description == null || request.resource.data.description.size() <= 1000);
       allow update: if isOwner(uid)
                     && request.resource.data.keys().hasOnly([
                          'title', 'description', 'startDate', 'endDate',
                          'country', 'countryCode', 'coverUrl', 'coverStoragePath', 'createdAt'
-                       ]);
+                       ])
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() <= 100
+                    && (!('description' in request.resource.data) || request.resource.data.description == null || request.resource.data.description.size() <= 1000);
       allow delete: if isOwner(uid);
     }
 
@@ -43,7 +47,8 @@ service cloud.firestore {
                         'width', 'height'
                       ])
                    && request.resource.data.url is string
-                   && request.resource.data.storagePath is string;
+                   && request.resource.data.storagePath is string
+                   && (!('caption' in request.resource.data) || request.resource.data.caption == null || request.resource.data.caption.size() <= 200);
       allow delete: if isOwner(uid);
     }
 
@@ -56,12 +61,16 @@ service cloud.firestore {
                          'imageStoragePath', 'createdAt'
                        ])
                     && request.resource.data.title is string
-                    && request.resource.data.title.size() <= 200;
+                    && request.resource.data.title.size() <= 150
+                    && (!('description' in request.resource.data) || request.resource.data.description == null || request.resource.data.description.size() <= 5000);
       allow update: if isOwner(uid)
                     && request.resource.data.keys().hasOnly([
                          'title', 'description', 'date', 'imageUrl',
                          'imageStoragePath', 'createdAt'
-                       ]);
+                       ])
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() <= 150
+                    && (!('description' in request.resource.data) || request.resource.data.description == null || request.resource.data.description.size() <= 5000);
       allow delete: if isOwner(uid);
     }
 

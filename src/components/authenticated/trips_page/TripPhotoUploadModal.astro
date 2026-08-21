@@ -129,12 +129,18 @@ const { uid, tripID } = Astro.props;
 <script>
     import { projectAuth } from "@/firebase/config";
     import { processResponsiveTripPhoto, type ResponsiveTripPhotoResult } from "@/utils/imageCompressor";
-    import { uploadTripPhoto } from "@/firebase/storageService";
+    import { uploadTripPhoto, MAX_PHOTOS_PER_TRIP, MAX_BATCH_UPLOAD_SIZE } from "@/firebase/storageService";
     import { showToast } from "@/utils/toast";
 
     const modalDialog = document.getElementById("trip-photo-upload-dialog") as any;
     const uid = modalDialog?.dataset.uid;
     const tripId = modalDialog?.dataset.tripId;
+
+    let currentPhotoCount = 0;
+
+    window.addEventListener("trip-photos:count-updated", ((e: CustomEvent) => {
+        currentPhotoCount = e.detail?.count ?? 0;
+    }) as EventListener);
 
     // Tabs
     const tabBatch = document.getElementById("tab-batch-mode") as HTMLButtonElement;
@@ -206,7 +212,24 @@ const { uid, tripID } = Astro.props;
         const imageFiles = files.filter((f) => f.type.startsWith("image/"));
         if (!imageFiles.length) return;
 
-        selectedBatchFiles = [...selectedBatchFiles, ...imageFiles];
+        const remainingSlots = MAX_PHOTOS_PER_TRIP - currentPhotoCount - selectedBatchFiles.length;
+        if (remainingSlots <= 0) {
+            showToast(`Límite alcanzado: Este viaje ya tiene el máximo de ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
+            return;
+        }
+
+        const maxCanAdd = Math.min(remainingSlots, MAX_BATCH_UPLOAD_SIZE - selectedBatchFiles.length);
+        if (maxCanAdd <= 0) {
+            showToast(`Máximo de ${MAX_BATCH_UPLOAD_SIZE} fotos por tanda de subida.`, "error");
+            return;
+        }
+
+        if (imageFiles.length > maxCanAdd) {
+            showToast(`Se añadieron las primeras ${maxCanAdd} fotos (límite de cuota disponible).`, "error");
+        }
+
+        const toAdd = imageFiles.slice(0, maxCanAdd);
+        selectedBatchFiles = [...selectedBatchFiles, ...toAdd];
         renderBatchPreviews();
     }
 
@@ -369,6 +392,11 @@ const { uid, tripID } = Astro.props;
     });
 
     async function processSingleFile(file: File) {
+        if (currentPhotoCount >= MAX_PHOTOS_PER_TRIP) {
+            showToast(`Límite alcanzado: Este viaje ya tiene el máximo de ${MAX_PHOTOS_PER_TRIP} fotos.`, "error");
+            return;
+        }
+
         try {
             singleResponsiveResult = await processResponsiveTripPhoto(file);
             singlePreviewImg.src = singleResponsiveResult.previewUrl;

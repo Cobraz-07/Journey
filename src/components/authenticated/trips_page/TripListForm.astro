@@ -15,8 +15,8 @@ const { uid } = Astro.props;
             <DialogHeader class="mb-4">
                 <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white">Crear nuevo viaje</DialogTitle>
             </DialogHeader>
-            <Input name="trip title" id="trip-title" type="text" placeholder="Título del viaje" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
-            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="trip-description" placeholder="Descripción del viaje" />
+            <Input name="trip title" id="trip-title" type="text" placeholder="Título del viaje" maxlength={100} class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="trip-description" maxlength={1000} placeholder="Descripción del viaje (máx. 1000 caracteres)" />
             
             <!-- Optional Cover Photo -->
             <p class="text-xs font-semibold text-[#6e826b]">Foto de Portada (Opcional)</p>
@@ -115,9 +115,9 @@ const { uid } = Astro.props;
 
 <script>
     import { db, projectAuth } from "@/firebase/config";
-    import { collection, doc, setDoc } from "firebase/firestore";
+    import { collection, doc, setDoc, getDocs } from "firebase/firestore";
     import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
-    import { uploadTripCover } from "@/firebase/storageService";
+    import { uploadTripCover, MAX_TRIPS_PER_USER } from "@/firebase/storageService";
     import { showToast } from "@/utils/toast";
 
     const tripForm = document.querySelector("#trip-form") as HTMLFormElement;
@@ -268,6 +268,18 @@ const { uid } = Astro.props;
 
         try {
             await projectAuth.authStateReady();
+
+            // Check max trips limit
+            const existingTripsSnap = await getDocs(collection(userDocRef, "trips"));
+            if (existingTripsSnap.size >= MAX_TRIPS_PER_USER) {
+                showToast(`Has alcanzado el límite máximo de ${MAX_TRIPS_PER_USER} viajes por cuenta.`, "error");
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Create Trip";
+                }
+                return;
+            }
+
             // Generate robust auto-ID for new trip document
             const newTripDocRef = doc(collection(userDocRef, "trips"));
             const tripId = newTripDocRef.id;
