@@ -9,8 +9,8 @@ const uid = Astro.locals.uid;
 if (!uid) return Astro.redirect("/signin");
 ---
 
-<BaseLayout title="Journey | Mapa del Mundo">
-    <TitleSimple title="Mapa del Mundo" />
+<BaseLayout title="Journey | World Map">
+    <TitleSimple title="World Map" />
     <div class="pb-24">
         <VisitedCountriesMap uid={uid} />
     </div>

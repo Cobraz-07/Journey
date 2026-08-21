@@ -14,34 +14,34 @@ const { uid } = Astro.props;
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
             <div>
                 <h3 class="text-lg font-bold text-[var(--text-color)] flex items-center gap-2">
-                    <span>🗺️</span> Tu Mapa del Mundo
+                    <span>🗺️</span> Your World Map
                 </h3>
-                <p class="text-xs text-[var(--lt-text-color)]">Países coloreados automáticamente según tus viajes</p>
+                <p class="text-xs text-[var(--lt-text-color)]">Countries colored automatically based on your trips</p>
             </div>
             
             <!-- Quick Stats Badges -->
             <div class="flex items-center gap-2.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
                 <div class="flex-1 md:flex-initial bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl px-3.5 py-2 text-center min-w-[90px]">
-                    <span class="block text-[11px] text-[#6e826b] dark:text-neutral-400 font-semibold uppercase tracking-wider">Países</span>
+                    <span class="block text-[11px] text-[#6e826b] dark:text-neutral-400 font-semibold uppercase tracking-wider">Countries</span>
                     <span id="stat-visited-count" class="text-base font-extrabold text-[#63875e] dark:text-[#8ac282]">—</span>
                 </div>
                 <div class="flex-1 md:flex-initial bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl px-3.5 py-2 text-center min-w-[90px]">
-                    <span class="block text-[11px] text-[#6e826b] dark:text-neutral-400 font-semibold uppercase tracking-wider">Mundo</span>
+                    <span class="block text-[11px] text-[#6e826b] dark:text-neutral-400 font-semibold uppercase tracking-wider">World</span>
                     <span id="stat-world-percent" class="text-base font-extrabold text-[#63875e] dark:text-[#8ac282]">—%</span>
                 </div>
                 <div class="flex-1 md:flex-initial bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-2xl px-3.5 py-2 text-center min-w-[90px]">
-                    <span class="block text-[11px] text-[#6e826b] dark:text-neutral-400 font-semibold uppercase tracking-wider">Viajes</span>
+                    <span class="block text-[11px] text-[#6e826b] dark:text-neutral-400 font-semibold uppercase tracking-wider">Trips</span>
                     <span id="stat-total-trips" class="text-base font-extrabold text-[#63875e] dark:text-[#8ac282]">—</span>
                 </div>
             </div>
         </div>
 
         <!-- SVG Map Container -->
-        <div class="relative w-full aspect-[1010/580] bg-[#f4f7f3] dark:bg-[#1a2119] rounded-2xl overflow-hidden border border-[#e0e7df] dark:border-neutral-800 flex items-center justify-center">
+        <div class="relative w-full aspect-[1010/580] bg-[#f4f7f3] dark:bg-[#1a2119] rounded-2xl overflow-hidden border border-[#e0e7df] dark:border-neutral-800 flex items-center justify-center group/map">
             <!-- Loading Skeleton Overlay -->
             <div id="map-loading-overlay" class="absolute inset-0 bg-[#f4f7f3]/80 dark:bg-[#1a2119]/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-10 transition-opacity duration-300">
                 <div class="w-6 h-6 border-2 border-[#63875e] border-t-transparent rounded-full animate-spin"></div>
-                <span class="text-xs text-[#6e826b] font-medium">Cargando mapa y aventuras...</span>
+                <span class="text-xs text-[#6e826b] font-medium">Loading map and adventures...</span>
             </div>
 
             <!-- World SVG -->
@@ -62,6 +62,20 @@ const { uid } = Astro.props;
                 ))}
             </svg>
 
+            <!-- Zoom / Landscape Button (Bottom Right) -->
+            <button
+                id="map-zoom-landscape-btn"
+                type="button"
+                aria-label="View Map in Landscape"
+                title="View Map in Landscape"
+                class="absolute bottom-3 right-3 z-20 bg-white/90 dark:bg-neutral-800/90 hover:bg-[#63875e] hover:text-white dark:hover:bg-[#63875e] text-[#121712] dark:text-white p-2 sm:px-3 sm:py-2 rounded-xl shadow-md border border-neutral-200/80 dark:border-neutral-700 transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5 text-xs font-semibold backdrop-blur-md cursor-pointer"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                <span class="hidden sm:inline">Landscape View</span>
+            </button>
+
             <!-- Floating Interactive Tooltip -->
             <div
                 id="map-tooltip"
@@ -77,13 +91,59 @@ const { uid } = Astro.props;
 
         <!-- Visited Countries Chips Section -->
         <div id="visited-chips-container" class="mt-4 pt-3 border-t border-neutral-200/60 dark:border-neutral-800">
-            <h4 class="text-xs font-bold text-[#6e826b] dark:text-neutral-400 mb-2 uppercase tracking-wider">Países Descubiertos</h4>
+            <h4 class="text-xs font-bold text-[#6e826b] dark:text-neutral-400 mb-2 uppercase tracking-wider">Discovered Countries</h4>
             <div id="visited-chips-list" class="flex flex-wrap gap-2">
-                <span class="text-xs text-neutral-400 italic">Cargando destinos...</span>
+                <span class="text-xs text-neutral-400 italic">Loading destinations...</span>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Fullscreen Landscape Modal -->
+<div
+    id="landscape-map-modal"
+    class="fixed inset-0 z-50 bg-[#f4f7f3]/98 dark:bg-[#121712]/98 backdrop-blur-xl hidden flex-col justify-between p-3 md:p-6 transition-all duration-300"
+>
+    <!-- Modal Header -->
+    <div class="w-full flex items-center justify-between gap-4 pb-2 border-b border-neutral-200/60 dark:border-neutral-800 shrink-0">
+        <div class="flex items-center gap-2.5">
+            <span class="text-base">🗺️</span>
+            <div>
+                <h4 class="text-sm font-bold text-[var(--text-color)]">World Map — Landscape View</h4>
+                <p class="text-[11px] text-[#6e826b] dark:text-neutral-400 hidden sm:block">Rotate your device horizontally for the best experience</p>
+            </div>
+        </div>
+
+        <button
+            id="landscape-modal-close-btn"
+            type="button"
+            class="bg-neutral-200/80 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-[var(--text-color)] px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
+        >
+            <span>✕</span>
+            <span>Close</span>
+        </button>
+    </div>
+
+    <!-- Landscape SVG Viewport -->
+    <div class="flex-1 w-full h-full flex items-center justify-center relative overflow-hidden py-2">
+        <svg
+            id="landscape-world-map-svg"
+            viewBox={WORLD_MAP_VIEWBOX}
+            class="w-full h-full max-h-[85vh] object-contain select-none transition-all"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            {worldMapCountries.map((country) => (
+                <path
+                    id={`landscape-country-${country.id}`}
+                    d={country.d}
+                    data-code={country.id}
+                    data-name={country.name}
+                    class="country-path fill-[#dce4db] dark:fill-[#2d372c] stroke-[#c8d4c6] dark:stroke-[#20281f] stroke-[0.4] transition-colors duration-200 hover:fill-[#b8ceb5] dark:hover:fill-[#3f503c] cursor-pointer"
+                />
+            ))}
+        </svg>
+    </div>
+</div>
 
 <script>
     import { db, projectAuth } from "@/firebase/config";
@@ -105,11 +165,54 @@ const { uid } = Astro.props;
         const statTotalTrips = document.getElementById("stat-total-trips");
         const loadingOverlay = document.getElementById("map-loading-overlay");
         const svgMap = document.getElementById("world-map-svg") as SVGSVGElement | null;
+        const landscapeSvgMap = document.getElementById("landscape-world-map-svg") as SVGSVGElement | null;
         const tooltip = document.getElementById("map-tooltip");
         const tooltipFlag = document.getElementById("tooltip-flag") as HTMLImageElement | null;
         const tooltipName = document.getElementById("tooltip-name");
         const tooltipStatus = document.getElementById("tooltip-status");
         const chipsList = document.getElementById("visited-chips-list");
+
+        // Landscape Modal Elements
+        const zoomLandscapeBtn = document.getElementById("map-zoom-landscape-btn");
+        const landscapeModal = document.getElementById("landscape-map-modal");
+        const landscapeCloseBtn = document.getElementById("landscape-modal-close-btn");
+
+        function openLandscapeModal() {
+            if (!landscapeModal) return;
+            landscapeModal.classList.remove("hidden");
+            landscapeModal.classList.add("flex");
+            document.body.classList.add("overflow-hidden");
+
+            // Attempt native screen orientation lock to landscape if available
+            try {
+                if (screen.orientation && (screen.orientation as any).lock) {
+                    (screen.orientation as any).lock("landscape").catch(() => {});
+                }
+            } catch {}
+        }
+
+        function closeLandscapeModal() {
+            if (!landscapeModal) return;
+            landscapeModal.classList.add("hidden");
+            landscapeModal.classList.remove("flex");
+            document.body.classList.remove("overflow-hidden");
+
+            // Unlock screen orientation
+            try {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+            } catch {}
+        }
+
+        zoomLandscapeBtn?.addEventListener("click", openLandscapeModal);
+        landscapeCloseBtn?.addEventListener("click", closeLandscapeModal);
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && landscapeModal && !landscapeModal.classList.contains("hidden")) {
+                closeLandscapeModal();
+            }
+        });
 
         async function loadMapData() {
             try {
@@ -135,7 +238,7 @@ const { uid } = Astro.props;
                 if (statWorldPercent) statWorldPercent.textContent = `${percentage}%`;
                 if (statTotalTrips) statTotalTrips.textContent = `${totalTripsCount}`;
 
-                // Color visited paths on SVG
+                // Color visited paths on both standard and landscape SVGs
                 document.querySelectorAll(".country-path").forEach((el) => {
                     const pathEl = el as SVGPathElement;
                     const code = (pathEl.dataset.code || "").toLowerCase();
@@ -151,13 +254,13 @@ const { uid } = Astro.props;
                 if (chipsList) {
                     if (visitedStats.length === 0) {
                         chipsList.innerHTML = `
-                            <p class="text-xs text-neutral-400 italic">Aún no has registrado viajes. Crea tu primer viaje y se coloreará en el mapa.</p>
+                            <p class="text-xs text-neutral-400 italic">No trips logged yet. Create your first trip and it will appear on the map.</p>
                         `;
                     } else {
                         chipsList.innerHTML = visitedStats.map((stat) => {
                             const safeCode = escapeHtml(stat.code);
                             const safeName = escapeHtml(stat.name);
-                            const tripsLabel = stat.tripCount === 1 ? "1 viaje" : `${stat.tripCount} viajes`;
+                            const tripsLabel = stat.tripCount === 1 ? "1 trip" : `${stat.tripCount} trips`;
                             return `
                                 <button
                                     type="button"
@@ -179,12 +282,16 @@ const { uid } = Astro.props;
 
                             btn.addEventListener("mouseenter", () => {
                                 const targetPath = document.getElementById(`country-${code}`);
+                                const landscapePath = document.getElementById(`landscape-country-${code}`);
                                 targetPath?.classList.add("fill-[#3f5c3a]", "dark:fill-[#9ee095]", "brightness-125");
+                                landscapePath?.classList.add("fill-[#3f5c3a]", "dark:fill-[#9ee095]", "brightness-125");
                             });
 
                             btn.addEventListener("mouseleave", () => {
                                 const targetPath = document.getElementById(`country-${code}`);
+                                const landscapePath = document.getElementById(`landscape-country-${code}`);
                                 targetPath?.classList.remove("fill-[#3f5c3a]", "dark:fill-[#9ee095]", "brightness-125");
+                                landscapePath?.classList.remove("fill-[#3f5c3a]", "dark:fill-[#9ee095]", "brightness-125");
                             });
                         });
                     }
@@ -201,9 +308,11 @@ const { uid } = Astro.props;
             }
         }
 
-        // Setup Tooltip Mouse Tracking
-        if (svgMap && tooltip) {
-            svgMap.addEventListener("mousemove", (e: MouseEvent) => {
+        // Setup Tooltip Mouse Tracking for both map views
+        function bindTooltipEvents(targetSvg: SVGSVGElement | null) {
+            if (!targetSvg || !tooltip) return;
+
+            targetSvg.addEventListener("mousemove", (e: MouseEvent) => {
                 const target = e.target as HTMLElement;
                 if (target && target.classList.contains("country-path")) {
                     const code = (target.dataset.code || "").toLowerCase();
@@ -216,7 +325,7 @@ const { uid } = Astro.props;
                     }
                     if (tooltipName) tooltipName.textContent = name;
                     if (tooltipStatus) {
-                        tooltipStatus.textContent = isVisited ? "✅ País visitado" : "📍 No visitado";
+                        tooltipStatus.textContent = isVisited ? "✅ Visited country" : "📍 Not visited yet";
                         tooltipStatus.className = isVisited ? "text-[11px] text-[#aadba3] font-medium mt-0.5" : "text-[11px] text-neutral-400 font-medium mt-0.5";
                     }
 
@@ -228,10 +337,13 @@ const { uid } = Astro.props;
                 }
             });
 
-            svgMap.addEventListener("mouseleave", () => {
+            targetSvg.addEventListener("mouseleave", () => {
                 tooltip.classList.add("hidden");
             });
         }
+
+        bindTooltipEvents(svgMap);
+        bindTooltipEvents(landscapeSvgMap);
 
         loadMapData();
     }
