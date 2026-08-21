@@ -140,3 +140,184 @@ export async function compressImageToWebP(
         reader.readAsDataURL(file);
     });
 }
+
+export interface ResponsiveTripPhotoResult {
+    displayFile: File;
+    thumbnailFile: File;
+    blurDataUrl: string;
+    displayWidth: number;
+    displayHeight: number;
+    originalSize: number;
+    displaySize: number;
+    thumbnailSize: number;
+    previewUrl: string;
+}
+
+/**
+ * Calculates aspect-ratio preserving dimensions constrained by max width/height.
+ */
+export function calculateAspectRatioFit(
+    srcWidth: number,
+    srcHeight: number,
+    maxWidth: number,
+    maxHeight: number
+): { width: number; height: number } {
+    if (srcWidth <= maxWidth && srcHeight <= maxHeight) {
+        return { width: srcWidth, height: srcHeight };
+    }
+    if (srcWidth / srcHeight > maxWidth / maxHeight) {
+        return {
+            width: maxWidth,
+            height: Math.max(1, Math.round((srcHeight * maxWidth) / srcWidth)),
+        };
+    }
+    return {
+        width: Math.max(1, Math.round((srcWidth * maxHeight) / srcHeight)),
+        height: maxHeight,
+    };
+}
+
+/**
+ * Generates an ultra-small Base64 LQIP (Low-Quality Image Placeholder) data URL for blur-up effect.
+ */
+export function generateBlurPlaceholder(
+    img: HTMLImageElement,
+    width = 24,
+    height = 24
+): string {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "low";
+    ctx.drawImage(img, 0, 0, width, height);
+
+    return canvas.toDataURL("image/webp", 0.35);
+}
+
+/**
+ * Compresses an HTMLImageElement to a File in WebP format at the specified dimensions and quality.
+ */
+function canvasToFile(
+    img: HTMLImageElement,
+    width: number,
+    height: number,
+    quality: number,
+    fileName: string
+): Promise<File> {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+            reject(new Error("No se pudo crear el contexto 2D de canvas."));
+            return;
+        }
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+            (blob) => {
+                if (!blob) {
+                    reject(new Error("Error al convertir la imagen a WebP."));
+                    return;
+                }
+                const file = new File([blob], fileName, {
+                    type: "image/webp",
+                    lastModified: Date.now(),
+                });
+                resolve(file);
+            },
+            "image/webp",
+            quality
+        );
+    });
+}
+
+/**
+ * Compresses an image file into responsive multi-resolution assets (display + thumbnail + blur placeholder).
+ */
+export async function processResponsiveTripPhoto(
+    file: File,
+    maxOriginalSizeMB = 15
+): Promise<ResponsiveTripPhotoResult> {
+    const validation = validateImageFile(file, maxOriginalSizeMB);
+    if (!validation.valid) {
+        throw new Error(validation.error);
+    }
+
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("No se pudo leer el archivo de imagen."));
+
+        reader.onload = async (e) => {
+            const img = new Image();
+            img.onerror = () => reject(new Error("No se pudo cargar la imagen para procesar."));
+
+            img.onload = async () => {
+                try {
+                    const originalWidth = img.width;
+                    const originalHeight = img.height;
+
+                    // 1. Display dimensions (max 1920x1920, quality 0.86)
+                    const displayDims = calculateAspectRatioFit(originalWidth, originalHeight, 1920, 1920);
+
+                    // 2. Thumbnail dimensions (max 360x360, quality 0.80)
+                    const thumbDims = calculateAspectRatioFit(originalWidth, originalHeight, 360, 360);
+
+                    // 3. Blur placeholder (24x24)
+                    const blurDataUrl = generateBlurPlaceholder(img, 24, 24);
+
+                    const baseName = file.name
+                        .replace(/\.[^/.]+$/, "")
+                        .replace(/[^a-zA-Z0-9_-]/g, "_");
+                    const timestamp = Date.now();
+
+                    // Generate both files in parallel
+                    const [displayFile, thumbnailFile] = await Promise.all([
+                        canvasToFile(
+                            img,
+                            displayDims.width,
+                            displayDims.height,
+                            0.86,
+                            `${baseName}_${timestamp}_display.webp`
+                        ),
+                        canvasToFile(
+                            img,
+                            thumbDims.width,
+                            thumbDims.height,
+                            0.80,
+                            `${baseName}_${timestamp}_thumb.webp`
+                        ),
+                    ]);
+
+                    const previewUrl = URL.createObjectURL(displayFile);
+
+                    resolve({
+                        displayFile,
+                        thumbnailFile,
+                        blurDataUrl,
+                        displayWidth: displayDims.width,
+                        displayHeight: displayDims.height,
+                        originalSize: file.size,
+                        displaySize: displayFile.size,
+                        thumbnailSize: thumbnailFile.size,
+                        previewUrl,
+                    });
+                } catch (err) {
+                    reject(err);
+                }
+            };
+
+            img.src = e.target?.result as string;
+        };
+
+        reader.readAsDataURL(file);
+    });
+}

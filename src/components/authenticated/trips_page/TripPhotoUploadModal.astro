@@ -128,7 +128,7 @@ const { uid, tripID } = Astro.props;
 
 <script>
     import { projectAuth } from "@/firebase/config";
-    import { compressImageToWebP, type CompressedImageResult } from "@/utils/imageCompressor";
+    import { processResponsiveTripPhoto, type ResponsiveTripPhotoResult } from "@/utils/imageCompressor";
     import { uploadTripPhoto } from "@/firebase/storageService";
     import { showToast } from "@/utils/toast";
 
@@ -179,12 +179,7 @@ const { uid, tripID } = Astro.props;
     const batchProgressPercent = document.getElementById("batch-progress-percent") as HTMLElement;
     const batchProgressLabel = document.getElementById("batch-progress-label") as HTMLElement;
 
-    batchFileInput?.addEventListener("click", (e) => e.stopPropagation());
-
-    batchDropzone?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        batchFileInput?.click();
-    });
+    batchDropzone?.addEventListener("click", () => batchFileInput?.click());
 
     batchDropzone?.addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -249,11 +244,11 @@ const { uid, tripID } = Astro.props;
             removeBtn.type = "button";
             removeBtn.className = "absolute top-1 right-1 bg-black/70 hover:bg-black text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]";
             removeBtn.textContent = "✕";
-            removeBtn.onclick = (e) => {
+            removeBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 selectedBatchFiles.splice(index, 1);
                 renderBatchPreviews();
-            };
+            });
             card.appendChild(removeBtn);
 
             batchFilesGrid.appendChild(card);
@@ -294,9 +289,15 @@ const { uid, tripID } = Astro.props;
                 if (!rawFile) break;
 
                 try {
-                    // Compress client-side to WebP
-                    const compressed = await compressImageToWebP(rawFile);
-                    await uploadTripPhoto(uid, tripId, compressed.file);
+                    // Process multi-resolution responsive assets
+                    const responsive = await processResponsiveTripPhoto(rawFile);
+                    await uploadTripPhoto(uid, tripId, {
+                        displayFile: responsive.displayFile,
+                        thumbnailFile: responsive.thumbnailFile,
+                        blurDataUrl: responsive.blurDataUrl,
+                        displayWidth: responsive.displayWidth,
+                        displayHeight: responsive.displayHeight,
+                    });
                 } catch (err) {
                     console.error(`Error subiendo foto ${rawFile.name}:`, err);
                 } finally {
@@ -326,7 +327,7 @@ const { uid, tripID } = Astro.props;
     batchCancelBtn?.addEventListener("click", closeUploadModal);
 
     // --- SINGLE PHOTO STATE & LOGIC ---
-    let singleCompressedResult: CompressedImageResult | null = null;
+    let singleResponsiveResult: ResponsiveTripPhotoResult | null = null;
     const singleDropzone = document.getElementById("single-dropzone") as HTMLDivElement;
     const singleFileInput = document.getElementById("single-file-input") as HTMLInputElement;
     const singleDropzonePlaceholder = document.getElementById("single-dropzone-placeholder") as HTMLDivElement;
@@ -339,11 +340,8 @@ const { uid, tripID } = Astro.props;
     const singleCancelBtn = document.getElementById("single-cancel-btn") as HTMLButtonElement;
     const singleProgressWrapper = document.getElementById("single-progress-wrapper") as HTMLDivElement;
 
-    singleFileInput?.addEventListener("click", (e) => e.stopPropagation());
-
     singleDropzone?.addEventListener("click", (e) => {
         if (e.target === singleRemoveFileBtn) return;
-        e.stopPropagation();
         singleFileInput?.click();
     });
 
@@ -372,9 +370,9 @@ const { uid, tripID } = Astro.props;
 
     async function processSingleFile(file: File) {
         try {
-            singleCompressedResult = await compressImageToWebP(file);
-            singlePreviewImg.src = singleCompressedResult.previewUrl;
-            singleSavingsBadge.textContent = `Optimizado a WebP: ${(singleCompressedResult.compressedSize / 1024).toFixed(0)} KB (-${singleCompressedResult.savingsPercentage}% ahorro)`;
+            singleResponsiveResult = await processResponsiveTripPhoto(file);
+            singlePreviewImg.src = singleResponsiveResult.previewUrl;
+            singleSavingsBadge.textContent = `Optimizado: Display ${(singleResponsiveResult.displaySize / 1024).toFixed(0)} KB | Miniatura ${(singleResponsiveResult.thumbnailSize / 1024).toFixed(0)} KB`;
             
             singleDropzonePlaceholder.classList.add("hidden");
             singlePreviewContainer.classList.remove("hidden");
@@ -387,7 +385,7 @@ const { uid, tripID } = Astro.props;
 
     singleRemoveFileBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
-        singleCompressedResult = null;
+        singleResponsiveResult = null;
         singleFileInput.value = "";
         singleDropzonePlaceholder.classList.remove("hidden");
         singlePreviewContainer.classList.add("hidden");
@@ -395,7 +393,7 @@ const { uid, tripID } = Astro.props;
     });
 
     singleSubmitBtn?.addEventListener("click", async () => {
-        if (!singleCompressedResult || !uid || !tripId) return;
+        if (!singleResponsiveResult || !uid || !tripId) return;
 
         singleSubmitBtn.disabled = true;
         singleSubmitBtn.textContent = "Subiendo...";
@@ -404,10 +402,16 @@ const { uid, tripID } = Astro.props;
         try {
             await projectAuth.authStateReady();
             const caption = singleCaptionInput?.value || "";
-            await uploadTripPhoto(uid, tripId, singleCompressedResult.file, caption);
+            await uploadTripPhoto(uid, tripId, {
+                displayFile: singleResponsiveResult.displayFile,
+                thumbnailFile: singleResponsiveResult.thumbnailFile,
+                blurDataUrl: singleResponsiveResult.blurDataUrl,
+                displayWidth: singleResponsiveResult.displayWidth,
+                displayHeight: singleResponsiveResult.displayHeight,
+            }, caption);
             
             // Clean
-            singleCompressedResult = null;
+            singleResponsiveResult = null;
             singleFileInput.value = "";
             singleCaptionInput.value = "";
             singleDropzonePlaceholder.classList.remove("hidden");

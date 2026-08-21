@@ -100,21 +100,26 @@ const { uid, tripID } = Astro.props;
                 const card = document.createElement("div");
                 card.className = "group relative rounded-xl overflow-hidden aspect-square bg-neutral-100 dark:bg-neutral-800 shadow-sm hover:shadow-md cursor-pointer border border-neutral-200/60 dark:border-neutral-800 transition-all hover:scale-[1.02]";
 
-                const safeUrl = escapeHtml(photo.url);
+                const safeThumbUrl = escapeHtml(photo.thumbnailUrl || photo.url);
                 const safeCaption = escapeHtml(photo.caption);
                 const safeStoragePath = escapeHtml(photo.storagePath);
+                const safeThumbStoragePath = escapeHtml(photo.thumbnailStoragePath || "");
                 const safeId = escapeHtml(photo.id);
+                const blurBg = photo.blurDataUrl ? `style="background-image: url('${photo.blurDataUrl}'); background-size: cover; background-position: center;"` : "";
 
                 card.innerHTML = `
-                    <img 
-                        src="${safeUrl}" 
-                        alt="${safeCaption || "Trip Photo"}" 
-                        loading="lazy" 
-                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
+                    <div class="w-full h-full relative overflow-hidden" ${blurBg}>
+                        <img 
+                            src="${safeThumbUrl}" 
+                            alt="${safeCaption || "Trip Photo"}" 
+                            loading="lazy" 
+                            onload="this.classList.remove('opacity-0')"
+                            class="w-full h-full object-cover opacity-0 transition-opacity duration-300 group-hover:scale-105"
+                        />
+                    </div>
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2.5">
                         <div class="flex justify-end">
-                            <button data-delete-id="${safeId}" data-storage-path="${safeStoragePath}" class="p-1.5 rounded-full bg-black/60 hover:bg-red-600 text-white transition-colors cursor-pointer" title="Eliminar foto">
+                            <button data-delete-id="${safeId}" data-storage-path="${safeStoragePath}" data-thumb-path="${safeThumbStoragePath}" class="p-1.5 rounded-full bg-black/60 hover:bg-red-600 text-white transition-colors cursor-pointer" title="Eliminar foto">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
@@ -157,7 +162,15 @@ const { uid, tripID } = Astro.props;
         if (!uid || !tripId) return;
         if (confirm("¿Deseas eliminar esta foto?")) {
             try {
-                await deleteTripPhoto(uid, tripId, photo.id, photo.storagePath);
+                await deleteTripPhoto(
+                    uid,
+                    tripId,
+                    photo.id,
+                    photo.storagePath,
+                    photo.url,
+                    photo.thumbnailStoragePath,
+                    photo.thumbnailUrl
+                );
                 loadGallery();
             } catch (err) {
                 console.error("Error al eliminar la foto:", err);

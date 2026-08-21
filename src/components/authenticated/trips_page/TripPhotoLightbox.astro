@@ -64,14 +64,14 @@
     interface LightboxState {
         photos: TripPhoto[];
         currentIndex: number;
-        email: string;
+        uid: string;
         tripId: string;
     }
 
     const state: LightboxState = {
         photos: [],
         currentIndex: 0,
-        email: "",
+        uid: "",
         tripId: "",
     };
 
@@ -92,7 +92,21 @@
         }
 
         const photo = state.photos[state.currentIndex];
-        imgEl.src = photo.url;
+        
+        // Progressive image loading: display fast thumbnail first, then high-res
+        if (photo.thumbnailUrl && photo.thumbnailUrl !== photo.url) {
+            imgEl.src = photo.thumbnailUrl;
+            const highRes = new Image();
+            highRes.src = photo.url;
+            highRes.onload = () => {
+                if (state.photos[state.currentIndex]?.id === photo.id) {
+                    imgEl.src = photo.url;
+                }
+            };
+        } else {
+            imgEl.src = photo.url;
+        }
+
         counterEl.textContent = `${state.currentIndex + 1} / ${state.photos.length}`;
         captionEl.textContent = photo.caption || "Sin descripción";
 
@@ -131,10 +145,10 @@
         renderCurrentPhoto();
     }
 
-    function openLightbox(photos: TripPhoto[], startIndex: number, email: string, tripId: string) {
+    function openLightbox(photos: TripPhoto[], startIndex: number, uid: string, tripId: string) {
         state.photos = photos;
         state.currentIndex = startIndex;
-        state.email = email;
+        state.uid = uid;
         state.tripId = tripId;
 
         renderCurrentPhoto();
@@ -191,7 +205,15 @@
         
         if (confirm("¿Estás seguro de que quieres eliminar esta foto?")) {
             try {
-                await deleteTripPhoto(state.email, state.tripId, currentPhoto.id, currentPhoto.storagePath);
+                await deleteTripPhoto(
+                    state.uid,
+                    state.tripId,
+                    currentPhoto.id,
+                    currentPhoto.storagePath,
+                    currentPhoto.url,
+                    currentPhoto.thumbnailStoragePath,
+                    currentPhoto.thumbnailUrl
+                );
                 state.photos.splice(state.currentIndex, 1);
                 
                 // Notify gallery to re-render
@@ -231,7 +253,7 @@
 
     // Expose global opener event
     window.addEventListener("open-trip-lightbox", ((e: CustomEvent) => {
-        const { photos, startIndex, email, tripId } = e.detail;
-        openLightbox(photos, startIndex, email, tripId);
+        const { photos, startIndex, uid, tripId } = e.detail;
+        openLightbox(photos, startIndex, uid, tripId);
     }) as EventListener);
 </script>

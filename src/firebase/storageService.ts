@@ -13,9 +13,23 @@ export interface TripPhoto {
     id: string;
     url: string;
     storagePath: string;
+    thumbnailUrl?: string;
+    thumbnailStoragePath?: string;
+    blurDataUrl?: string;
     caption?: string;
     createdAt: string;
     size?: number;
+    thumbnailSize?: number;
+    width?: number;
+    height?: number;
+}
+
+export interface ResponsiveUploadPayload {
+    displayFile: File;
+    thumbnailFile?: File;
+    blurDataUrl?: string;
+    displayWidth?: number;
+    displayHeight?: number;
 }
 
 /**
@@ -35,31 +49,54 @@ export function getStoragePathFromUrl(url?: string | null): string | undefined {
 }
 
 /**
- * Uploads a photo to a trip's gallery, saving the file in Storage and metadata in Firestore.
+ * Uploads a photo to a trip's gallery with responsive display and thumbnail assets.
  */
 export async function uploadTripPhoto(
     uid: string,
     tripId: string,
-    file: File,
+    fileOrPayload: File | ResponsiveUploadPayload,
     caption = ""
 ): Promise<TripPhoto> {
     const photoId = `photo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const storagePath = `users/${uid}/trips/${tripId}/photos/${photoId}.webp`;
+    const isPayload = "displayFile" in fileOrPayload;
+    const displayFile = isPayload ? fileOrPayload.displayFile : fileOrPayload;
+    const thumbnailFile = isPayload ? fileOrPayload.thumbnailFile : undefined;
+    const blurDataUrl = isPayload ? fileOrPayload.blurDataUrl : undefined;
+    const width = isPayload ? fileOrPayload.displayWidth : undefined;
+    const height = isPayload ? fileOrPayload.displayHeight : undefined;
+
+    const storagePath = `users/${uid}/trips/${tripId}/photos/${photoId}_display.webp`;
     const storageRef = ref(projectStorage, storagePath);
 
-    // Upload file
-    const snapshot = await uploadBytes(storageRef, file, {
+    // Upload display image
+    const uploadDisplayPromise = uploadBytes(storageRef, displayFile, {
         contentType: "image/webp",
-    });
-    const url = await getDownloadURL(snapshot.ref);
+    }).then((snap) => getDownloadURL(snap.ref));
+
+    // Upload thumbnail image if provided
+    let thumbStoragePath: string | undefined;
+    let uploadThumbPromise: Promise<string | undefined> = Promise.resolve(undefined);
+    if (thumbnailFile) {
+        thumbStoragePath = `users/${uid}/trips/${tripId}/photos/${photoId}_thumb.webp`;
+        const thumbRef = ref(projectStorage, thumbStoragePath);
+        uploadThumbPromise = uploadBytes(thumbRef, thumbnailFile, {
+            contentType: "image/webp",
+        }).then((snap) => getDownloadURL(snap.ref));
+    }
+
+    const [url, thumbnailUrl] = await Promise.all([uploadDisplayPromise, uploadThumbPromise]);
 
     const photoData: TripPhoto = {
         id: photoId,
         url,
         storagePath,
+        ...(thumbnailUrl && thumbStoragePath ? { thumbnailUrl, thumbnailStoragePath: thumbStoragePath } : {}),
+        ...(blurDataUrl ? { blurDataUrl } : {}),
         caption: caption.trim(),
         createdAt: new Date().toISOString(),
-        size: file.size,
+        size: displayFile.size,
+        ...(thumbnailFile ? { thumbnailSize: thumbnailFile.size } : {}),
+        ...(width && height ? { width, height } : {}),
     };
 
     // Save to Firestore under users/{uid}/trips/{tripId}/photos/{photoId}
@@ -92,30 +129,44 @@ export async function getTripPhotos(uid: string, tripId: string): Promise<TripPh
 }
 
 /**
- * Deletes a photo from both Firebase Storage and Firestore.
+ * Deletes a photo from both Firebase Storage (display + thumb) and Firestore.
  */
 export async function deleteTripPhoto(
     uid: string,
     tripId: string,
     photoId: string,
     storagePath?: string,
-    photoUrl?: string
+    photoUrl?: string,
+    thumbnailStoragePath?: string,
+    thumbnailUrl?: string
 ): Promise<void> {
     // Delete from Firestore
     const photoDocRef = doc(db, "users", uid, "trips", tripId, "photos", photoId);
     await deleteDoc(photoDocRef);
 
     const targetPath = storagePath || getStoragePathFromUrl(photoUrl);
+    const targetThumbPath = thumbnailStoragePath || getStoragePathFromUrl(thumbnailUrl);
 
-    // Delete from Storage if path is resolved
+    // Delete both files in parallel from Storage
+    const deletePromises: Promise<any>[] = [];
     if (targetPath) {
-        try {
-            const storageRef = ref(projectStorage, targetPath);
-            await deleteObject(storageRef);
-        } catch (storageError) {
-            console.warn("Could not delete file from Storage (might already be deleted):", storageError);
-        }
+        const storageRef = ref(projectStorage, targetPath);
+        deletePromises.push(
+            deleteObject(storageRef).catch((err) => {
+                console.warn("Could not delete display file from Storage:", err);
+            })
+        );
     }
+    if (targetThumbPath) {
+        const thumbRef = ref(projectStorage, targetThumbPath);
+        deletePromises.push(
+            deleteObject(thumbRef).catch((err) => {
+                console.warn("Could not delete thumbnail file from Storage:", err);
+            })
+        );
+    }
+
+    await Promise.all(deletePromises);
 }
 
 /**
