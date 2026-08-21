@@ -1,5 +1,4 @@
 ---
-import { Skeleton } from "@/components/starwind/skeleton";
 import { DialogTrigger } from "@/components/starwind/dialog";
 import { Icon } from "astro-icon/components";
 import TripPhotoUploadModal from "./TripPhotoUploadModal.astro";
@@ -37,11 +36,11 @@ const { uid, tripID } = Astro.props;
         data-trip-id={tripID}
         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 min-h-[140px]"
     >
-        <!-- Skeletons on loading -->
-        <Skeleton class="h-36 w-full rounded-xl" />
-        <Skeleton class="h-36 w-full rounded-xl" />
-        <Skeleton class="h-36 w-full rounded-xl" />
-        <Skeleton class="h-36 w-full rounded-xl" />
+        <!-- Shimmer Skeletons on loading -->
+        <div class="w-full aspect-square rounded-xl skeleton-shimmer" />
+        <div class="w-full aspect-square rounded-xl skeleton-shimmer" />
+        <div class="w-full aspect-square rounded-xl skeleton-shimmer" />
+        <div class="w-full aspect-square rounded-xl skeleton-shimmer" />
     </div>
 
     <!-- Load More Container -->
@@ -76,219 +75,222 @@ const { uid, tripID } = Astro.props;
     import { escapeHtml } from "@/utils/escapeHtml";
     import { showToast } from "@/utils/toast";
 
-    const galleryEl = document.getElementById("trip-photo-gallery") as HTMLDivElement;
-    const badgeCountEl = document.getElementById("gallery-badge-count") as HTMLElement;
-    const addPhotosBtn = document.getElementById("gallery-add-photos-btn") as HTMLElement;
-    const addBtnText = document.getElementById("gallery-add-btn-text") as HTMLElement;
-    const loadMoreContainer = document.getElementById("gallery-load-more-container") as HTMLDivElement;
-    const loadMoreBtn = document.getElementById("gallery-load-more-btn") as HTMLButtonElement;
-    const loadMoreText = document.getElementById("load-more-text") as HTMLElement;
-    const loadMoreSpinner = document.getElementById("load-more-spinner") as HTMLElement;
+    function initPhotoGallery() {
+        const galleryEl = document.getElementById("trip-photo-gallery") as HTMLDivElement;
+        if (!galleryEl) return;
 
-    const uid = galleryEl?.dataset.uid;
-    const tripId = galleryEl?.dataset.tripId;
+        const badgeCountEl = document.getElementById("gallery-badge-count") as HTMLElement;
+        const addPhotosBtn = document.getElementById("gallery-add-photos-btn") as HTMLElement;
+        const addBtnText = document.getElementById("gallery-add-btn-text") as HTMLElement;
+        const loadMoreContainer = document.getElementById("gallery-load-more-container") as HTMLDivElement;
+        const loadMoreBtn = document.getElementById("gallery-load-more-btn") as HTMLButtonElement;
+        const loadMoreText = document.getElementById("load-more-text") as HTMLElement;
+        const loadMoreSpinner = document.getElementById("load-more-spinner") as HTMLElement;
+        const currentUid: string = galleryEl.dataset.uid || "";
+        const currentTripId: string = galleryEl.dataset.tripId || "";
+        if (!currentUid || !currentTripId) return;
 
-    let loadedPhotos: TripPhoto[] = [];
-    let lastVisibleDoc: any = null;
-    let hasMorePhotos = false;
-    let isLoadingMore = false;
+        let loadedPhotos: TripPhoto[] = [];
+        let lastVisibleDoc: any = null;
+        let hasMorePhotos = false;
+        let isLoadingMore = false;
 
-    function renderPhotoCards(photosToRender: TripPhoto[], startIndexOffset: number) {
-        photosToRender.forEach((photo, relativeIdx) => {
-            const globalIndex = startIndexOffset + relativeIdx;
-            const card = document.createElement("div");
-            card.className = "group relative rounded-xl overflow-hidden aspect-square bg-neutral-100 dark:bg-neutral-800 shadow-sm hover:shadow-md cursor-pointer border border-neutral-200/60 dark:border-neutral-800 transition-all hover:scale-[1.02]";
+        function renderPhotoCards(photosToRender: TripPhoto[], startIndexOffset: number) {
+            photosToRender.forEach((photo, relativeIdx) => {
+                const globalIndex = startIndexOffset + relativeIdx;
+                const card = document.createElement("div");
+                card.className = "group relative rounded-xl overflow-hidden aspect-square bg-neutral-100 dark:bg-neutral-800 shadow-sm hover:shadow-md cursor-pointer border border-neutral-200/60 dark:border-neutral-800 transition-all hover:scale-[1.02]";
 
-            const safeThumbUrl = escapeHtml(photo.thumbnailUrl || photo.url);
-            const safeCaption = escapeHtml(photo.caption);
-            const safeStoragePath = escapeHtml(photo.storagePath);
-            const safeThumbStoragePath = escapeHtml(photo.thumbnailStoragePath || "");
-            const safeId = escapeHtml(photo.id);
-            const blurBg = photo.blurDataUrl ? `style="background-image: url('${photo.blurDataUrl}'); background-size: cover; background-position: center;"` : "";
+                const safeThumbUrl = escapeHtml(photo.thumbnailUrl || photo.url);
+                const safeCaption = escapeHtml(photo.caption);
+                const safeStoragePath = escapeHtml(photo.storagePath);
+                const safeThumbStoragePath = escapeHtml(photo.thumbnailStoragePath || "");
+                const safeId = escapeHtml(photo.id);
+                const blurBg = photo.blurDataUrl ? `style="background-image: url('${photo.blurDataUrl}'); background-size: cover; background-position: center;"` : "";
 
-            card.innerHTML = `
-                <div class="w-full h-full relative overflow-hidden" ${blurBg}>
-                    <img 
-                        src="${safeThumbUrl}" 
-                        alt="${safeCaption || "Trip Photo"}" 
-                        loading="lazy" 
-                        onload="this.classList.remove('opacity-0')"
-                        class="w-full h-full object-cover opacity-0 transition-opacity duration-300 group-hover:scale-105"
-                    />
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2.5">
-                    <div class="flex justify-end">
-                        <button data-delete-id="${safeId}" data-storage-path="${safeStoragePath}" data-thumb-path="${safeThumbStoragePath}" class="p-1.5 rounded-full bg-black/60 hover:bg-red-600 text-white transition-colors cursor-pointer" title="Eliminar foto">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
+                card.innerHTML = `
+                    <div class="w-full h-full relative overflow-hidden" ${blurBg}>
+                        <img 
+                            src="${safeThumbUrl}" 
+                            alt="${safeCaption || "Trip Photo"}" 
+                            loading="lazy" 
+                            onload="this.classList.remove('opacity-0')"
+                            class="w-full h-full object-cover opacity-0 transition-opacity duration-300 group-hover:scale-105"
+                        />
                     </div>
-                    ${safeCaption ? `<p class="text-white text-xs font-medium truncate drop-shadow">${safeCaption}</p>` : ""}
-                </div>
-            `;
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2.5">
+                        <div class="flex justify-end">
+                            <button data-delete-id="${safeId}" data-storage-path="${safeStoragePath}" data-thumb-path="${safeThumbStoragePath}" class="p-1.5 rounded-full bg-black/60 hover:bg-red-600 text-white transition-colors cursor-pointer active:scale-95" title="Eliminar foto">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        ${safeCaption ? `<p class="text-white text-xs font-medium truncate drop-shadow">${safeCaption}</p>` : ""}
+                    </div>
+                `;
 
-            // Lightbox and delete event listeners
-            card.addEventListener("click", (e) => {
-                const target = e.target as HTMLElement;
-                const deleteBtn = target.closest("[data-delete-id]");
-                if (deleteBtn) {
-                    e.stopPropagation();
-                    handleDelete(photo);
+                // Lightbox and delete event listeners
+                card.addEventListener("click", (e) => {
+                    const target = e.target as HTMLElement;
+                    const deleteBtn = target.closest("[data-delete-id]");
+                    if (deleteBtn) {
+                        e.stopPropagation();
+                        handleDelete(photo);
+                        return;
+                    }
+
+                    window.dispatchEvent(
+                        new CustomEvent("open-trip-lightbox", {
+                            detail: {
+                                photos: loadedPhotos,
+                                startIndex: globalIndex,
+                                uid: currentUid,
+                                tripId: currentTripId,
+                            },
+                        })
+                    );
+                });
+
+                galleryEl.appendChild(card);
+            });
+        }
+
+        async function loadGallery() {
+            try {
+                await projectAuth.authStateReady();
+                const result = await getTripPhotosPaginated(currentUid, currentTripId, PHOTOS_PAGE_SIZE, null);
+                loadedPhotos = result.photos;
+                lastVisibleDoc = result.lastDoc;
+                hasMorePhotos = result.hasMore;
+
+                const count = result.totalCount;
+                const isFull = count >= MAX_PHOTOS_PER_TRIP;
+
+                // Notify upload modal about count
+                window.dispatchEvent(
+                    new CustomEvent("trip-photos:count-updated", {
+                        detail: { count, max: MAX_PHOTOS_PER_TRIP },
+                    })
+                );
+
+                if (count === 0) {
+                    badgeCountEl?.classList.add("hidden");
+                    loadMoreContainer?.classList.add("hidden");
+                    galleryEl.className = "flex flex-col items-center justify-center p-8 border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl bg-[#fafcfa] dark:bg-[#121712]/40 text-center gap-2";
+                    galleryEl.innerHTML = `
+                        <div class="w-12 h-12 rounded-full bg-[#ebf0eb] dark:bg-neutral-800 flex items-center justify-center text-[#63875e] mb-1">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <p class="font-semibold text-sm text-[var(--text-color)]">Aún no hay fotos en este viaje</p>
+                        <p class="text-xs text-[var(--lt-text-color)] mb-2">Guarda hasta ${MAX_PHOTOS_PER_TRIP} recuerdos en alta calidad.</p>
+                        <button id="empty-state-upload-btn" type="button" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#63875e] text-white hover:bg-[#52704e] transition-all shadow-xs cursor-pointer active:scale-95">
+                            Subir primera foto
+                        </button>
+                    `;
+
+                    document.getElementById("empty-state-upload-btn")?.addEventListener("click", () => {
+                        const trigger = document.querySelector('.starwind-dialog-trigger[data-dialog-for="trip-photo-upload-dialog"]') as HTMLButtonElement;
+                        trigger?.click();
+                    });
                     return;
                 }
 
-                window.dispatchEvent(
-                    new CustomEvent("open-trip-lightbox", {
-                        detail: {
-                            photos: loadedPhotos,
-                            startIndex: globalIndex,
-                            uid,
-                            tripId,
-                        },
-                    })
-                );
-            });
+                if (badgeCountEl) {
+                    badgeCountEl.textContent = `${count} / ${MAX_PHOTOS_PER_TRIP}`;
+                    badgeCountEl.classList.remove("hidden");
 
-            galleryEl.appendChild(card);
-        });
-    }
-
-    async function loadGallery() {
-        if (!uid || !tripId) return;
-
-        try {
-            await projectAuth.authStateReady();
-            const result = await getTripPhotosPaginated(uid, tripId, PHOTOS_PAGE_SIZE, null);
-            loadedPhotos = result.photos;
-            lastVisibleDoc = result.lastDoc;
-            hasMorePhotos = result.hasMore;
-
-            const count = result.totalCount;
-            const isFull = count >= MAX_PHOTOS_PER_TRIP;
-
-            // Notify upload modal about count
-            window.dispatchEvent(
-                new CustomEvent("trip-photos:count-updated", {
-                    detail: { count, max: MAX_PHOTOS_PER_TRIP },
-                })
-            );
-
-            if (count === 0) {
-                badgeCountEl.classList.add("hidden");
-                loadMoreContainer.classList.add("hidden");
-                galleryEl.className = "flex flex-col items-center justify-center p-8 border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl bg-[#fafcfa] dark:bg-[#121712]/40 text-center gap-2";
-                galleryEl.innerHTML = `
-                    <div class="w-12 h-12 rounded-full bg-[#ebf0eb] dark:bg-neutral-800 flex items-center justify-center text-[#63875e] mb-1">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <p class="font-semibold text-sm text-[var(--text-color)]">Aún no hay fotos en este viaje</p>
-                    <p class="text-xs text-[var(--lt-text-color)] mb-2">Guarda hasta ${MAX_PHOTOS_PER_TRIP} recuerdos en alta calidad.</p>
-                    <button id="empty-state-upload-btn" type="button" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#63875e] text-white hover:bg-[#52704e] transition-all shadow-xs cursor-pointer">
-                        Subir primera foto
-                    </button>
-                `;
-
-                document.getElementById("empty-state-upload-btn")?.addEventListener("click", () => {
-                    const trigger = document.querySelector('.starwind-dialog-trigger[data-dialog-for="trip-photo-upload-dialog"]') as HTMLButtonElement;
-                    trigger?.click();
-                });
-                return;
-            }
-
-            badgeCountEl.textContent = `${count} / ${MAX_PHOTOS_PER_TRIP}`;
-            badgeCountEl.classList.remove("hidden");
-
-            if (isFull) {
-                badgeCountEl.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300";
-                if (addPhotosBtn && addBtnText) {
-                    addBtnText.textContent = "Límite (50/50)";
-                    addPhotosBtn.classList.add("opacity-60", "cursor-not-allowed");
+                    if (isFull) {
+                        badgeCountEl.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300";
+                        if (addPhotosBtn && addBtnText) {
+                            addBtnText.textContent = "Límite (50/50)";
+                            addPhotosBtn.classList.add("opacity-60", "cursor-not-allowed");
+                        }
+                    } else {
+                        badgeCountEl.className = "text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#ebf0eb] dark:bg-neutral-800 text-[#63875e]";
+                        if (addPhotosBtn && addBtnText) {
+                            addBtnText.textContent = "Añadir Fotos";
+                            addPhotosBtn.classList.remove("opacity-60", "cursor-not-allowed");
+                        }
+                    }
                 }
-            } else {
-                badgeCountEl.className = "text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#ebf0eb] dark:bg-neutral-800 text-[#63875e]";
-                if (addPhotosBtn && addBtnText) {
-                    addBtnText.textContent = "Añadir Fotos";
-                    addPhotosBtn.classList.remove("opacity-60", "cursor-not-allowed");
+
+                galleryEl.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3";
+                galleryEl.innerHTML = "";
+                renderPhotoCards(loadedPhotos, 0);
+
+                if (hasMorePhotos) {
+                    loadMoreContainer?.classList.remove("hidden");
+                } else {
+                    loadMoreContainer?.classList.add("hidden");
                 }
-            }
-
-            galleryEl.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3";
-            galleryEl.innerHTML = "";
-            renderPhotoCards(loadedPhotos, 0);
-
-            // Toggle load more container
-            if (hasMorePhotos) {
-                loadMoreContainer.classList.remove("hidden");
-            } else {
-                loadMoreContainer.classList.add("hidden");
-            }
-        } catch (err) {
-            console.error("Error loading trip photos:", err);
-        }
-    }
-
-    async function loadMore() {
-        if (!uid || !tripId || !lastVisibleDoc || isLoadingMore) return;
-
-        isLoadingMore = true;
-        loadMoreBtn.disabled = true;
-        loadMoreSpinner.classList.remove("hidden");
-        loadMoreText.textContent = "Cargando...";
-
-        try {
-            const result = await getTripPhotosPaginated(uid, tripId, PHOTOS_PAGE_SIZE, lastVisibleDoc);
-            const startIndex = loadedPhotos.length;
-            loadedPhotos = [...loadedPhotos, ...result.photos];
-            lastVisibleDoc = result.lastDoc;
-            hasMorePhotos = result.hasMore;
-
-            renderPhotoCards(result.photos, startIndex);
-
-            if (hasMorePhotos) {
-                loadMoreContainer.classList.remove("hidden");
-            } else {
-                loadMoreContainer.classList.add("hidden");
-            }
-        } catch (err) {
-            console.error("Error loading more photos:", err);
-            showToast("Error al cargar más fotos.", "error");
-        } finally {
-            isLoadingMore = false;
-            loadMoreBtn.disabled = false;
-            loadMoreSpinner.classList.add("hidden");
-            loadMoreText.textContent = "Cargar más fotos";
-        }
-    }
-
-    loadMoreBtn?.addEventListener("click", loadMore);
-
-    async function handleDelete(photo: TripPhoto) {
-        if (!uid || !tripId) return;
-        if (confirm("¿Deseas eliminar esta foto?")) {
-            try {
-                await deleteTripPhoto(
-                    uid,
-                    tripId,
-                    photo.id,
-                    photo.storagePath,
-                    photo.url,
-                    photo.thumbnailStoragePath,
-                    photo.thumbnailUrl
-                );
-                loadGallery();
             } catch (err) {
-                console.error("Error al eliminar la foto:", err);
-                showToast("Error al eliminar la foto.", "error");
+                console.error("Error loading trip photos:", err);
             }
         }
+
+        async function loadMore() {
+            if (!lastVisibleDoc || isLoadingMore) return;
+
+            isLoadingMore = true;
+            if (loadMoreBtn) loadMoreBtn.disabled = true;
+            loadMoreSpinner?.classList.remove("hidden");
+            if (loadMoreText) loadMoreText.textContent = "Cargando...";
+
+            try {
+                const result = await getTripPhotosPaginated(currentUid, currentTripId, PHOTOS_PAGE_SIZE, lastVisibleDoc);
+                const startIndex = loadedPhotos.length;
+                loadedPhotos = [...loadedPhotos, ...result.photos];
+                lastVisibleDoc = result.lastDoc;
+                hasMorePhotos = result.hasMore;
+
+                renderPhotoCards(result.photos, startIndex);
+
+                if (hasMorePhotos) {
+                    loadMoreContainer?.classList.remove("hidden");
+                } else {
+                    loadMoreContainer?.classList.add("hidden");
+                }
+            } catch (err) {
+                console.error("Error loading more photos:", err);
+                showToast("Error al cargar más fotos.", "error");
+            } finally {
+                isLoadingMore = false;
+                if (loadMoreBtn) loadMoreBtn.disabled = false;
+                loadMoreSpinner?.classList.add("hidden");
+                if (loadMoreText) loadMoreText.textContent = "Cargar más fotos";
+            }
+        }
+
+        loadMoreBtn?.addEventListener("click", loadMore);
+
+        async function handleDelete(photo: TripPhoto) {
+            if (confirm("¿Deseas eliminar esta foto?")) {
+                try {
+                    await deleteTripPhoto(
+                        currentUid,
+                        currentTripId,
+                        photo.id,
+                        photo.storagePath,
+                        photo.url,
+                        photo.thumbnailStoragePath,
+                        photo.thumbnailUrl
+                    );
+                    loadGallery();
+                } catch (err) {
+                    console.error("Error al eliminar la foto:", err);
+                    showToast("Error al eliminar la foto.", "error");
+                }
+            }
+        }
+
+        loadGallery();
+
+        window.addEventListener("trip-photos:updated", loadGallery);
     }
 
-    // Initial load
-    loadGallery();
-
-    // Listen for updates
-    window.addEventListener("trip-photos:updated", loadGallery);
+    initPhotoGallery();
+    document.addEventListener("astro:page-load", initPhotoGallery);
 </script>

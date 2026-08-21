@@ -23,3 +23,55 @@
     max-width: 160px;
     box-shadow: 0 1px #aadba3;
 }
+
+/* Shimmer Animation for Skeleton Loaders */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(235, 240, 235, 0.8) 0%,
+        rgba(255, 255, 255, 0.9) 50%,
+        rgba(235, 240, 235, 0.8) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite ease-in-out;
+}
+
+@media (prefers-color-scheme: dark) {
+    .skeleton-shimmer {
+        background: linear-gradient(
+            90deg,
+            rgba(38, 38, 38, 0.7) 0%,
+            rgba(60, 60, 60, 0.9) 50%,
+            rgba(38, 38, 38, 0.7) 100%
+        );
+        background-size: 200% 100%;
+    }
+}
+
+/* View Transitions Micro-Interactions */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Accessibility: Disable transitions if user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
+    .skeleton-shimmer {
+        animation: none !important;
+    }
+}

@@ -44,6 +44,7 @@ const tripData = tripSnap.data();
                 id="trip-cover-img" 
                 src={tripData?.coverUrl || ""} 
                 alt="Cover photo" 
+                transition:name={`trip-cover-${tripID}`}
                 class={`absolute inset-0 w-full h-full object-cover ${tripData?.coverUrl ? "" : "hidden"}`} 
             />
 
@@ -64,7 +65,7 @@ const tripData = tripSnap.data();
                 <button 
                     id="change-cover-btn" 
                     type="button" 
-                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-black/60 hover:bg-black text-white backdrop-blur-md transition-all shadow cursor-pointer"
+                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-black/60 hover:bg-black text-white backdrop-blur-md transition-all shadow cursor-pointer active:scale-95"
                     title="Cambiar foto de portada"
                 >
                     <Icon name="image" class="w-3.5 h-3.5" />
@@ -74,7 +75,11 @@ const tripData = tripSnap.data();
 
             <!-- Trip Header Details -->
             <div class="relative z-10 p-5 w-full">
-                <h2 id="trip-title-header" class={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-1 ${tripData?.coverUrl ? "text-white drop-shadow-md" : "text-[var(--text-color)]"}`}>
+                <h2 
+                    id="trip-title-header" 
+                    transition:name={`trip-title-${tripID}`}
+                    class={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-1 ${tripData?.coverUrl ? "text-white drop-shadow-md" : "text-[var(--text-color)]"}`}
+                >
                     {tripData?.title ?? "Unnamed Trip"}
                 </h2>
                 <p id="trip-desc-header" class={`text-sm mb-2 max-w-2xl line-clamp-3 ${tripData?.coverUrl ? "text-white/90 drop-shadow" : "text-[var(--lt-text-color)]"}`}>
@@ -107,74 +112,79 @@ const tripData = tripSnap.data();
     import { db } from "@/firebase/config";
     import { doc, getDoc, setDoc } from "firebase/firestore";
 
-    const deleteBtn = document.getElementById("delete-trip-btn");
-    const uid = deleteBtn?.dataset.uid;
-    const tripID = deleteBtn?.dataset.id;
+    function initTripDetails() {
+        const deleteBtn = document.getElementById("delete-trip-btn");
+        const uid = deleteBtn?.dataset.uid;
+        const tripID = deleteBtn?.dataset.id;
 
-    deleteBtn?.addEventListener("click", async () => {
-        if (!uid || !tripID) return;
-        if (confirm("¿Estás seguro de que deseas eliminar este viaje por completo? Se borrarán todas sus fotos y entradas del diario.")) {
-            deleteBtn.setAttribute("disabled", "true");
-            try {
-                await deleteEntireTrip(uid, tripID);
-                window.location.href = "/authenticated/trips";
-            } catch (err) {
-                console.error("Error al eliminar el viaje:", err);
-                showToast("Error al eliminar el viaje.", "error");
-                deleteBtn.removeAttribute("disabled");
+        deleteBtn?.addEventListener("click", async () => {
+            if (!uid || !tripID) return;
+            if (confirm("¿Estás seguro de que deseas eliminar este viaje por completo? Se borrarán todas sus fotos y entradas del diario.")) {
+                deleteBtn.setAttribute("disabled", "true");
+                try {
+                    await deleteEntireTrip(uid, tripID);
+                    window.location.href = "/authenticated/trips";
+                } catch (err) {
+                    console.error("Error al eliminar el viaje:", err);
+                    showToast("Error al eliminar el viaje.", "error");
+                    deleteBtn.removeAttribute("disabled");
+                }
             }
-        }
-    });
+        });
 
-    // Cover Photo Upload Logic
-    const changeCoverBtn = document.getElementById("change-cover-btn");
-    const changeCoverText = document.getElementById("change-cover-text");
-    const coverFileInput = document.getElementById("cover-file-input") as HTMLInputElement;
-    const coverImg = document.getElementById("trip-cover-img") as HTMLImageElement;
-    const coverOverlay = document.getElementById("cover-overlay") as HTMLDivElement;
-    const titleHeader = document.getElementById("trip-title-header");
-    const descHeader = document.getElementById("trip-desc-header");
+        // Cover Photo Upload Logic
+        const changeCoverBtn = document.getElementById("change-cover-btn");
+        const changeCoverText = document.getElementById("change-cover-text");
+        const coverFileInput = document.getElementById("cover-file-input") as HTMLInputElement;
+        const coverImg = document.getElementById("trip-cover-img") as HTMLImageElement;
+        const coverOverlay = document.getElementById("cover-overlay") as HTMLDivElement;
+        const titleHeader = document.getElementById("trip-title-header");
+        const descHeader = document.getElementById("trip-desc-header");
 
-    changeCoverBtn?.addEventListener("click", () => coverFileInput?.click());
+        changeCoverBtn?.addEventListener("click", () => coverFileInput?.click());
 
-    coverFileInput?.addEventListener("change", async () => {
-        if (!coverFileInput.files?.[0] || !uid || !tripID) return;
-        const rawFile = coverFileInput.files[0];
+        coverFileInput?.addEventListener("change", async () => {
+            if (!coverFileInput.files?.[0] || !uid || !tripID) return;
+            const rawFile = coverFileInput.files[0];
 
-        try {
-            if (changeCoverText) changeCoverText.textContent = "Comprimiendo...";
-            const compressed = await compressImageToWebP(rawFile, { maxWidth: 2000, maxHeight: 1200, quality: 0.88 });
-            
-            if (changeCoverText) changeCoverText.textContent = "Subiendo...";
-            
-            const tripDocRef = doc(db, "users", uid, "trips", tripID);
-            const tripSnap = await getDoc(tripDocRef);
-            const oldCoverStoragePath = tripSnap.exists() ? tripSnap.data()?.coverStoragePath : undefined;
+            try {
+                if (changeCoverText) changeCoverText.textContent = "Comprimiendo...";
+                const compressed = await compressImageToWebP(rawFile, { maxWidth: 2000, maxHeight: 1200, quality: 0.88 });
+                
+                if (changeCoverText) changeCoverText.textContent = "Subiendo...";
+                
+                const tripDocRef = doc(db, "users", uid, "trips", tripID);
+                const tripSnap = await getDoc(tripDocRef);
+                const oldCoverStoragePath = tripSnap.exists() ? tripSnap.data()?.coverStoragePath : undefined;
 
-            const coverResult = await uploadTripCover(uid, tripID, compressed.file, oldCoverStoragePath);
-            await setDoc(tripDocRef, {
-                coverUrl: coverResult.url,
-                coverStoragePath: coverResult.storagePath,
-            }, { merge: true });
+                const coverResult = await uploadTripCover(uid, tripID, compressed.file, oldCoverStoragePath);
+                await setDoc(tripDocRef, {
+                    coverUrl: coverResult.url,
+                    coverStoragePath: coverResult.storagePath,
+                }, { merge: true });
 
-            // Update UI instantly
-            coverImg.src = coverResult.url;
-            coverImg.classList.remove("hidden");
-            coverOverlay.classList.remove("hidden");
+                // Update UI instantly
+                coverImg.src = coverResult.url;
+                coverImg.classList.remove("hidden");
+                coverOverlay.classList.remove("hidden");
 
-            titleHeader?.classList.remove("text-[var(--text-color)]");
-            titleHeader?.classList.add("text-white", "drop-shadow-md");
+                titleHeader?.classList.remove("text-[var(--text-color)]");
+                titleHeader?.classList.add("text-white", "drop-shadow-md");
 
-            descHeader?.classList.remove("text-[var(--lt-text-color)]");
-            descHeader?.classList.add("text-white/90", "drop-shadow");
+                descHeader?.classList.remove("text-[var(--lt-text-color)]");
+                descHeader?.classList.add("text-white/90", "drop-shadow");
 
-            if (changeCoverText) changeCoverText.textContent = "Cambiar portada";
-            showToast("Portada actualizada con éxito.", "success");
-        } catch (err) {
-            console.error("Error al subir foto de portada:", err);
-            showToast("No se pudo actualizar la foto de portada.", "error");
-            if (changeCoverText) changeCoverText.textContent = "Cambiar portada";
-        }
-    });
+                if (changeCoverText) changeCoverText.textContent = "Cambiar portada";
+                showToast("Portada actualizada con éxito.", "success");
+            } catch (err) {
+                console.error("Error al subir foto de portada:", err);
+                showToast("No se pudo actualizar la foto de portada.", "error");
+                if (changeCoverText) changeCoverText.textContent = "Cambiar portada";
+            }
+        });
+    }
+
+    initTripDetails();
+    document.addEventListener("astro:page-load", initTripDetails);
 </script>
 
