@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { aggregateVisitedCountries, calculateWorldExploredPercentage } from "../src/utils/travelerStats";
+import {
+    aggregateVisitedCountries,
+    calculateWorldExploredPercentage,
+    getVisitedContinents,
+    calculateTotalDaysTraveled,
+    calculateTravelerSummary,
+} from "../src/utils/travelerStats";
 
 describe("Traveler Stats & Visited Countries Utility", () => {
     it("should return an empty list when trips array is empty", () => {
@@ -44,5 +50,42 @@ describe("Traveler Stats & Visited Countries Utility", () => {
         expect(calculateWorldExploredPercentage(10, 195)).toBe(5.1);
         expect(calculateWorldExploredPercentage(195, 195)).toBe(100);
         expect(calculateWorldExploredPercentage(250, 195)).toBe(100);
+    });
+
+    it("should correctly identify visited continents", () => {
+        const codes = ["es", "fr", "jp", "us", "br", "au", "eg"];
+        const result = getVisitedContinents(codes);
+        expect(result.visitedCount).toBe(6); // Europe (es, fr), Asia (jp), North America (us), South America (br), Oceania (au), Africa (eg)
+        expect(result.totalContinents).toBe(7);
+        expect(result.continentsList).toContain("Europe");
+        expect(result.continentsList).toContain("Asia");
+        expect(result.continentsList).toContain("North America");
+        expect(result.continentsList).toContain("South America");
+        expect(result.continentsList).toContain("Oceania");
+        expect(result.continentsList).toContain("Africa");
+    });
+
+    it("should calculate total days traveled accurately", () => {
+        const trips = [
+            { id: "1", startDate: "2024-06-01", endDate: "2024-06-10" }, // 10 days
+            { id: "2", startDate: "2024-07-01", endDate: "2024-07-01" }, // 1 day
+            { id: "3", startDate: "2024-08-15" },                         // 1 day
+        ];
+
+        expect(calculateTotalDaysTraveled(trips)).toBe(12);
+    });
+
+    it("should calculate complete summary stats correctly", () => {
+        const trips = [
+            { id: "1", title: "Japan", country: "Japan", countryCode: "jp", startDate: "2024-01-01", endDate: "2024-01-05" },
+            { id: "2", title: "Spain", country: "Spain", countryCode: "es", startDate: "2024-02-01", endDate: "2024-02-07" },
+        ];
+
+        const summary = calculateTravelerSummary(trips);
+        expect(summary.visitedCountriesCount).toBe(2);
+        expect(summary.worldExploredPercentage).toBe(1.0);
+        expect(summary.totalTripsCount).toBe(2);
+        expect(summary.visitedContinentsCount).toBe(2); // Asia, Europe
+        expect(summary.totalDaysTraveled).toBe(12); // 5 + 7
     });
 });
