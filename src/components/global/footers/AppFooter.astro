@@ -9,7 +9,7 @@ interface Props {
 const { iconStateMap = "", iconStateHome = "", iconStateUser = "" } = Astro.props;
 ---
 
-<nav aria-label="Main navigation" class="fixed bottom-0 left-0 right-0 z-40 bg-[#f2f0eb]/95 dark:bg-[#121712]/95 backdrop-blur-md border-t border-neutral-200/70 dark:border-neutral-800 py-2.5 px-6 flex justify-around items-center max-w-lg mx-auto md:max-w-2xl rounded-t-2xl shadow-lg">
+<nav aria-label="Main navigation" class="fixed bottom-0 left-0 right-0 z-40 bg-[#f2f0eb]/95 dark:bg-[#121712]/95 backdrop-blur-md border-t border-neutral-200/70 dark:border-neutral-800 pt-2.5 px-6 flex justify-around items-center max-w-lg mx-auto md:max-w-2xl rounded-t-2xl shadow-lg" style="padding-bottom: max(0.75rem, calc(0.5rem + env(safe-area-inset-bottom, 0px)));">
     <!-- 1. Map -->
     <a aria-label="World Map" href="/authenticated/map" class={`p-1.5 ${iconStateMap} rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 flex flex-col items-center gap-0.5`}>
         <Icon name="map" class="w-6.5 h-6.5" />
