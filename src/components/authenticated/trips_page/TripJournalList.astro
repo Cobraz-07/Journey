@@ -43,10 +43,11 @@ const { tripID, uid } = Astro.props;
         const tripDocRef = doc(collection(userDocRef, "trips"), `${tripId}`);
         const journalCollectionRef = collection(tripDocRef, "journal");
 
-        // Add event listener to journal list for deletion
+        // Add event listener to journal list for deletion and toggling description
         journalList.addEventListener("click", async (event) => {
             const target = event.target as HTMLElement;
             const deleteButton = target.closest("[data-delete-journal]") as HTMLButtonElement;
+            const toggleButton = target.closest(".toggle-journal-desc-btn") as HTMLButtonElement;
 
             if (deleteButton) {
                 const journalId = deleteButton.dataset.deleteJournal;
@@ -60,6 +61,14 @@ const { tripID, uid } = Astro.props;
                     } catch (error) {
                         console.error("Error deleting journal:", error);
                     }
+                }
+            } else if (toggleButton) {
+                const textEl = toggleButton.previousElementSibling;
+                const isEsBtn = toggleButton.dataset.isEs === "true";
+                if (textEl) {
+                    textEl.classList.toggle("line-clamp-3");
+                    const isClamped = textEl.classList.contains("line-clamp-3");
+                    toggleButton.textContent = isClamped ? (isEsBtn ? "Ver más" : "Read more") : (isEsBtn ? "Ver menos" : "Read less");
                 }
             }
         });
@@ -106,7 +115,14 @@ const { tripID, uid } = Astro.props;
                                 </button>
                             </div>
                             
-                            ${safeDescription ? `<p class="text-sm text-[var(--lt-text-color)] whitespace-pre-line leading-relaxed">${safeDescription}</p>` : ""}
+                            ${safeDescription ? `
+                                <div class="journal-desc-wrapper flex flex-col items-start gap-1">
+                                    <p class="journal-desc-text text-sm text-[var(--lt-text-color)] whitespace-pre-line leading-relaxed line-clamp-3 w-full">${safeDescription}</p>
+                                    <button type="button" class="toggle-journal-desc-btn text-xs font-bold text-[#63875e] dark:text-[#aadba3] hover:underline hidden" data-is-es="${isEs}">
+                                        ${isEs ? "Ver más" : "Read more"}
+                                    </button>
+                                </div>
+                            ` : ""}
 
                             ${hasImage ? `
                                 <div class="mt-1 max-w-sm rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-xs cursor-pointer group" data-journal-img-url="${safeImageUrl}" data-journal-img-title="${safeTitle}">
@@ -118,6 +134,15 @@ const { tripID, uid } = Astro.props;
                     `;
                 });
                 journalList.innerHTML = html;
+
+                // Show "Read more" buttons for overflowing text
+                journalList.querySelectorAll(".journal-desc-wrapper").forEach((wrapper) => {
+                    const textEl = wrapper.querySelector(".journal-desc-text") as HTMLElement;
+                    const btnEl = wrapper.querySelector(".toggle-journal-desc-btn") as HTMLElement;
+                    if (textEl && btnEl && textEl.scrollHeight > textEl.clientHeight) {
+                        btnEl.classList.remove("hidden");
+                    }
+                });
 
                 // Attach click handlers to journal images for lightbox
                 journalList.querySelectorAll("[data-journal-img-url]").forEach((imgContainer) => {

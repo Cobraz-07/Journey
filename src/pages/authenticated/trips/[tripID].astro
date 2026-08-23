@@ -87,13 +87,20 @@ const tripData = tripSnap.data();
                 <h2 
                     id="trip-title-header" 
                     transition:name={`trip-title-${tripID}`}
-                    class={`text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight mb-2 ${tripData?.coverUrl ? "text-white drop-shadow-md" : "text-[var(--text-color)]"}`}
+                    class={`text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight mb-2 ${tripData?.coverUrl ? "text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.8)]" : "text-[var(--text-color)]"}`}
                 >
                     {tripData?.title ?? (lang === 'es' ? "Viaje sin título" : "Unnamed Trip")}
                 </h2>
-                <p id="trip-desc-header" class={`text-sm leading-relaxed mb-3 max-w-2xl line-clamp-3 ${tripData?.coverUrl ? "text-white/90 drop-shadow" : "text-[var(--lt-text-color)]"}`}>
-                    {tripData?.description ?? t('tripDetail.noDescription')}
-                </p>
+                <div>
+                    <p id="trip-desc-header" class={`text-sm leading-relaxed mb-1 max-w-2xl line-clamp-3 ${tripData?.coverUrl ? "text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]" : "text-[var(--lt-text-color)]"}`}>
+                        {tripData?.description ?? t('tripDetail.noDescription')}
+                    </p>
+                    {tripData?.description && (
+                        <button id="toggle-trip-desc-btn" class={`hidden text-xs font-bold hover:underline mb-3 ${tripData?.coverUrl ? "text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]" : "text-[#63875e]"}`} data-is-es={lang === 'es'}>
+                            {lang === 'es' ? "Ver más" : "Read more"}
+                        </button>
+                    )}
+                </div>
                 <div class="flex items-center gap-2">
                     <span class={`text-xs font-semibold px-2 py-0.5 rounded-md ${tripData?.coverUrl ? "bg-black/40 text-white/90 backdrop-blur-sm" : "bg-[#ebf0eb] text-[#63875e]"}`}>
                         📅 {formatDate(tripData?.startDate)} — {formatDate(tripData?.endDate)}
@@ -152,6 +159,22 @@ const tripData = tripSnap.data();
             }
         });
 
+        // Trip Description Toggle
+        const tripDescEl = document.getElementById("trip-desc-header");
+        const toggleTripDescBtn = document.getElementById("toggle-trip-desc-btn");
+        if (tripDescEl && toggleTripDescBtn) {
+            // Check if text overflows
+            if (tripDescEl.scrollHeight > tripDescEl.clientHeight) {
+                toggleTripDescBtn.classList.remove("hidden");
+            }
+            toggleTripDescBtn.addEventListener("click", () => {
+                tripDescEl.classList.toggle("line-clamp-3");
+                const isClamped = tripDescEl.classList.contains("line-clamp-3");
+                const isEs = toggleTripDescBtn.dataset.isEs === "true";
+                toggleTripDescBtn.textContent = isClamped ? (isEs ? "Ver más" : "Read more") : (isEs ? "Ver menos" : "Read less");
+            });
+        }
+
         // Cover Photo Upload Logic
         const changeCoverBtn = document.getElementById("change-cover-btn");
         const changeCoverText = document.getElementById("change-cover-text");
@@ -189,10 +212,15 @@ const tripData = tripSnap.data();
                 coverOverlay.classList.remove("hidden");
 
                 titleHeader?.classList.remove("text-[var(--text-color)]");
-                titleHeader?.classList.add("text-white", "drop-shadow-md");
+                titleHeader?.classList.add("text-white", "[text-shadow:0_2px_4px_rgba(0,0,0,0.8)]");
 
                 descHeader?.classList.remove("text-[var(--lt-text-color)]");
-                descHeader?.classList.add("text-white/90", "drop-shadow");
+                descHeader?.classList.add("text-white/90", "[text-shadow:0_1px_3px_rgba(0,0,0,0.8)]");
+                
+                if (toggleTripDescBtn) {
+                    toggleTripDescBtn.classList.remove("text-[#63875e]");
+                    toggleTripDescBtn.classList.add("text-white", "[text-shadow:0_1px_3px_rgba(0,0,0,0.8)]");
+                }
 
                 if (changeCoverText) changeCoverText.textContent = isEs ? "Cambiar portada" : "Change cover";
                 showToast(isEs ? "Foto de portada actualizada con éxito." : "Cover photo updated successfully.", "success");
