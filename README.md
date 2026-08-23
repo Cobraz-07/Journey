@@ -1,57 +1,106 @@
 # Journey
 
-A full-stack web application to record, organize, and revisit personal travel memories. It allows travelers to manage itineraries, write daily field journals, upload client-compressed photo galleries, and track visited countries on an interactive world map.
+A modern, full-stack Progressive Web App (PWA) designed to record, organize, and revisit personal travel memories. Journey allows travelers to manage detailed itineraries, write daily field journals, compress and upload photo galleries, track visited countries on an interactive world map, and share read-only trips with friends and family.
 
-Built with Astro in SSR mode, Tailwind CSS, and Google Firebase for authentication, database, and media storage.
+Built with **Astro 5** in SSR mode, **Tailwind CSS v4**, and **Google Firebase** for authentication, database, and media storage.
+
+---
 
 ## Key Features
 
-### Trip Management and Itineraries
+### 🗺️ Trip Management and Itineraries
+- **Comprehensive Trip Planner:** Create, view, edit, and organize trips with destination country, city, date ranges, and custom descriptions.
+- **Trip Filtering:** Seamlessly toggle and browse between upcoming journeys and past travels.
+- **Safe Modifications:** Confirmation modals and alerts to prevent accidental deletions of trips and memories.
 
-- Create, view, update, and delete trips with start and end dates, destination country, city, and descriptions.
-- Filter and navigate between past journeys and upcoming trips.
-- Modal confirmations for destructive operations.
+### 📝 Daily Travel Journal
+- **Chronological Field Notes:** Document daily stories, routes, activities, and memories linked to each individual journey.
+- **Timeline-Bound Editor:** Quick journal entry creation with intelligent date constraints locked to the trip's schedule.
+- **XSS & Input Sanitization:** Automatic sanitization of all user-generated entries before persistence and rendering.
 
-### Daily Travel Journal
+### 🌍 Interactive World Map & Traveler Stats
+- **Visited Countries Map:** Dynamic world map that automatically highlights all visited countries across your logged trips.
+- **Traveler Metrics:** Live computation of your travel statistics:
+  - Total trips logged and total countries visited.
+  - Percentage of the world explored.
+  - Continents discovered.
+  - Total days spent traveling.
+- **Landscape Fullscreen Mode:** Interactive zoom and pan view optimized for exploring the map on both mobile and desktop.
 
-- Daily log entries associated with each trip to document stories, routes, and personal notes.
-- Quick entry editor with date constraints aligned to the trip schedule.
-- Automatic input sanitization to safeguard against XSS attacks.
+### 📸 Photo Gallery & Lightbox Viewer
+- **Client-Side Image Optimization:** Images are converted to WebP, resized, and processed into responsive blur-up thumbnails in the browser before upload, minimizing bandwidth and storage costs.
+- **Concurrent Batch Uploading:** Upload multiple photos simultaneously (up to 5 concurrent streams) with real-time per-photo and total progress bars, memory leak protection, and abort handling.
+- **Cursor-Based Pagination:** Efficient gallery scrolling powered by Firestore cursor pagination (`startAfter`).
+- **Interactive Lightbox:** Fullscreen photo viewer with keyboard navigation (arrows/escape), zoom controls, photo deletion, and direct image download via a dedicated attachment proxy endpoint (`Content-Disposition: attachment`).
 
-### Photo Gallery and Lightbox
+### 🔗 Public Trip Showcase & Social Sharing
+- **Shareable Read-Only Links:** Share individual trips with friends and family (`/trip/public/[shareToken]`) without exposing private account details.
+- **Granular Privacy Controls:** Toggle trip visibility between public and private with instant token regeneration and one-click clipboard copying.
+- **Rich Social Previews (Open Graph):** Automated Open Graph (OG) meta tags generating rich preview cards when sharing links on WhatsApp, Twitter, Telegram, and other social platforms.
 
-- Multi-photo uploads per trip with real-time upload progress indicators.
-- Client-side image pipeline that converts files to WebP and resizes dimensions before transmission, minimizing storage and bandwidth consumption.
-- Full-screen lightbox viewer with keyboard navigation, zoom support, and photo deletion.
+### 🌐 Internationalization (i18n)
+- **Full Bilingual Support:** Complete English and Spanish localization across all user interfaces, forms, modals, alerts, and public views.
+- **Astro Native Routing:** Subpath-based localization (`/` for English, `/es/` for Spanish) with automatic locale detection.
+- **Responsive Language Switcher:** Interactive flag switch and dropdown component for quick language switching on landing and authenticated pages.
 
-### Interactive Travel Map
+### 📱 Progressive Web App (PWA) & Mobile UX
+- **Installable Experience:** Native-like mobile installation via Web App Manifest (`manifest.webmanifest`), adaptive icons, and standalone display mode.
+- **Mobile-First Layout:** Bottom navigation bar with iOS safe-area support (`safe-area-inset-bottom`) and ergonomic touch targets.
+- **Smooth Page Transitions:** Astro `ClientRouter` view transitions with shimmer skeleton loaders for zero-flicker navigation.
 
-- World map plotting destinations and countries recorded in the user account.
-- Summary statistics: total trips logged, countries visited, and time spent traveling.
+---
 
-### Privacy and Shared Links
+## Architecture & Security Highlights
 
-- Read-only shareable links for individual trips without exposing the rest of the account.
-- Sharing modal with one-click clipboard copying.
+- **Server-Side Rendering (SSR):** Powered by Astro 5 with the `@astrojs/vercel` adapter, eliminating client-side flash of unauthenticated content and delivering instant first paint.
+- **HTTPOnly Session Cookies:** Secure authentication using Firebase Admin SDK session cookies (`__session`), keeping sensitive credentials and tokens out of `localStorage`.
+- **UID Data Partitioning:** Firestore documents and Cloud Storage buckets are strictly partitioned by user `uid` and enforced with granular security rules (`firestore.rules` and `storage.rules`).
+- **Self-Hosted Variable Fonts:** Local `@fontsource-variable/plus-jakarta-sans` integration removes external render-blocking font requests, improving Core Web Vitals (LCP/CLS).
+- **Cost & Quota Protection:** Client-side compression and quota limit safeguards ensure efficient resource utilization and protect against unexpected Firebase usage spikes.
 
-### Architecture and Security Highlights
-
-- Server-Side Rendering (SSR): Astro renders authenticated views on the server using the Vercel adapter, eliminating client-side flash of unauthenticated content and speeding up first paint.
-- HTTPOnly Session Cookies: Astro middleware validates session tokens against the Firebase Admin SDK (`__session`), preventing sensitive credentials from being stored in client-side storage.
-- UID Data Partitioning: All Firestore documents and Storage objects are partitioned by immutable user `uid` values and guarded by strict database rules (`firestore.rules` and `storage.rules`).
-- Browser-Side Media Optimization: Compression and WebP conversion run in the browser prior to upload, keeping storage footprints light and transfer times fast.
+---
 
 ## Tech Stack
 
-- Framework: Astro 5 (SSR with `@astrojs/vercel`)
-- Language: TypeScript
-- UI and Styling: Tailwind CSS v4, Starwind UI, and Tailwind Variants
-- Backend and Auth: Firebase 12 (Client SDK) and Firebase Admin 13
-- Database: Cloud Firestore
-- Storage: Firebase Cloud Storage
-- Icons: Tabler Icons
-- Testing: Vitest
+| Layer | Technology |
+|---|---|
+| **Framework** | [Astro 5](https://astro.build/) (SSR mode with `@astrojs/vercel`) |
+| **Language** | [TypeScript](https://www.typescriptlang.org/) |
+| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) (`@tailwindcss/vite`), [Starwind UI](https://starwindui.com/), [Tailwind Variants](https://www.tailwind-variants.org/) |
+| **Typography** | Plus Jakarta Sans (Variable, self-hosted via `@fontsource-variable`) |
+| **Icons** | [Tabler Icons](https://tabler.io/icons) via `astro-icon` |
+| **Backend & Auth** | Firebase 12 (Client SDK) & Firebase Admin 13 (SSR Admin SDK) |
+| **Database** | Cloud Firestore |
+| **Storage** | Firebase Cloud Storage |
+| **Testing** | [Vitest](https://vitest.dev/) |
+
+---
+
+## Project Structure
+
+```text
+Journey/
+├── public/                 # Static assets, PWA icons, manifest
+├── src/
+│   ├── components/         # Reusable UI, forms, modals, navigation, language picker
+│   ├── data/               # Country codes, datasets, coordinate mappings
+│   ├── i18n/               # Internationalization dictionaries and utility helpers
+│   ├── layouts/            # BaseLayout, AuthenticatedLayout
+│   ├── middleware.ts       # Astro SSR middleware for session cookie verification
+│   ├── pages/              # Astro routes & API endpoints (including /es/ localized routes)
+│   │   ├── api/            # Server endpoints (auth, downloads, share tokens)
+│   │   ├── authenticated/  # Protected views (Trips, Map, Profile/Account)
+│   │   ├── es/             # Spanish localized routes
+│   │   └── trip/public/    # Public showcase shareable views
+│   ├── services/           # Firebase client & admin services, image compressors
+│   └── styles/             # Global CSS and Tailwind v4 theme configurations
+├── tests/                  # Vitest unit and integration test suites
+├── firestore.rules         # Cloud Firestore security rules
+└── storage.rules           # Firebase Storage security rules
+```
+
+---
 
 ## License
 
-This project is licensed under the GPL-3.0 License. See the [LICENSE](file:///home/cobraz/Documents/GitHub/Journey/LICENSE) file for details.
+This project is licensed under the **GPL-3.0 License**. See the [LICENSE](LICENSE) file for details.
