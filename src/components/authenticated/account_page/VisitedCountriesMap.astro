@@ -1,11 +1,14 @@
 ---
 import { worldMapCountries, WORLD_MAP_VIEWBOX } from "@/utils/worldMapData";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
 
 interface Props {
     uid?: string | null;
 }
 
 const { uid } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <section class="w-full mx-auto px-3 sm:px-4" id="visited-map-section" data-uid={uid}>
@@ -16,31 +19,31 @@ const { uid } = Astro.props;
         <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2.5 mb-3">
             <!-- 1. World Explored % -->
             <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-xl sm:rounded-2xl py-2 px-1.5 sm:p-2.5 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center">
-                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">World</span>
+                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">{t('map.world')}</span>
                 <span id="stat-world-percent" class="text-sm sm:text-base font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—%</span>
             </div>
 
             <!-- 2. Continents Visited -->
             <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-xl sm:rounded-2xl py-2 px-1.5 sm:p-2.5 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center" title="Visited Continents">
-                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">Continents</span>
+                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">{t('map.continents')}</span>
                 <span id="stat-continents-count" class="text-sm sm:text-base font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">— / 7</span>
             </div>
 
             <!-- 3. Total Days Traveled -->
             <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-xl sm:rounded-2xl py-2 px-1.5 sm:p-2.5 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center">
-                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">Days</span>
+                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">{t('map.days')}</span>
                 <span id="stat-total-days" class="text-sm sm:text-base font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—</span>
             </div>
 
             <!-- 4. Countries Visited -->
             <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-xl sm:rounded-2xl py-2 px-1.5 sm:p-2.5 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center">
-                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">Countries</span>
+                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">{t('map.countries')}</span>
                 <span id="stat-visited-count" class="text-sm sm:text-base font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—</span>
             </div>
 
             <!-- 5. Total Trips -->
             <div class="bg-[#ebf0eb] dark:bg-neutral-800/80 rounded-xl sm:rounded-2xl py-2 px-1.5 sm:p-2.5 text-center border border-[#e2eae0] dark:border-neutral-700/60 flex flex-col justify-center col-span-2 sm:col-span-1">
-                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">Trips</span>
+                <span class="text-[9px] sm:text-[10px] text-[#6e826b] dark:text-neutral-400 font-bold uppercase tracking-wider truncate">{t('map.trips')}</span>
                 <span id="stat-total-trips" class="text-sm sm:text-base font-extrabold text-[#63875e] dark:text-[#8ac282] mt-0.5">—</span>
             </div>
         </div>
@@ -50,7 +53,7 @@ const { uid } = Astro.props;
             <!-- Loading Skeleton Overlay -->
             <div id="map-loading-overlay" class="absolute inset-0 bg-[#f4f7f3]/80 dark:bg-[#1a2119]/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-10 transition-opacity duration-300">
                 <div class="w-6 h-6 border-2 border-[#63875e] border-t-transparent rounded-full animate-spin"></div>
-                <span class="text-xs text-[#6e826b] font-medium">Loading adventures...</span>
+                <span class="text-xs text-[#6e826b] font-medium">{t('map.loading')}</span>
             </div>
 
             <!-- World SVG -->
@@ -75,14 +78,14 @@ const { uid } = Astro.props;
             <button
                 id="map-zoom-landscape-btn"
                 type="button"
-                aria-label="View Map in Landscape"
-                title="View Map in Landscape"
+                aria-label={t('map.viewLandscape')}
+                title={t('map.viewLandscape')}
                 class="absolute bottom-2.5 right-2.5 z-20 bg-white/90 dark:bg-neutral-800/90 hover:bg-[#63875e] hover:text-white dark:hover:bg-[#63875e] text-[#121712] dark:text-white p-2 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl shadow-md border border-neutral-200/80 dark:border-neutral-700 transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5 text-xs font-semibold backdrop-blur-md cursor-pointer"
             >
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                 </svg>
-                <span class="hidden sm:inline text-[11px]">Landscape</span>
+                <span class="hidden sm:inline text-[11px]">{t('map.landscape')}</span>
             </button>
 
             <!-- Floating Interactive Tooltip -->
@@ -101,10 +104,10 @@ const { uid } = Astro.props;
         <!-- Visited Countries Chips Section -->
         <div id="visited-chips-container" class="mt-2.5 pt-2 border-t border-neutral-200/60 dark:border-neutral-800">
             <div class="flex items-center justify-between mb-1.5">
-                <h4 class="text-[11px] font-bold text-[#6e826b] dark:text-neutral-400 uppercase tracking-wider">Discovered Destinations</h4>
+                <h4 class="text-[11px] font-bold text-[#6e826b] dark:text-neutral-400 uppercase tracking-wider">{t('map.discoveredDestinations')}</h4>
             </div>
             <div id="visited-chips-list" class="flex flex-wrap gap-1.5 max-h-20 sm:max-h-24 overflow-y-auto">
-                <span class="text-xs text-neutral-400 italic">Loading destinations...</span>
+                <span class="text-xs text-neutral-400 italic">{t('map.loadingDestinations')}</span>
             </div>
         </div>
     </div>
@@ -120,8 +123,8 @@ const { uid } = Astro.props;
         <div class="flex items-center gap-2.5">
             <span class="text-base">🗺️</span>
             <div>
-                <h4 class="text-sm font-bold text-[var(--text-color)]">World Map — Landscape View</h4>
-                <p class="text-[11px] text-[#6e826b] dark:text-neutral-400 hidden sm:block">Rotate your device horizontally for the best experience</p>
+                <h4 class="text-sm font-bold text-[var(--text-color)]">{t('map.landscapeTitle')}</h4>
+                <p class="text-[11px] text-[#6e826b] dark:text-neutral-400 hidden sm:block">{t('map.landscapeSubtitle')}</p>
             </div>
         </div>
 
@@ -131,7 +134,7 @@ const { uid } = Astro.props;
             class="bg-neutral-200/80 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-[var(--text-color)] px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1"
         >
             <span>✕</span>
-            <span>Close</span>
+            <span>{t('map.close')}</span>
         </button>
     </div>
 
@@ -171,6 +174,7 @@ const { uid } = Astro.props;
         if (!section || section.dataset.bound === "true") return;
         section.dataset.bound = "true";
 
+        const isEs = window.location.pathname.startsWith("/es");
         const rawUid = section.dataset.uid;
         if (!rawUid) return;
         const validUid: string = rawUid;
@@ -255,7 +259,7 @@ const { uid } = Astro.props;
                     if (summary.visitedContinentsList.length > 0) {
                         statContinentsCount.parentElement?.setAttribute(
                             "title",
-                            `Visited: ${summary.visitedContinentsList.join(", ")}`
+                            `${isEs ? "Visitados" : "Visited"}: ${summary.visitedContinentsList.join(", ")}`
                         );
                     }
                 }
@@ -281,13 +285,15 @@ const { uid } = Astro.props;
                 if (chipsList) {
                     if (visitedStats.length === 0) {
                         chipsList.innerHTML = `
-                            <p class="text-xs text-neutral-400 italic">No trips logged yet. Create your first trip and it will appear on the map.</p>
+                            <p class="text-xs text-neutral-400 italic">${isEs ? "Aún no hay viajes registrados. Crea tu primer viaje y aparecerá en el mapa." : "No trips logged yet. Create your first trip and it will appear on the map."}</p>
                         `;
                     } else {
                         chipsList.innerHTML = visitedStats.map((stat) => {
                             const safeCode = escapeHtml(stat.code);
                             const safeName = escapeHtml(stat.name);
-                            const tripsLabel = stat.tripCount === 1 ? "1 trip" : `${stat.tripCount} trips`;
+                            const tripsLabel = stat.tripCount === 1 
+                                ? (isEs ? "1 viaje" : "1 trip")
+                                : `${stat.tripCount} ${isEs ? "viajes" : "trips"}`;
                             return `
                                 <button
                                     type="button"
@@ -352,7 +358,9 @@ const { uid } = Astro.props;
                     }
                     if (tooltipName) tooltipName.textContent = name;
                     if (tooltipStatus) {
-                        tooltipStatus.textContent = isVisited ? "✅ Visited country" : "📍 Not visited yet";
+                        tooltipStatus.textContent = isVisited 
+                            ? (isEs ? "✅ País visitado" : "✅ Visited country")
+                            : (isEs ? "📍 Aún no visitado" : "📍 Not visited yet");
                         tooltipStatus.className = isVisited ? "text-[11px] text-[#aadba3] font-medium mt-0.5" : "text-[11px] text-neutral-400 font-medium mt-0.5";
                     }
 

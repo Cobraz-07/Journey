@@ -1,20 +1,24 @@
 ---
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/starwind/accordion";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <section class="w-full my-4">
     <Accordion class="w-full">
         <AccordionItem value="item-1" class="border-0 border-transparent">
-            <AccordionTrigger>Manage Account</AccordionTrigger>
-            <AccordionContent>Do you want to delete your account? Get in touch with me at <a class="text-[var(--dk-brand-color)] underline" href="mailto:journeyapp.help@gmail.com">journeyapp.help@gmail.com</a></AccordionContent>
+            <AccordionTrigger>{t('settings.manageAccount')}</AccordionTrigger>
+            <AccordionContent>{t('settings.deleteAccountNotice')} <a class="text-[var(--dk-brand-color)] underline" href="mailto:journeyapp.help@gmail.com">journeyapp.help@gmail.com</a></AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-2" class="border-0 border-transparent">
-            <AccordionTrigger>Privacity</AccordionTrigger>
-            <AccordionContent>We don't sell any of your data! It is stored in a database and can only be accessed by you.</AccordionContent>
+            <AccordionTrigger>{t('settings.privacy')}</AccordionTrigger>
+            <AccordionContent>{t('settings.privacyNotice')}</AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-3" class="border-0 border-transparent">
-            <AccordionTrigger>Help & Support</AccordionTrigger>
-            <AccordionContent>Get in touch with me at <a class="text-[var(--dk-brand-color)] underline" href="mailto:journeyapp.help@gmail.com">journeyapp.help@gmail.com</a></AccordionContent>
+            <AccordionTrigger>{t('settings.helpSupport')}</AccordionTrigger>
+            <AccordionContent>{t('settings.helpNotice')} <a class="text-[var(--dk-brand-color)] underline" href="mailto:journeyapp.help@gmail.com">journeyapp.help@gmail.com</a></AccordionContent>
         </AccordionItem>
     </Accordion>
 </section>

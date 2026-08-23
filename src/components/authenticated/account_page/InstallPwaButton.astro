@@ -1,5 +1,9 @@
 ---
 import Button from "@/components/starwind/button";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <div id="pwa-install-container" class="hidden flex-col items-center justify-center w-full my-4">
@@ -11,12 +15,12 @@ import Button from "@/components/starwind/button";
                 </svg>
             </div>
             <div>
-                <h4 class="text-sm font-bold text-[var(--text-color)]">Install Journey</h4>
-                <p class="text-xs text-[var(--lt-text-color)]" id="pwa-install-subtitle">Add to home screen</p>
+                <h4 class="text-sm font-bold text-[var(--text-color)]">{t('pwa.title')}</h4>
+                <p class="text-xs text-[var(--lt-text-color)]" id="pwa-install-subtitle">{t('pwa.subtitle')}</p>
             </div>
         </div>
         <Button id="pwa-install-btn" variant="outline" class="rounded-full text-xs font-semibold px-4 py-1.5 h-auto shrink-0 bg-[#63875e] text-white hover:bg-[#52724d] border-transparent">
-            Install
+            {t('pwa.install')}
         </Button>
     </div>
 </div>
@@ -32,6 +36,8 @@ import Button from "@/components/starwind/button";
         if (container.dataset.bound === "true") return;
         container.dataset.bound = "true";
 
+        const isEs = window.location.pathname.startsWith("/es");
+
         // Check if already running in standalone mode (already installed)
         const isStandalone = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone === true;
         if (isStandalone) {
@@ -43,10 +49,13 @@ import Button from "@/components/starwind/button";
         const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         if (isIos) {
             container.classList.remove("hidden");
-            if (subtitle) subtitle.textContent = "Tap Share ⏎ and 'Add to Home Screen'";
-            installBtn.textContent = "Instructions";
+            if (subtitle) subtitle.textContent = isEs ? "Pulsa Compartir ⏎ y 'Añadir a pantalla de inicio'" : "Tap Share ⏎ and 'Add to Home Screen'";
+            installBtn.textContent = isEs ? "Instrucciones" : "Instructions";
             installBtn.addEventListener("click", () => {
-                alert("To install Journey on your iPhone/iPad:\n\n1. Tap the Share button (⏎) in Safari's toolbar.\n2. Select 'Add to Home Screen' (+).\n3. Tap 'Add' in the top right corner.");
+                alert(isEs 
+                    ? "Para instalar Journey en tu iPhone/iPad:\n\n1. Pulsa el botón Compartir (⏎) en la barra de Safari.\n2. Selecciona 'Añadir a pantalla de inicio' (+).\n3. Pulsa 'Añadir' en la esquina superior derecha."
+                    : "To install Journey on your iPhone/iPad:\n\n1. Tap the Share button (⏎) in Safari's toolbar.\n2. Select 'Add to Home Screen' (+).\n3. Tap 'Add' in the top right corner."
+                );
             });
             return;
         }
@@ -58,7 +67,10 @@ import Button from "@/components/starwind/button";
 
         installBtn.addEventListener("click", async () => {
             if (!deferredPrompt) {
-                alert("To install the app, open the browser menu (⋮) and select 'Install app' or 'Add to Home Screen'.");
+                alert(isEs
+                    ? "Para instalar la aplicación, abre el menú del navegador (⋮) y selecciona 'Instalar aplicación' o 'Añadir a pantalla de inicio'."
+                    : "To install the app, open the browser menu (⋮) and select 'Install app' or 'Add to Home Screen'."
+                );
                 return;
             }
             deferredPrompt.prompt();

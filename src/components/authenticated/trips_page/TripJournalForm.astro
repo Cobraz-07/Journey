@@ -4,29 +4,32 @@ import { Input } from "@/components/starwind/input";
 import { Button } from "@/components/starwind/button";
 import { Textarea } from "@/components/starwind/textarea";
 import { Icon } from "astro-icon/components";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
 
 const { uid, tripID } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <Dialog id="journal-form-dialog" data-trip-id={tripID}>
     <DialogContent class="w-9/10 max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6">
         <form id="journal-form" data-uid={uid} method="dialog" class="flex flex-col gap-4 h-full">
             <DialogHeader class="mb-2">
-                <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white">New Journal Entry</DialogTitle>
+                <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white">{t('journal.newTitle')}</DialogTitle>
             </DialogHeader>
-            <Input name="journal title" id="journal-title" type="text" placeholder="Journal title" maxlength={150} class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
-            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="journal-description" maxlength={5000} placeholder="What adventures did you have today? (max. 5000 characters)" />
+            <Input name="journal title" id="journal-title" type="text" placeholder={t('journal.titlePlaceholder')} maxlength={150} class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
+            <Textarea class="rounded-[12px] p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" size="lg" id="journal-description" maxlength={5000} placeholder={t('journal.descPlaceholder')} />
             
-            <p class="text-xs font-semibold text-[#6e826b]">Journal Date</p>
+            <p class="text-xs font-semibold text-[#6e826b]">{t('journal.dateLabel')}</p>
             <Input name="journal date" id="journal-date" type="date" class="rounded-[12px] h-12 p-3 text-[15px] text-[#63875E] bg-[#EBF0EB]" required />
 
             <!-- Optional Image Attachment -->
-            <p class="text-xs font-semibold text-[#6e826b]">Attached Photo (Optional)</p>
+            <p class="text-xs font-semibold text-[#6e826b]">{t('journal.attachedPhoto')}</p>
             <div id="journal-image-dropzone" class="border-2 border-dashed border-[#aadba3] hover:border-[#63875e] bg-white/60 dark:bg-neutral-900/40 rounded-xl p-4 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5 relative">
                 <input id="journal-image-input" type="file" accept="image/*" class="hidden" />
                 <div id="journal-image-placeholder" class="flex items-center gap-2 text-[#63875e]">
                     <Icon name="image" class="w-5 h-5" />
-                    <span class="text-xs font-medium">Add a photo for this day</span>
+                    <span class="text-xs font-medium">{t('journal.addPhoto')}</span>
                 </div>
                 <div id="journal-image-preview-wrapper" class="hidden relative w-full">
                     <img id="journal-image-preview" src="" alt="Preview" class="max-h-36 mx-auto rounded-lg object-contain shadow" />
@@ -38,7 +41,7 @@ const { uid, tripID } = Astro.props;
             <!-- Upload progress bar -->
             <div id="journal-upload-progress" class="hidden flex-col gap-1">
                 <div class="flex justify-between text-xs text-[#6e826b] font-medium">
-                    <span id="journal-progress-label">Saving and uploading photo...</span>
+                    <span id="journal-progress-label">{t('journal.savingUploading')}</span>
                 </div>
                 <div class="w-full bg-[#ebf0eb] h-1.5 rounded-full overflow-hidden">
                     <div class="bg-[#63875e] h-full w-full animate-pulse rounded-full"></div>
@@ -46,7 +49,7 @@ const { uid, tripID } = Astro.props;
             </div>
 
             <DialogFooter class="mt-4">
-                <Button id="journal-submit-btn" type="submit" variant="Form" class="rounded-xl w-full">Save Journal</Button>
+                <Button id="journal-submit-btn" type="submit" variant="Form" class="rounded-xl w-full">{t('journal.saveButton')}</Button>
             </DialogFooter>
         </form>
     </DialogContent>
@@ -64,6 +67,8 @@ const { uid, tripID } = Astro.props;
         const journalForm = document.querySelector("#journal-form") as HTMLFormElement;
         if (!journalForm || !journalFormDialog || journalForm.dataset.bound === "true") return;
         journalForm.dataset.bound = "true";
+
+        const isEs = window.location.pathname.startsWith("/es");
 
         const formTitle = document.getElementById("journal-title") as HTMLInputElement;
         const formDescription = document.getElementById("journal-description") as HTMLTextAreaElement;
@@ -106,7 +111,7 @@ const { uid, tripID } = Astro.props;
                 imagePlaceholder?.classList.add("hidden");
                 previewWrapper?.classList.remove("hidden");
             } catch (err: unknown) {
-                const message = err instanceof Error ? err.message : "Failed to process the image.";
+                const message = err instanceof Error ? err.message : (isEs ? "Error al procesar la imagen." : "Failed to process the image.");
                 showToast(message, "error");
             }
         });
@@ -136,7 +141,11 @@ const { uid, tripID } = Astro.props;
                 // Check max journals limit
                 const existingJournalsSnap = await getDocs(journalCollectionRef);
                 if (existingJournalsSnap.size >= MAX_JOURNALS_PER_TRIP) {
-                    showToast(`You have reached the maximum limit of ${MAX_JOURNALS_PER_TRIP} journal entries for this trip.`, "error");
+                    showToast(isEs 
+                        ? `Has alcanzado el límite máximo de ${MAX_JOURNALS_PER_TRIP} entradas de diario para este viaje.`
+                        : `You have reached the maximum limit of ${MAX_JOURNALS_PER_TRIP} journal entries for this trip.`, 
+                        "error"
+                    );
                     if (submitBtn) submitBtn.disabled = false;
                     progressWrapper?.classList.add("hidden");
                     return;
@@ -154,7 +163,7 @@ const { uid, tripID } = Astro.props;
                 }
 
                 await setDoc(newJournalDocRef, {
-                    title: formTitle?.value || "Untitled",
+                    title: formTitle?.value || (isEs ? "Sin título" : "Untitled"),
                     description: formDescription?.value || "",
                     date: formDate?.value || "",
                     imageUrl: imageUrl || null,
@@ -183,11 +192,11 @@ const { uid, tripID } = Astro.props;
                     d?.close();
                 }
 
-                showToast("Journal entry saved successfully.", "success");
+                showToast(isEs ? "Entrada del diario guardada con éxito." : "Journal entry saved successfully.", "success");
                 window.location.reload();
             } catch (err) {
                 console.error("Error creating journal:", err);
-                showToast("Failed to create the journal entry.", "error");
+                showToast(isEs ? "Error al guardar la entrada del diario." : "Failed to create the journal entry.", "error");
                 if (submitBtn) submitBtn.disabled = false;
                 progressWrapper?.classList.add("hidden");
             }

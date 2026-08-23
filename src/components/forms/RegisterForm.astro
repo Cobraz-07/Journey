@@ -2,21 +2,25 @@
 import { Label } from "@/components/starwind/label";
 import { Input } from "@/components/starwind/input";
 import { Button } from "@/components/starwind/button";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <section class="flex flex-col pt-5 pl-4 pr-4 gap-6">
-    <h2 class="text-[22px] font-extrabold">Create your account</h2>
+    <h2 class="text-[22px] font-extrabold">{t('auth.registerTitle')}</h2>
     <form class="flex flex-col" id="create-account">
-        <Label class="mb-2 font-medium" for="register-email">Email</Label>
-        <Input name="email" id="register-email" type="email" placeholder="Enter your email" class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
-        <Label class="mb-2 font-medium" for="register-password">Password</Label>
+        <Label class="mb-2 font-medium" for="register-email">{t('auth.email')}</Label>
+        <Input name="email" id="register-email" type="email" placeholder={t('auth.emailPlaceholder')} class="rounded-[12px] mb-6 h-14 p-4 text-[16px] text-[#63875E] bg-[#EBF0EB]" />
+        <Label class="mb-2 font-medium" for="register-password">{t('auth.password')}</Label>
         <div class="relative flex items-center mb-6">
-            <Input name="password" id="register-password" type="password" placeholder="Enter your password" class="rounded-[12px] h-14 p-4 pr-12 text-[16px] text-[#63875E] bg-[#EBF0EB] w-full" />
+            <Input name="password" id="register-password" type="password" placeholder={t('auth.passwordPlaceholder')} class="rounded-[12px] h-14 p-4 pr-12 text-[16px] text-[#63875E] bg-[#EBF0EB] w-full" />
             <button
                 type="button"
                 id="register-toggle-password"
                 class="absolute right-4 text-[#63875E] hover:text-[#4a6546] transition-colors focus:outline-none cursor-pointer flex items-center justify-center p-1"
-                aria-label="Toggle password visibility"
+                aria-label={t('auth.togglePassword')}
             >
                 <svg id="register-eye-icon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -27,7 +31,7 @@ import { Button } from "@/components/starwind/button";
                 </svg>
             </button>
         </div>
-        <Button type="submit" variant="Form">Sign Up</Button>
+        <Button type="submit" variant="Form">{t('auth.registerButton')}</Button>
     </form>
 </section>
 
@@ -46,6 +50,8 @@ import { Button } from "@/components/starwind/button";
         const togglePasswordBtn = document.getElementById("register-toggle-password");
         const eyeIcon = document.getElementById("register-eye-icon");
         const eyeOffIcon = document.getElementById("register-eye-off-icon");
+
+        const isEs = window.location.pathname.startsWith("/es");
 
         togglePasswordBtn?.addEventListener("click", () => {
             const isPassword = formPassword.type === "password";
@@ -76,10 +82,10 @@ import { Button } from "@/components/starwind/button";
                     throw new Error("Failed to create session");
                 }
 
-                window.location.href = "/authenticated/trips";
+                window.location.href = isEs ? "/es/authenticated/trips" : "/authenticated/trips";
             } catch (err: unknown) {
                 console.error("Sign-up error:", err);
-                const message = err instanceof Error ? err.message : "Error al crear la cuenta";
+                const message = err instanceof Error ? err.message : (isEs ? "Error al crear la cuenta" : "Sign-up error");
                 showToast(message, "error");
             }
         });

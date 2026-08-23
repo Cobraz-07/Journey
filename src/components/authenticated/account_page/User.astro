@@ -1,17 +1,22 @@
 ---
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+
 interface Props {
     email?: string | null;
     uid?: string | null;
 }
 
 const { email } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
 const index = email ? email.indexOf("@") : -1;
-const strippedEmail = index !== -1 && email ? email.substring(0, index) : "TRAVELER";
+const strippedEmail = index !== -1 && email ? email.substring(0, index) : t('settings.traveler');
 ---
 
 <section class="flex flex-col items-center my-6 text-center">
     <div>
         <h2 class="text-[20px] font-extrabold">{strippedEmail.toUpperCase()}</h2>
-        <h4 class="font-extralight text-sm text-[var(--lt-text-color)]">{email ?? "Anonymous User"}</h4>
+        <h4 class="font-extralight text-sm text-[var(--lt-text-color)]">{email ?? t('settings.anonymous')}</h4>
     </div>
 </section>

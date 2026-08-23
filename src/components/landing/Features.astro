@@ -1,30 +1,34 @@
 ---
 import { Icon } from "astro-icon/components";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <section class="flex flex-col items-center my-4 max-w-[420px] mx-auto">
     <div id="features-title-container" class="mx-4 mt-6 mb-3 text-center">
-        <h2 class="text-[32px] font-bold">Your Travel Companion</h2>
+        <h2 class="text-[32px] font-bold">{t('features.title')}</h2>
     </div>
     <div id="features-subtitle-container" class="mx-4 mt-1 mb-3 text-center">
-        <p class="text-[16px] w-9/10 m-auto">Journey helps you document your travels with ease. Capture every moment, from the big adventures to the small details.</p>
+        <p class="text-[16px] w-9/10 m-auto">{t('features.subtitle')}</p>
     </div>
     <div id="feature-grid" class="grid grid-cols-2 grid-rows-2 gap-3 w-4/5 max-[370px]:w-9/10 max-w-[318px]">
         <div class="feature-box col-start-1 row-start-1 flex items-center gap-4">
             <Icon name="plane" class="w-6 h-6" />
-            Trip<br />Tracking
+            <span set:html={t('features.tripTracking')}></span>
         </div>
         <div class="feature-box col-start-2 flex items-center gap-4">
             <Icon name="timeline" class="w-6 h-6" />
-            Travel<br />Timeline
+            <span set:html={t('features.travelTimeline')}></span>
         </div>
         <div class="feature-box col-start-1 flex items-center gap-4">
             <Icon name="pen" class="w-6 h-6" />
-            Daily<br />Journals
+            <span set:html={t('features.dailyJournals')}></span>
         </div>
         <div class="feature-box col-start-2 row-start-2 flex items-center gap-4">
             <Icon name="image" class="w-6 h-6" />
-            Photo<br />Albums
+            <span set:html={t('features.photoAlbums')}></span>
         </div>
     </div>
 </section>

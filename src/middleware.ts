@@ -27,10 +27,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
         }
     }
 
+    const isEs = pathname.startsWith("/es");
+    const langPrefix = isEs ? "/es" : "";
+    const pathWithoutLang = isEs ? pathname.slice(3) || "/" : pathname;
+
     // Protect all authenticated routes regardless of HTTP method
-    if (!user && pathname.startsWith("/authenticated")) {
+    if (!user && pathWithoutLang.startsWith("/authenticated")) {
         if (context.request.method === "GET") {
-            return context.redirect("/signin");
+            return context.redirect(`${langPrefix}/signin`);
         }
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
@@ -39,8 +43,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     // Redirect authenticated users away from public landing & auth pages
-    if (user && (pathname === "/signin" || pathname === "/register" || pathname === "/")) {
-        return context.redirect("/authenticated/trips");
+    if (user && (pathWithoutLang === "/signin" || pathWithoutLang === "/register" || pathWithoutLang === "/")) {
+        return context.redirect(`${langPrefix}/authenticated/trips`);
     }
 
     // Set verified user info in locals

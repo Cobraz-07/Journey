@@ -1,9 +1,13 @@
 ---
 import Button from "@/components/starwind/button";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <section class="flex justify-center w-full mt-8 mb-6">
-    <Button variant="outline" class="rounded-full" id="logout-button">Log Out</Button>
+    <Button variant="outline" class="rounded-full" id="logout-button">{t('settings.logout')}</Button>
 </section>
 
 <script>
@@ -14,13 +18,15 @@ import Button from "@/components/starwind/button";
         if (!logoutButton || logoutButton.dataset.bound === "true") return;
         logoutButton.dataset.bound = "true";
 
+        const isEs = window.location.pathname.startsWith("/es");
+
         logoutButton.addEventListener("click", async (e) => {
             e.preventDefault();
             // Clear client-side Firebase Auth state
             await projectAuth.signOut();
             // Clear server-side session cookie
             await fetch("/api/session", { method: "DELETE" });
-            window.location.href = "/";
+            window.location.href = isEs ? "/es" : "/";
         });
     }
 

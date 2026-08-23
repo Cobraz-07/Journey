@@ -2,6 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/starwind/dialog";
 import { Button } from "@/components/starwind/button";
 import { Icon } from "astro-icon/components";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
 
 interface Props {
     uid: string;
@@ -9,6 +10,8 @@ interface Props {
 }
 
 const { uid, tripID } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <Dialog id="trip-share-dialog">
@@ -17,18 +20,18 @@ const { uid, tripID } = Astro.props;
             <DialogHeader>
                 <DialogTitle class="text-xl font-bold text-[#121712] dark:text-white flex items-center gap-2">
                     <Icon name="share" class="w-5 h-5 text-[#63875e]" />
-                    <span>Share Trip Showcase</span>
+                    <span>{t('share.modalTitle')}</span>
                 </DialogTitle>
             </DialogHeader>
 
             <p class="text-xs text-[var(--lt-text-color)] leading-relaxed">
-                Generate a public read-only link to share your itinerary, journal entries, and photo gallery with anyone — no sign in required.
+                {t('share.explanation')}
             </p>
 
             <!-- Loading State -->
             <div id="share-loading" class="flex flex-col items-center justify-center py-6 gap-2">
                 <div class="w-6 h-6 border-2 border-[#63875e] border-t-transparent rounded-full animate-spin"></div>
-                <span class="text-xs text-[var(--lt-text-color)]">Checking sharing status...</span>
+                <span class="text-xs text-[var(--lt-text-color)]">{t('share.checking')}</span>
             </div>
 
             <!-- Inactive / Private State -->
@@ -40,11 +43,11 @@ const { uid, tripID } = Astro.props;
                     </svg>
                 </div>
                 <div>
-                    <h4 class="text-sm font-bold text-[var(--text-color)]">This trip is currently private</h4>
-                    <p class="text-xs text-[var(--lt-text-color)] mt-0.5">Only you can view this adventure.</p>
+                    <h4 class="text-sm font-bold text-[var(--text-color)]">{t('share.privateTitle')}</h4>
+                    <p class="text-xs text-[var(--lt-text-color)] mt-0.5">{t('share.privateDesc')}</p>
                 </div>
                 <Button id="share-generate-btn" variant="Form" class="w-full py-2.5 text-xs font-semibold mt-1">
-                    Generate Public Link
+                    {t('share.generateBtn')}
                 </Button>
             </div>
 
@@ -53,13 +56,13 @@ const { uid, tripID } = Astro.props;
                 <div class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl px-3 py-2">
                     <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Public Link Active
+                        {t('share.publicActive')}
                     </span>
-                    <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Read-only</span>
+                    <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{t('share.readOnly')}</span>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-xs font-semibold text-[#6e826b] dark:text-neutral-400">Shareable URL</label>
+                    <label class="text-xs font-semibold text-[#6e826b] dark:text-neutral-400">{t('share.urlLabel')}</label>
                     <div class="flex items-center gap-2">
                         <input
                             type="text"
@@ -72,7 +75,7 @@ const { uid, tripID } = Astro.props;
                             id="share-copy-btn"
                             class="px-3.5 py-2.5 rounded-xl bg-[#63875e] hover:bg-[#52704e] text-white text-xs font-bold transition-all shrink-0 active:scale-95 shadow-xs cursor-pointer"
                         >
-                            Copy
+                            {t('share.copy')}
                         </button>
                     </div>
                 </div>
@@ -85,7 +88,7 @@ const { uid, tripID } = Astro.props;
                         rel="noopener noreferrer"
                         class="text-xs font-semibold text-[#63875e] hover:underline flex items-center gap-1"
                     >
-                        <span>Open Showcase in new tab</span>
+                        <span>{t('share.openTab')}</span>
                         <span>↗</span>
                     </a>
 
@@ -94,7 +97,7 @@ const { uid, tripID } = Astro.props;
                         id="share-revoke-btn"
                         class="text-xs text-red-600 dark:text-red-400 hover:underline font-semibold cursor-pointer"
                     >
-                        Revoke Link
+                        {t('share.revoke')}
                     </button>
                 </div>
             </div>
@@ -106,7 +109,7 @@ const { uid, tripID } = Astro.props;
                         id="share-close-dialog-btn"
                         class="w-full text-center py-2.5 px-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-xs font-bold text-[var(--text-color)] transition-all cursor-pointer active:scale-95"
                     >
-                        Done
+                        {t('share.done')}
                     </button>
                 </DialogClose>
             </DialogFooter>
@@ -121,6 +124,8 @@ const { uid, tripID } = Astro.props;
         const wrapper = document.getElementById("trip-share-wrapper");
         if (!wrapper || wrapper.dataset.bound === "true") return;
         wrapper.dataset.bound = "true";
+
+        const isEs = window.location.pathname.startsWith("/es");
 
         const tripId = wrapper.dataset.tripId;
         if (!tripId) return;
@@ -166,7 +171,7 @@ const { uid, tripID } = Astro.props;
         generateBtn?.addEventListener("click", async () => {
             if (generateBtn) {
                 generateBtn.disabled = true;
-                generateBtn.textContent = "Generating...";
+                generateBtn.textContent = isEs ? "Generando..." : "Generating...";
             }
 
             try {
@@ -187,14 +192,18 @@ const { uid, tripID } = Astro.props;
                 publicStateEl?.classList.remove("hidden");
                 publicStateEl?.classList.add("flex");
 
-                showToast("Public link generated! Anyone with this link can view this trip.", "success");
+                showToast(isEs 
+                    ? "¡Enlace público generado! Cualquier persona con el enlace puede ver este viaje." 
+                    : "Public link generated! Anyone with this link can view this trip.", 
+                    "success"
+                );
             } catch (err) {
                 console.error("Error generating share link:", err);
-                showToast("Failed to generate public link.", "error");
+                showToast(isEs ? "Error al generar el enlace público." : "Failed to generate public link.", "error");
             } finally {
                 if (generateBtn) {
                     generateBtn.disabled = false;
-                    generateBtn.textContent = "Generate Public Link";
+                    generateBtn.textContent = isEs ? "Generar Enlace Público" : "Generate Public Link";
                 }
             }
         });
@@ -209,19 +218,22 @@ const { uid, tripID } = Astro.props;
                     urlInput.setSelectionRange(0, 99999);
                 }
                 if (copyBtn) {
-                    copyBtn.textContent = "Copied! ✓";
+                    copyBtn.textContent = isEs ? "¡Copiado! ✓" : "Copied! ✓";
                     setTimeout(() => {
-                        if (copyBtn) copyBtn.textContent = "Copy";
+                        if (copyBtn) copyBtn.textContent = isEs ? "Copiar" : "Copy";
                     }, 2000);
                 }
-                showToast("Link copied to clipboard! 📋", "success");
+                showToast(isEs ? "¡Enlace copiado al portapapeles! 📋" : "Link copied to clipboard! 📋", "success");
             } catch {
-                showToast("Link copied to clipboard!", "success");
+                showToast(isEs ? "¡Enlace copiado al portapapeles!" : "Link copied to clipboard!", "success");
             }
         });
 
         revokeBtn?.addEventListener("click", async () => {
-            if (!confirm("Are you sure you want to revoke this public link? Friends and family will no longer be able to view this showcase.")) {
+            const confirmMsg = isEs
+                ? "¿Estás seguro de que deseas revocar este enlace público? Tus amigos y familiares ya no podrán ver este escaparate."
+                : "Are you sure you want to revoke this public link? Friends and family will no longer be able to view this showcase.";
+            if (!confirm(confirmMsg)) {
                 return;
             }
 
@@ -239,10 +251,10 @@ const { uid, tripID } = Astro.props;
                 privateStateEl?.classList.remove("hidden");
                 privateStateEl?.classList.add("flex");
 
-                showToast("Public link revoked. The trip is now private.", "info");
+                showToast(isEs ? "Enlace público revocado. El viaje ahora es privado." : "Public link revoked. The trip is now private.", "info");
             } catch (err) {
                 console.error("Error revoking share link:", err);
-                showToast("Failed to revoke link.", "error");
+                showToast(isEs ? "Error al revocar el enlace." : "Failed to revoke link.", "error");
             }
         });
 
