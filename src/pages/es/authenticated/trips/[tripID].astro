@@ -37,7 +37,7 @@ const tripData = tripSnap.data();
 
 <BaseLayout id="layout" title={`Journey | ${tripData?.title ?? tripID}`}>
     <BackBTN href={getLocalizedPath("/authenticated/trips", lang)} />
-    <div class="flex items-center gap-1.5 absolute top-4 right-4 z-20">
+    <div class="flex items-center gap-1.5 absolute top-4 right-28 z-20">
         <DialogTrigger for="trip-share-dialog" class="p-1.5 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-800 text-[#63875e] transition-colors cursor-pointer" title={t('tripDetail.shareTitle')}>
             <Icon class="w-6 h-6" name="share" />
         </DialogTrigger>

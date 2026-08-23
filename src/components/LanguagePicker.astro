@@ -1,29 +1,60 @@
 ---
-import { languages } from '../i18n/ui';
 import { getLangFromUrl } from '../i18n/utils';
 
 const lang = getLangFromUrl(Astro.url);
 
 const pathname = Astro.url.pathname;
-const isEs = pathname.startsWith('/es');
-const pathWithoutLang = isEs ? pathname.slice(3) || '/' : pathname;
+const isEs = pathname === '/es' || pathname.startsWith('/es/');
+const pathWithoutLang = isEs 
+    ? (pathname.replace(/^\/es(\/|$)/, '/') || '/') 
+    : pathname;
 
 // Ensure pathWithoutLang always starts with /
 const cleanPath = pathWithoutLang.startsWith('/') ? pathWithoutLang : `/${pathWithoutLang}`;
+const enPath = cleanPath;
+const esPath = cleanPath === '/' ? '/es' : `/es${cleanPath}`;
 ---
 
-<div class="relative inline-block text-left group z-50">
-  <button type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none">
-    {languages[lang]}
-    <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-    </svg>
-  </button>
+<div class="flex items-center bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md p-1 rounded-full border border-neutral-200/80 dark:border-neutral-800 shadow-sm gap-0.5 select-none z-50">
+    <!-- US Flag (English) -->
+    <a
+        href={enPath}
+        title="English"
+        aria-label="Switch to English"
+        class={`flex items-center gap-1 px-2 py-1 rounded-full transition-all duration-200 cursor-pointer ${
+            lang === 'en'
+                ? 'bg-[#63875e] text-white shadow-2xs font-bold scale-[1.02]'
+                : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 opacity-60 hover:opacity-100'
+        }`}
+    >
+        <img
+            src="https://flagcdn.com/us.svg"
+            width="17"
+            height="12"
+            class="rounded-2xs object-cover shadow-2xs shrink-0"
+            alt="US"
+        />
+        <span class="text-[10px] uppercase font-bold tracking-tight">US</span>
+    </a>
 
-  <div class="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 invisible group-hover:visible">
-    <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-      <a href={cleanPath} class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">{languages.en}</a>
-      <a href={`/es${cleanPath === '/' ? '' : cleanPath}`} class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">{languages.es}</a>
-    </div>
-  </div>
+    <!-- Spain Flag (Español) -->
+    <a
+        href={esPath}
+        title="Español"
+        aria-label="Cambiar a Español"
+        class={`flex items-center gap-1 px-2 py-1 rounded-full transition-all duration-200 cursor-pointer ${
+            lang === 'es'
+                ? 'bg-[#63875e] text-white shadow-2xs font-bold scale-[1.02]'
+                : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 opacity-60 hover:opacity-100'
+        }`}
+    >
+        <img
+            src="https://flagcdn.com/es.svg"
+            width="17"
+            height="12"
+            class="rounded-2xs object-cover shadow-2xs shrink-0"
+            alt="ES"
+        />
+        <span class="text-[10px] uppercase font-bold tracking-tight">ES</span>
+    </a>
 </div>
