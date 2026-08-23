@@ -15,7 +15,7 @@ const uid = Astro.locals.uid;
 if (!uid) return Astro.redirect(getLocalizedPath("/signin", lang));
 ---
 
-<BaseLayout title={`Journey | ${t('nav.trips')}`}>
+<BaseLayout title={`Journey | ${t('nav.trips')}`} showLanguagePicker={true}>
     <TitleSimple title="Journey" />
     <TripListHeader />
     <TripListForm uid={uid} />
