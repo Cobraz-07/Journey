@@ -9,7 +9,11 @@ const t = useTranslations(lang);
 
 <section class="flex justify-between items-center items-left mx-6">
     <h2 class="mt-5 mb-3 text-[22px] font-extrabold">{t('trips.recentTrips')}</h2>
-    <DialogTrigger for="trip-form-dialog" class="mt-2" asChild>
+    <DialogTrigger 
+        for="trip-form-dialog" 
+        class="mt-2 p-1.5 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-800 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer text-[var(--text-color)] flex items-center justify-center"
+        title={t('tripForm.title')}
+    >
         <Icon name="add" class="w-7.5 h-7.5" />
     </DialogTrigger>
 </section>

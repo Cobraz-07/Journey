@@ -28,8 +28,6 @@ export const ui = {
         "features.travelTimeline": "Travel<br />Timeline",
         "features.dailyJournals": "Daily<br />Journals",
         "features.photoAlbums": "Photo<br />Albums",
-        "alert.danger": "Danger!",
-        "alert.mobileRequired": "Use on mobile is mandatory for a good experience! (PWA)",
 
         // Auth & Forms
         "auth.signinTitle": "Sign In to your account",
@@ -271,8 +269,6 @@ export const ui = {
         "features.travelTimeline": "Línea de<br />Tiempo",
         "features.dailyJournals": "Diarios de<br />Viaje",
         "features.photoAlbums": "Álbumes de<br />Fotos",
-        "alert.danger": "¡Atención!",
-        "alert.mobileRequired": "¡El uso en móvil es imprescindible para una buena experiencia! (PWA)",
 
         // Auth & Forms
         "auth.signinTitle": "Inicia sesión en tu cuenta",

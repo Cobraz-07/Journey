@@ -3,8 +3,8 @@ const { href } = Astro.props;
 import { Icon } from "astro-icon/components";
 ---
 
-<div class="absolute top-4 left-4">
-    <a aria-label="Go back button" href={href}>
+<div class="absolute top-4 left-4 z-20">
+    <a aria-label="Go back button" href={href} class="inline-flex p-1.5 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-800 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer text-[var(--text-color)]">
         <Icon name="back" class="w-7.5 h-7.5" />
     </a>
 </div>

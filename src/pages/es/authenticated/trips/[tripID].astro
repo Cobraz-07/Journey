@@ -38,10 +38,10 @@ const tripData = tripSnap.data();
 <BaseLayout id="layout" title={`Journey | ${tripData?.title ?? tripID}`}>
     <BackBTN href={getLocalizedPath("/authenticated/trips", lang)} />
     <div class="flex items-center gap-1.5 absolute top-4 right-4 z-20">
-        <DialogTrigger for="trip-share-dialog" class="p-1.5 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-800 text-[#63875e] transition-colors cursor-pointer" title={t('tripDetail.shareTitle')}>
+        <DialogTrigger for="trip-share-dialog" class="p-1.5 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-800 text-[#63875e] transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center" title={t('tripDetail.shareTitle')}>
             <Icon class="w-6 h-6" name="share" />
         </DialogTrigger>
-        <button data-uid={uid} data-id={tripID} id="delete-trip-btn" class="p-1 rounded-full hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors cursor-pointer" title={t('tripDetail.deleteTitle')}><Icon class="w-7.5 h-7.5 text-red-500" name="delete" /></button>
+        <button data-uid={uid} data-id={tripID} id="delete-trip-btn" class="p-1 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-800 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center text-red-500" title={t('tripDetail.deleteTitle')}><Icon class="w-7.5 h-7.5" name="delete" /></button>
     </div>
     <TitleSimple title={t('tripDetail.title')} />
 
