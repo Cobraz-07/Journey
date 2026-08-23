@@ -13,22 +13,22 @@ const t = useTranslations(lang);
     <div id="features-subtitle-container" class="mx-4 mt-1 mb-3 text-center">
         <p class="text-[16px] w-9/10 m-auto">{t('features.subtitle')}</p>
     </div>
-    <div id="feature-grid" class="grid grid-cols-2 grid-rows-2 gap-3 w-4/5 max-[370px]:w-9/10 max-w-[318px]">
-        <div class="feature-box col-start-1 row-start-1 flex items-center gap-4">
-            <Icon name="plane" class="w-6 h-6" />
-            <span set:html={t('features.tripTracking')}></span>
+    <div id="feature-grid" class="grid grid-cols-2 grid-rows-2 gap-3 w-4/5 max-[370px]:w-9/10 max-w-[340px]">
+        <div class="feature-box col-start-1 row-start-1 flex items-center gap-3">
+            <Icon name="plane" class="w-6 h-6 shrink-0 text-[#121712] dark:text-white" />
+            <span class="text-xs sm:text-sm font-bold leading-tight truncate-lines" set:html={t('features.tripTracking')}></span>
         </div>
-        <div class="feature-box col-start-2 flex items-center gap-4">
-            <Icon name="timeline" class="w-6 h-6" />
-            <span set:html={t('features.travelTimeline')}></span>
+        <div class="feature-box col-start-2 flex items-center gap-3">
+            <Icon name="timeline" class="w-6 h-6 shrink-0 text-[#121712] dark:text-white" />
+            <span class="text-xs sm:text-sm font-bold leading-tight truncate-lines" set:html={t('features.travelTimeline')}></span>
         </div>
-        <div class="feature-box col-start-1 flex items-center gap-4">
-            <Icon name="pen" class="w-6 h-6" />
-            <span set:html={t('features.dailyJournals')}></span>
+        <div class="feature-box col-start-1 flex items-center gap-3">
+            <Icon name="pen" class="w-6 h-6 shrink-0 text-[#121712] dark:text-white" />
+            <span class="text-xs sm:text-sm font-bold leading-tight truncate-lines" set:html={t('features.dailyJournals')}></span>
         </div>
-        <div class="feature-box col-start-2 row-start-2 flex items-center gap-4">
-            <Icon name="image" class="w-6 h-6" />
-            <span set:html={t('features.photoAlbums')}></span>
+        <div class="feature-box col-start-2 row-start-2 flex items-center gap-3">
+            <Icon name="image" class="w-6 h-6 shrink-0 text-[#121712] dark:text-white" />
+            <span class="text-xs sm:text-sm font-bold leading-tight truncate-lines" set:html={t('features.photoAlbums')}></span>
         </div>
     </div>
 </section>

@@ -269,7 +269,7 @@ export const ui = {
         "features.subtitle": "Journey te ayuda a documentar tus viajes fácilmente. Captura cada momento, desde las grandes aventuras hasta los pequeños detalles.",
         "features.tripTracking": "Seguimiento<br />de Viajes",
         "features.travelTimeline": "Línea de<br />Tiempo",
-        "features.dailyJournals": "Diarios<br />Diarios",
+        "features.dailyJournals": "Diarios de<br />Viaje",
         "features.photoAlbums": "Álbumes de<br />Fotos",
         "alert.danger": "¡Atención!",
         "alert.mobileRequired": "¡El uso en móvil es imprescindible para una buena experiencia! (PWA)",
