@@ -83,15 +83,15 @@ const tripData = tripSnap.data();
             </div>
 
             <!-- Trip Header Details -->
-            <div class="relative z-10 p-5 w-full">
+            <div class="relative z-10 p-5 pt-16 w-full">
                 <h2 
                     id="trip-title-header" 
                     transition:name={`trip-title-${tripID}`}
-                    class={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-1 ${tripData?.coverUrl ? "text-white drop-shadow-md" : "text-[var(--text-color)]"}`}
+                    class={`text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight mb-2 ${tripData?.coverUrl ? "text-white drop-shadow-md" : "text-[var(--text-color)]"}`}
                 >
                     {tripData?.title ?? (lang === 'es' ? "Viaje sin título" : "Unnamed Trip")}
                 </h2>
-                <p id="trip-desc-header" class={`text-sm mb-2 max-w-2xl line-clamp-3 ${tripData?.coverUrl ? "text-white/90 drop-shadow" : "text-[var(--lt-text-color)]"}`}>
+                <p id="trip-desc-header" class={`text-sm leading-relaxed mb-3 max-w-2xl line-clamp-3 ${tripData?.coverUrl ? "text-white/90 drop-shadow" : "text-[var(--lt-text-color)]"}`}>
                     {tripData?.description ?? t('tripDetail.noDescription')}
                 </p>
                 <div class="flex items-center gap-2">
