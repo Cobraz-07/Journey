@@ -3,6 +3,7 @@ import TitleSimple from "@/components/global/headers/TitleSimple.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import User from "@/components/authenticated/account_page/User.astro";
 import SettingsAccordion from "@/components/authenticated/account_page/SettingsAccordion.astro";
+import InstallPwaButton from "@/components/authenticated/account_page/InstallPwaButton.astro";
 import AppFooter from "@/components/global/footers/AppFooter.astro";
 import SignOutButton from "@/components/authenticated/account_page/SignOutButton.astro";
 
@@ -13,9 +14,12 @@ if (!uid) return Astro.redirect("/signin");
 ---
 
 <BaseLayout title="Journey | Account">
-    <TitleSimple title="Settings" />
-    <User email={email} uid={uid} />
-    <SettingsAccordion />
-    <SignOutButton />
+    <div class="flex flex-col min-h-svh pb-28 max-w-md mx-auto w-full px-4">
+        <TitleSimple title="Settings" />
+        <User email={email} uid={uid} />
+        <SettingsAccordion />
+        <InstallPwaButton />
+        <SignOutButton />
+    </div>
     <AppFooter iconStateUser={toggled} />
 </BaseLayout>
